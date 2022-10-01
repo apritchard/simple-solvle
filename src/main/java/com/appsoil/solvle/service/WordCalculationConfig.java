@@ -67,9 +67,9 @@ public record  WordCalculationConfig (
     /**
      * Config that guesses the best words based on letters based on number of solutions with that word's characters. Selects from the fishing word list until
      * 2 words remain. Does not use letter position bias, remaining word partitioning.
-     * {2=51, 3=743, 4=1221, 5=284, 6=16}
-     * Mean: 3.7714902807775377
-     * StDv: 0.7123185627850815
+     * {2=51, 3=740, 4=1243, 5=267, 6=14}
+     * Mean: 3.763714902807775
+     * StDv: 0.7012003696822036
      * Median: 4.0
      * @return
      */
@@ -78,8 +78,8 @@ public record  WordCalculationConfig (
     /**
      * Config that guesses the best words based on letters based on number of solutions with that word's characters. Selects from the fishing word list until
      * 50 words remain and then switches to selecting the word that removes the most remaining options until 2 words. Does not use letter position bias.
-     * {2=59, 3=846, 4=1284, 5=125, 6=1}
-     * Mean: 3.638444924406047
+     * {2=62, 3=848, 4=1288, 5=117}
+     * Mean: 3.630669546436285
      * StDv: 0.6265442121982954
      * Median: 4.0
      * @return
@@ -88,9 +88,9 @@ public record  WordCalculationConfig (
 
     /**
      * Returns a config that minimizes the mean score without failing
-     * {1=1, 2=74, 3=1167, 4=1014, 5=56, 6=3}
-     *  mean: 3.4574514038876893
-     *  std dev: 0.6091207384585445
+     * {1=1, 2=71, 3=1168, 4=1019, 5=56}
+     *  mean: 3.4570194384449247
+     *  std dev: 0.6005159961171692
      *  median: 3.0
      * @return
      */
@@ -98,10 +98,20 @@ public record  WordCalculationConfig (
             .withFineTuning(1, 0, 0.0, 0.7);
 
     /**
+     * Optimal mean but with partitioning disabled
+     * {1=1, 2=56, 3=992, 4=1102, 5=155, 6=9}
+     * Mean: 3.596544276457883, StDv:
+     * 0.6701347128504703,
+     * Median: 4.0
+     */
+    public static WordCalculationConfig OPTIMAL_MEAN_WITHOUT_PARTITIONING =  new WordCalculationConfig(3, 8, 0, .007)
+            .withFineTuning(1, 0, 0.0, 0.7);
+
+    /**
      * Returns a config guaranteed to solve any wordle in 5 or fewer guesses, at the cost of higher mean
-     *  {2=60, 3=1012, 4=1157, 5=86}
-     *  mean: 3.5481641468682508
-     *  std dev: 0.6115355008575277
+     *  {1=1, 2=72, 3=1126, 4=1056, 5=60}
+     *  mean: 3.476025917926566
+     *  std dev: 0.6051562647557255
      *  median: 4.0
      * @return
      */
@@ -110,9 +120,9 @@ public record  WordCalculationConfig (
 
     /**
      * Maximize the number of scores 3 and below
-     * {1=1, 2=67, 3=1199, 4=950, 5=92, 6=6}
-     *  mean: 3.4678185745140393
-     *  std dev: 0.6361184706040264
+     * {2=46, 3=1142, 4=1008, 5=112, 6=7}
+     *  mean: 3.5213822894168474
+     *  std dev: 0.6358939347320292
      *  median: 3.0
      * @return
      */
@@ -122,9 +132,9 @@ public record  WordCalculationConfig (
 
     /**
      * Maximize the number of scores 4 and below
-     * {1=1, 2=73, 3=1168, 4=1014, 5=55, 6=4}
-     *  mean: 3.458315335
-     *  std dev: 0.609889483
+     * {1=1, 2=71, 3=1158, 4=1029, 5=56}
+     *  mean: 3.46133909287257
+     *  std dev: 0.6008096844494963
      *  median: 3.0
      * @return
      */
@@ -142,14 +152,4 @@ public record  WordCalculationConfig (
     public static WordCalculationConfig TWO_OR_LESS =  new WordCalculationConfig(3, 4, 50, .4)
             .withFineTuning(0, 0, 0, 0.9);
 
-    public static Map<String, WordCalculationConfig> DEFAULT_CONFIGS = Map.of(
-            "SIMPLE", SIMPLE,
-            "SIMPLE_WITH_FISHING", SIMPLE_WITH_FISHING,
-            "SIMPLE_WITH_PARTITIONING", SIMPLE_WITH_PARTITIONING,
-            "OPTIMAL_MEAN", OPTIMAL_MEAN,
-            "LOWEST_MAX", LOWEST_MAX,
-            "THREE_OR_LESS", THREE_OR_LESS,
-            "FOUR_OR_LESS", FOUR_OR_LESS,
-            "TWO_OR_LESS", TWO_OR_LESS
-    );
 }

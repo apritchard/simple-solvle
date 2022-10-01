@@ -80,9 +80,8 @@ function Options(props) {
 
                 { (!boardState.settings.usePartitioning || currentOptions.bestWords === null) &&
                     <Tab eventKey="Remain" title="Cut✂" tabClassName="remTab">
-                        <div>Enable Partition Calculation in the Settings menu to activate this tab.</div>
+                        <div>Select a different heuristic strategy in the options menu to enable.</div>
                     </Tab>
-
                 }
 
             </Tabs>

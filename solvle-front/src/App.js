@@ -14,7 +14,6 @@ import Config from "./components/Config";
 import AppContext from "./contexts/contexts";
 import BoardActions from "./components/BoardActions";
 import {generateConfigParams, generateRestrictionString} from "./functions/functions";
-import AnagramOptions from "./components/AnagramOptions";
 
 function App() {
 
@@ -47,7 +46,6 @@ function App() {
                 usePartitioning: localStorage.getItem("usePartitioning") === 'true',
                 useRutBreaking: localStorage.getItem("useRutBreaking") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
-                anagramMode: localStorage.getItem("anagramMode") === 'true',
                 wordConfig: localStorage.getItem("wordConfig") || "SIMPLE"
             },
             shouldUpdate: false
@@ -350,19 +348,22 @@ function App() {
         }));
     }
 
-    const helpText = <div><div>Solvle is a tool that helps evaluate potential candidate words based on available letters.
-        One way to use it is to type in words you tried in other puzzle games and mark letters as known or unavailable.
-        The list of words on the right will update to reflect which words are still available. Words are ranked based
-        on how many of their letters are shared by other available words.</div>
+    const helpText = <div><div>Solvle is a tool for evaluating potential solutions to Wordle puzzles or evaluating
+        your performance after finishing a game.</div>
         <ul>
+            <li>Press "Set Solution" if you already know the answer so that Solvle can color your tiles automatically.</li>
             <li>Type letters or tap the on-screen keyboard to enter a word.</li>
             <li>Click the letters you've entered to mark them gray (unavailable), yellow (required, but wrong position), or green (correct position).</li>
             <li>Press ENTER to advance the word choice to the next line.</li>
-            <li>The top 100 viable words appear on the right. You can click a word to fill in its letters on the current line.</li>
+            <li>Viable words appear on the right. You can click a word to fill in its letters on the current line.</li>
             <li>Numbers under each letter on the keyboard indicate how many of the available words include that letter.</li>
-            <li>Fishing words help you 'fish' for new letters without trying to reuse existing letters.</li>
-            <li>Click the gear wheel to enable more complex recommendation options.</li>
-        </ul></div>
+            <li>Fish🐟 words help you 'fish' for new letters without trying to reuse existing letters.</li>
+            <li>Cut✂ words help you 'cut' the remaining options as much as possible.</li>
+        </ul>
+
+        Click the gear icon to customize your options.
+
+    </div>
 
     return (
         <AppContext.Provider
@@ -415,7 +416,7 @@ function App() {
                     <BoardActions />
                     <div className="parent">
                         <Board/>
-                        {boardState.settings.anagramMode ? <AnagramOptions/> : <Options/>}
+                        <Options/>
                     </div>
                     <Keyboard/>
                 </div>

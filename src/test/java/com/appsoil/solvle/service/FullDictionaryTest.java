@@ -210,12 +210,9 @@ public class FullDictionaryTest {
     @Test
     public void compareStandardConfigs() {
         String firstWord = "";
-        WordCalculationConfig.DEFAULT_CONFIGS.forEach((name, config) -> {
-            log.info("Running " + name);
-            addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple"));
-//            log.info("Running with rut breaking " + name);
-//            config = config.withRutBreak(1, 6).withPartitionThreshold(20);
-//            addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple"));
+        Arrays.stream(WordConfig.values()).forEach((config) -> {
+            log.info("Running " + config.toString());
+            addStats(config.config, solvleService.solveDictionary(new RemainingSolver(solvleService, config.config), firstWord, config.config, "simple"));
         });
     }
 

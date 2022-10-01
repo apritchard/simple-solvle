@@ -43,11 +43,11 @@ function Controls() {
     const biasHelpText = "Calculation Bias enables Solvle to prioritize words that match the" +
         " positions of letters. Customize the extent of this prioritization using the sliders below.";
 
-    const simpleHelpText = "Does not employ letter position heuristics and disables partitioning."
-    const lowestAverageHelpText = "Produces the best average score (about 3.457) and never fails a puzzle.";
-    const lowestMaxHelpText = "Finishes all puzzles in 5 or fewer guesses, but worse average performance (about 3.54816).";
-    const most2HelpText = "Achieves a score of 2 on about 6.5% of puzzles (about twice as often as other strategies), but can fail if used past word 2. Average score 3.55982.";
-    const most3HelpText = "Maximizes scores of 3 or lower and does not fail, but scores 6 on more words. Averages 3.46781.";
+    const simpleHelpText = "Does not employ letter position heuristics and disables partitioning. Mean: 3.7637, StDv: 0.7012, Median: 4.0, Counts: {2=51, 3=740, 4=1243, 5=267, 6=14}"
+    const simplePartitionHelpText = "Does not employ letter position heuristics, but enables partitioning. Mean: 3.6307, StDv: 0.6227, Median: 4.0, Counts: {2=62, 3=848, 4=1288, 5=117}"
+    const lowestAverageHelpText = "Uses letter position heuristics to minimize the average score. Mean: 3.5965, StDv: 0.6701, Median: 4.0, Counts: {1=1, 2=56, 3=992, 4=1102, 5=155, 6=9}";
+    const lowestAveragePartitionHelpText = "Uses letter position heuristics and partitioning to minimize the average score. Mean: 3.4570, StDv: 0.6005, Median: 3.0, Counts: {1=1, 2=71, 3=1168, 4=1019, 5=56}";
+    const most2HelpText = "Adjusts heuristics to maximize the odds of getting a score in 2 or 3, but risks failure. Mean: 3.5598, StDv: 0.8170, Median: 4.0, Counts: {1=1, 2=146, 3=996, 4=953, 5=177, 6=33, 7=7, 8=2}";
 
 
     return (
@@ -55,20 +55,20 @@ function Controls() {
             <div onChange={toggleResetWords} className="wordLists">
                 Word List:
                 <span
-                    title="2315 words: https://github.com/techtribeyt/Wordle/blob/main/wordle_answers.txt Defaults to Scrabble for words that are not 5-letters.">
+                    title="Only valid solutions.">
                     <input id="simpleRadio" defaultChecked={dictionary === "simple"} type="radio" value="simple"
                            name="dict"/>
-                    <label htmlFor="simpleRadio">Simple</label>
+                    <label htmlFor="simpleRadio">Solutions Only</label>
                 </span>
                 <span
-                    title="1906 words: Same as simple, but has had solutions used before Aug 9, 2022 removed">
+                    title="Only solutions that have not been used yet">
                     <input id="reducedRadio" defaultChecked={dictionary === "reduced"} type="radio" value="reduced"
                            name="dict"/>
                     <label htmlFor="reducedRadio">Reduced</label>
                 </span>
-                <span title="172820 words: https://github.com/dolph/dictionary/blob/master/enable1.txt">
+                <span title="All words that are valid guesses">
                     <input id="bigRadio" defaultChecked={dictionary === "big"} type="radio" value="big" name="dict"/>
-                    <label htmlFor="bigRadio">Scrabble</label>
+                    <label htmlFor="bigRadio">All Allowable</label>
                 </span>
             </div>
             <hr/>
@@ -87,6 +87,7 @@ function Controls() {
 
             <h6 title={biasHelpText}>Heuristic Strategy</h6>
             <div onChange={setPreset} className="wordLists">
+                Heuristics only:
                 <div
                     title={simpleHelpText}>
                     <input id="simpleStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE"} type="radio" value="SIMPLE"
@@ -99,23 +100,25 @@ function Controls() {
                            name="strat"/>
                     <label htmlFor="optimalMeanRadio">Optimal Mean</label>
                 </div>
+                <hr/>
+                With Cut✂ Enabled
                 <div
-                    title={lowestMaxHelpText}>
-                    <input id="lowestMaxRadio" defaultChecked={boardState.settings.wordConfig === "LOWEST_MAX"} type="radio" value="LOWEST_MAX"
+                    title={simplePartitionHelpText}>
+                    <input id="simplePartitionStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE_WITH_PARTITIONING"} type="radio" value="SIMPLE_WITH_PARTITIONING"
                            name="strat"/>
-                    <label htmlFor="optimalMeanRadio">Lowest Max</label>
+                    <label htmlFor="simplePartitionStratRadio">Simple</label>
+                </div>
+                <div
+                    title={lowestAveragePartitionHelpText}>
+                    <input id="optimalMeanPartitionRadio" defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN_WITH_PARTITIONING"} type="radio" value="OPTIMAL_MEAN_WITH_PARTITIONING"
+                           name="strat"/>
+                    <label htmlFor="optimalMeanPartitionRadio">Optimal Mean</label>
                 </div>
                 <div
                     title={most2HelpText}>
                     <input id="most2Radio" defaultChecked={boardState.settings.wordConfig === "TWO_OR_LESS"} type="radio" value="TWO_OR_LESS"
                            name="strat"/>
                     <label htmlFor="most2Radio">Most Twos</label>
-                </div>
-                <div
-                    title={most3HelpText}>
-                    <input id="most3Radio" defaultChecked={boardState.settings.wordConfig === "THREE_OR_LESS"} type="radio" value="THREE_OR_LESS"
-                           name="strat"/>
-                    <label htmlFor="most3Radio">Most Threes</label>
                 </div>
             </div>
         </div>
