@@ -36,7 +36,8 @@ public class SolvleServiceTest {
 
     @Autowired
     SolvleService solvleService;
-    WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN;
+    WordConfig config = WordConfig.OPTIMAL_MEAN;
+    boolean hardMode = false;
 
 
     @ParameterizedTest
@@ -49,7 +50,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_lettersAvailable_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, 5, "simple", config);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -66,7 +67,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_requiredPosition_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, 5, "simple", config);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -82,7 +83,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_excludedPosition_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, 5, "simple", config);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -99,7 +100,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_excludeAndRequired_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, 5, "simple", config);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }

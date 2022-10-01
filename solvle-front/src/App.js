@@ -48,20 +48,7 @@ function App() {
                 useRutBreaking: localStorage.getItem("useRutBreaking") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
                 anagramMode: localStorage.getItem("anagramMode") === 'true',
-                calculationConfig: {
-                    rightLocationMultiplier: localStorage.getItem("rightLocationMultiplier") || 3,
-                    uniquenessMultiplier: localStorage.getItem("uniquenessMultiplier") || 8,
-                    useHarmonic: false,
-                    partitionThreshold: localStorage.getItem("partitionThreshold") !== null ? localStorage.getItem("partitionThreshold") : 30,
-                    fishingThreshold: 2,
-                    viableWordPreference: localStorage.getItem("viableWordPreference") !== null ? localStorage.getItem("viableWordPreference") : .007,
-                    locationAdjustmentScale: localStorage.getItem("locationAdjustmentScale") || 0,
-                    uniqueAdjustmentScale: localStorage.getItem("uniqueAdjustmentScale") || 0,
-                    viableWordAdjustmentScale: localStorage.getItem("viableWordAdjustmentScale") || 0,
-                    vowelMultiplier: localStorage.getItem("vowelMultiplier") || 1,
-                    rutBreakMultiplier: localStorage.getItem("rutBreakMultiplier") || 0,
-                    rutBreakThreshold: localStorage.getItem("rutBreakThreshold") || 6,
-                }
+                wordConfig: localStorage.getItem("wordConfig") || "SIMPLE"
             },
             shouldUpdate: false
         }

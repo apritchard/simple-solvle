@@ -25,42 +25,44 @@ public class SolvleService {
     private final Dictionary simpleDictionary;
     private final Dictionary reducedDictionary;
     private final Dictionary bigDictionary;
-    private final Dictionary hugeDictionary;
 
     private final int MAX_RESULT_LIST_SIZE = 100;
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
+    private final int DEFAULT_LENGTH = 5;
 
     public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
-                         @Qualifier("bigDictionary") Dictionary bigDictionary,
-                         @Qualifier("hugeDictionary") Dictionary hugeDictionary) {
+                         @Qualifier("bigDictionary") Dictionary bigDictionary) {
         this.simpleDictionary = simpleDictionary;
         this.bigDictionary = bigDictionary;
-        this.hugeDictionary = hugeDictionary;
         this.reducedDictionary = reducedDictionary;
     }
 
     @Cacheable("validWords")
-    public SolvleDTO getWordAnalysis(String restrictionString, int length, String wordList, WordCalculationConfig wordCalculationConfig) {
+    public SolvleDTO getWordAnalysis(String restrictionString, String wordList, WordConfig wordConfig, boolean hardMode) {
 
-        log.debug("Searching for words of length {}", length);
+        log.debug("Searching for words using {}", wordConfig);
 
         // parse the string to identify required letters and position exclusions
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
-        SolvleDTO result = getWordAnalysis(wordRestrictions, length, wordList, wordCalculationConfig);
+        SolvleDTO result = getWordAnalysis(wordRestrictions, wordList, wordConfig, hardMode);
 
-        log.info("Found {} length {} matches for {}", result.totalWords(), length, restrictionString);
+        log.info("Found {} matches for {}", result.totalWords(), restrictionString);
 
         return result;
     }
 
-    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, int length, String wordList, WordCalculationConfig wordCalculationConfig) {
-        Set<Word> wordSet = getPrimarySet(wordList, length);
-        Set<Word> fishingSet = getFishingSet(wordList, length);
+    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, String wordList, WordConfig wordConfig, boolean hardMode) {
+        Set<Word> wordSet = getPrimarySet(wordList);
+        Set<Word> fishingSet = getFishingSet(wordList);
 
-        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordCalculationConfig);
+        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig, hardMode);
 
+    }
+
+    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordConfig wordConfig, boolean hardMode) {
+        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig.config.withHardMode(hardMode));
     }
 
     public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordCalculationConfig wordCalculationConfig) {
@@ -136,11 +138,12 @@ public class SolvleService {
     }
 
     @Cacheable("wordScore")
-    public WordScoreDTO getScore(String restrictionString, String wordToScore, String wordList, WordCalculationConfig wordCalculationConfig) {
+    public WordScoreDTO getScore(String restrictionString, String wordToScore, String wordList, WordConfig wordConfig, boolean hardMode) {
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
+        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
 
         Word word = new Word(wordToScore, 0);
-        Set<Word> wordSet = getPrimarySet(wordList, wordToScore.length());
+        Set<Word> wordSet = getPrimarySet(wordList);
 
         //get the counts
         WordCalculationService wordCalculationService = new WordCalculationService(wordCalculationConfig);
@@ -180,20 +183,20 @@ public class SolvleService {
      * With a given set of restrictions, get the average solve length for top recommended words using a given configuration
      * Takes a long time, use with caution.
      * @param restrictionString         Current known restrictions about the solution
-     * @param length                    Length of word to solve for
      * @param wordList                  Name of the wordlist for this playout
-     * @param wordCalculationConfig     Config to use
      * @param guess                     Which number guess this is, used for identifying failure state (exceeding 6 guesses)
      * @return
      */
-    public Set<PlayOut> playOutSolutions(String restrictionString, int length, String wordList, WordCalculationConfig wordCalculationConfig, int guess) {
+    public Set<PlayOut> playOutSolutions(String restrictionString, String wordList, WordConfig wordConfig, boolean hardMode, int guess) {
+
+        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
 
         WordCalculationService wordCalculationService = new WordCalculationService(wordCalculationConfig);
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString);
         Solver solver = new RemainingSolver(this, wordCalculationConfig);
 
-        Set<Word> wordSet = getPrimarySet(wordList, length);
-        Set<Word> fishingSet = getFishingSet(wordList, length);
+        Set<Word> wordSet = getPrimarySet(wordList);
+        Set<Word> fishingSet = getFishingSet(wordList);
 
         // get the potential solutions
         Set<Word> containedWords = wordCalculationService.findMatchingWords(wordSet, wordRestrictions);
@@ -221,29 +224,23 @@ public class SolvleService {
         }));
     }
 
-    private Set<Word> getPrimarySet(String wordList, int length) {
+    private Set<Word> getPrimarySet(String wordList) {
         Dictionary dictionary = switch (wordList) {
-            case "reduced" -> length == 5 ? reducedDictionary : bigDictionary;
-            case "simple" -> length == 5 ? simpleDictionary : bigDictionary;
-            case "huge" -> hugeDictionary;
+            case "reduced" -> reducedDictionary;
+            case "simple" -> simpleDictionary;
             default -> bigDictionary;
         };
-        return dictionary.wordsBySize().get(length);
+        return dictionary.wordsBySize().get(DEFAULT_LENGTH);
     }
 
-    private Set<Word> getFishingSet(String wordList, int length) {
+    private Set<Word> getFishingSet(String wordList) {
         // use the big dictionary for fishing simple words, because answers are not required to be valid
-        Dictionary fishingWordDictionary = switch(wordList) {
-            case "simple" -> /*length == 5 ? simpleGuessesDictionary :*/ bigDictionary;
-            case "huge" -> hugeDictionary;
-            default -> bigDictionary;
-        };
-        return fishingWordDictionary.wordsBySize().get(length);
+        return bigDictionary.wordsBySize().get(DEFAULT_LENGTH);
     }
 
-    public SharedPositions findSharedWordRestrictions(String wordList, int length) {
+    public SharedPositions findSharedWordRestrictions(String wordList) {
         WordCalculationService wordCalculationService= new WordCalculationService(WordCalculationConfig.SIMPLE);
-        return wordCalculationService.findSharedWordRestrictions(getPrimarySet(wordList, length));
+        return wordCalculationService.findSharedWordRestrictions(getPrimarySet(wordList));
     }
 
     /**
@@ -257,10 +254,10 @@ public class SolvleService {
      */
     public Map<String, List<String>> solveDictionary(Solver solver, String firstWord, WordCalculationConfig wordCalculationConfig, String wordList) {
 
-        Set<Word> words = getPrimarySet(wordList, 5);
+        Set<Word> words = getPrimarySet(wordList);
 
         if(firstWord == null || firstWord.isBlank()) {
-            SolvleDTO guess = getWordAnalysis(WordRestrictions.noRestrictions(), words, getFishingSet(wordList, 5), wordCalculationConfig);
+            SolvleDTO guess = getWordAnalysis(WordRestrictions.noRestrictions(), words, getFishingSet(wordList), wordCalculationConfig);
             firstWord = guess.fishingWords().stream().findFirst().get().word();
         }
 
@@ -276,8 +273,8 @@ public class SolvleService {
     }
 
     public Map<String, List<String>> solveDictionary(Solver solver, List<String> previousGuesses, WordCalculationConfig wordCalculationConfig, String startingRestrictions, String wordList) {
-        Set<Word> words = getPrimarySet("simple", 5);
-        SolvleDTO guess = getWordAnalysis(new WordRestrictions(startingRestrictions.toLowerCase()), words, getFishingSet("simple", 5), wordCalculationConfig);
+        Set<Word> words = getPrimarySet("simple");
+        SolvleDTO guess = getWordAnalysis(new WordRestrictions(startingRestrictions.toLowerCase()), words, getFishingSet("simple"), wordCalculationConfig);
         final String firstWord = guess.fishingWords().stream().findFirst().get().word();
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
@@ -303,8 +300,8 @@ public class SolvleService {
     public List<String> solveWord(Solver solver, Word word, String firstWord, String wordList) {
 
         //get initial restrictions
-        Set<Word> wordSet = getPrimarySet(wordList, word.getLength());
-        Set<Word> fishingSet = getFishingSet(wordList, word.getLength());
+        Set<Word> wordSet = getPrimarySet(wordList);
+        Set<Word> fishingSet = getFishingSet(wordList);
 
         if(!wordSet.contains(word)) {
             return List.of("Word Not Found");

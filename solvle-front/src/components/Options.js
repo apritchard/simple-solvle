@@ -3,7 +3,6 @@ import AppContext from "../contexts/contexts";
 import OptionTab from "./OptionTab";
 import {Spinner, Tab, Tabs} from "react-bootstrap";
 import {generateConfigParams, generateRestrictionString} from "../functions/functions";
-import RutTab from "./RutTab";
 
 function Options(props) {
 
@@ -86,12 +85,6 @@ function Options(props) {
 
                 }
 
-                { boardState.settings.useRutBreaking && currentOptions.knownPositions !== null &&
-                    <Tab eventKey="rutBreak" title="Rut⛏" tabClassName="rutab" tabAttrs={{title:"Word ruts are groups of viable words that share 3 or more letters. Watch out for ruts in hard mode to avoid getting trapped!"}}>
-                        {loading && <div>Loading...<Spinner animation="border" role="status" /> </div>}
-                        {!loading && <RutTab knownPositions={currentOptions.knownPositions} onSelectWord={onSelectWord}
-                                                heading={currentOptions.knownPositions.length <= 0 ? "No ruts with " + boardState.settings.calculationConfig.rutBreakThreshold + " words found for position or too many viable words." : ""}/> }
-                    </Tab> }
             </Tabs>
         </div>
 

@@ -221,10 +221,10 @@ public class FullDictionaryTest {
 
     @Test
     public void playOut() {
-        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN;
+        WordConfig config = WordConfig.OPTIMAL_MEAN;
         String wordRestrictions = "bcde!5fghijklmnopquvwxyz";
         log.info("Playout requested with configuration {}", config);
-        Set<PlayOut> result = solvleService.playOutSolutions(wordRestrictions.toLowerCase(), 5, "simple", config, 2);
+        Set<PlayOut> result = solvleService.playOutSolutions(wordRestrictions.toLowerCase(), "simple", config, false, 2);
         log.info(result);
     }
 
@@ -233,42 +233,16 @@ public class FullDictionaryTest {
     public void findRestrictions() {
         final int wordLength = 5;
         final String dictionary = "simple";
-        SharedPositions out = solvleService.findSharedWordRestrictions(dictionary, wordLength);
+        SharedPositions out = solvleService.findSharedWordRestrictions(dictionary);
 
         Word allLetters = new Word("abcdefghijklmnopqrstuvwxyz");
         out.sortedPositionStream().forEach(es -> {
             if(es.getKey().getShared() > 2 && es.getValue().size() > 5) { // && notEndInS(es.getKey(), wordLength) && notEndinEd(es.getKey(), wordLength) && notEndinIng(es.getKey(), wordLength) ) {
                 WordRestrictions restrictions = new WordRestrictions(allLetters, new HashSet<>(es.getKey().pos().values()), es.getKey().pos(), new HashMap<>());
-                SolvleDTO solution = solvleService.getWordAnalysis(restrictions, wordLength, dictionary, WordCalculationConfig.OPTIMAL_MEAN);
+                SolvleDTO solution = solvleService.getWordAnalysis(restrictions, dictionary, WordConfig.OPTIMAL_MEAN, false);
                 log.warn("{} {} Words: {} \n{} Recommended: {}", es.getKey(), es.getValue().size(), es.getValue(), formatKnownPosition(es.getKey(), wordLength), solution.bestWords().stream().limit(5).map(WordFrequencyScore::word).collect(Collectors.toSet()));
             }
         });
-    }
-
-
-    @ParameterizedTest
-    @CsvSource({
-            "2, 4, 9, 100, false, .007",
-    })
-    void getPartitionStatsForWord( int fishingThreshold, double rightLocationMultiplier, double uniquenessMultiplier, int permutationThreshold, boolean useHarmonic, double viableWordPreference) {
-        String wordToScore = "diner";
-        String startingRestrictions = "BCDE!5FGHIJKMNOPQRUVWXYZ";
-        WordCalculationConfig config = new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, permutationThreshold, viableWordPreference);
-        WordScoreDTO result = solvleService.getScore(startingRestrictions, wordToScore, "simple", config);
-        log.info(result);
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "2, 3, 9, 1000, false, .007",
-    })
-    void getOptionsForRestrictions( int fishingThreshold, double rightLocationMultiplier, double uniquenessMultiplier, int permutationThreshold, boolean useHarmonic, double viableWordPreference) {
-        String firstWord = "SLATE";
-        String startingRestrictions = "BCDE!5FGHIJKMNOPQRUVWXYZ";
-//        WordCalculationConfig config = new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, permutationThreshold,viableWordPreference).withFishingThreshold(fishingThreshold);
-        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN.withRutBreak(5, 8);
-        SolvleDTO result = solvleService.getWordAnalysis(startingRestrictions, 5, "simple", config);
-        log.info(result);
     }
 
     private static String formatKnownPosition(KnownPosition kp, int wordLength) {
