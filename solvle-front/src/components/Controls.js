@@ -32,6 +32,7 @@ function Controls() {
             ...prev,
             settings: {
                 ...prev.settings,
+                usePartitioning: e.target.value != "SIMPLE" && e.target.value != "OPTIMAL_MEAN",
                 wordConfig: e.target.value
             }
         }));

@@ -43,7 +43,6 @@ allot
 alloy
 along
 aloof
-aloud
 alter
 amass
 amaze
@@ -73,7 +72,6 @@ aping
 apnea
 apple
 apply
-aptly
 arbor
 ardor
 arena
@@ -92,7 +90,6 @@ audio
 augur
 aunty
 avail
-avert
 avian
 avoid
 await
@@ -101,13 +98,11 @@ aware
 awash
 awoke
 axial
-axiom
 axion
 azure
 bacon
 bagel
 baggy
-baker
 baler
 balmy
 banjo
@@ -130,7 +125,6 @@ befit
 began
 begat
 beget
-begin
 begun
 belie
 belle
@@ -190,7 +184,6 @@ borne
 bosom
 bossy
 botch
-bough
 boule
 bound
 bowel
@@ -201,7 +194,6 @@ brain
 brand
 brash
 brass
-brave
 bravo
 brawl
 brawn
@@ -262,10 +254,8 @@ caper
 caput
 carat
 carol
-carry
 carve
 caste
-catch
 catty
 cause
 cavil
@@ -400,7 +390,6 @@ dairy
 daisy
 dally
 dance
-dandy
 datum
 daunt
 dealt
@@ -419,7 +408,6 @@ deity
 delay
 demon
 demur
-denim
 dense
 derby
 deter
@@ -460,7 +448,6 @@ drape
 drawl
 drawn
 dread
-dream
 dress
 dried
 drier
@@ -519,13 +506,11 @@ empty
 enact
 endow
 enemy
-enjoy
 ennui
 ensue
 enter
 entry
 envoy
-equal
 equip
 erase
 erect
@@ -544,7 +529,6 @@ exalt
 excel
 exert
 exile
-exist
 expel
 extol
 extra
@@ -559,7 +543,6 @@ fancy
 fanny
 fatal
 fatty
-fault
 fauna
 feast
 fecal
@@ -604,10 +587,8 @@ fleet
 flier
 flint
 flirt
-floor
 flora
 flour
-flout
 flown
 fluid
 fluke
@@ -617,7 +598,6 @@ flush
 flute
 flyer
 foamy
-foggy
 foist
 folio
 folly
@@ -683,7 +663,6 @@ glint
 globe
 gloss
 glove
-glyph
 gnash
 gnome
 godly
@@ -718,7 +697,6 @@ groom
 grope
 gross
 grout
-grove
 grown
 gruff
 grunt
@@ -781,7 +759,6 @@ hound
 house
 hovel
 hover
-howdy
 human
 humid
 humus
@@ -805,18 +782,15 @@ image
 imbue
 impel
 imply
-inane
 inbox
 incur
 index
-inept
 infer
 ingot
 inlay
 inlet
 inner
 intro
-ionic
 irate
 issue
 itchy
@@ -877,7 +851,6 @@ learn
 lease
 leash
 least
-leave
 ledge
 leech
 lefty
@@ -888,7 +861,6 @@ lemur
 leper
 level
 lever
-libel
 liege
 liken
 limbo
@@ -945,9 +917,7 @@ mangy
 mania
 manic
 manly
-maple
 march
-marsh
 mason
 match
 matey
@@ -958,7 +928,6 @@ mealy
 meant
 meaty
 mecca
-medal
 media
 medic
 melee
@@ -1002,7 +971,6 @@ mucky
 mucus
 muddy
 mulch
-mummy
 munch
 mural
 murky
@@ -1109,12 +1077,10 @@ petal
 petty
 phone
 phony
-photo
 piano
 piece
 piggy
 pinch
-piney
 pinky
 piper
 pique
@@ -1158,7 +1124,6 @@ preen
 press
 price
 pried
-prime
 prior
 prism
 privy
@@ -1200,7 +1165,6 @@ queue
 quick
 quill
 quilt
-quirk
 quite
 quota
 quote
@@ -1210,7 +1174,6 @@ rabid
 racer
 radar
 radii
-rainy
 raise
 rajah
 rally
@@ -1423,7 +1386,6 @@ sling
 slink
 sloop
 slope
-sloth
 slunk
 slurp
 slush
@@ -1444,8 +1406,6 @@ snail
 snake
 snaky
 snare
-snarl
-sneak
 sneer
 snide
 sniff
@@ -1466,7 +1426,6 @@ sorry
 sound
 south
 space
-spade
 spank
 spare
 spark
@@ -1476,13 +1435,11 @@ speak
 spear
 speck
 speed
-spell
 spelt
 spent
 sperm
 spice
 spied
-spiel
 spiky
 spilt
 spine
@@ -1512,7 +1469,6 @@ stage
 staid
 stain
 stake
-stale
 stalk
 stall
 stamp
@@ -1528,12 +1484,10 @@ steam
 steel
 steep
 steer
-stein
 stern
 stiff
 still
 stilt
-sting
 stint
 stock
 stoic
@@ -1626,7 +1580,6 @@ terse
 testy
 thank
 theft
-there
 these
 theta
 thick
@@ -1700,7 +1653,6 @@ turbo
 tutor
 tweak
 tweet
-twine
 twirl
 twist
 twixt
@@ -1713,7 +1665,6 @@ under
 undid
 undue
 union
-unite
 unity
 unlit
 unset
@@ -1729,8 +1680,6 @@ usual
 utile
 utter
 vague
-valet
-valid
 valor
 value
 valve
@@ -1748,7 +1697,6 @@ verve
 vicar
 video
 vigil
-vigor
 villa
 vinyl
 viola
@@ -1770,7 +1718,6 @@ wager
 wagon
 waist
 waive
-waltz
 warty
 water
 waver
