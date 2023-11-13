@@ -26,6 +26,9 @@ public class SolvleService {
     private final Dictionary reducedDictionary;
     private final Dictionary bigDictionary;
 
+    //international word lists
+    private final Dictionary icelandicDictionary;
+
     private final int MAX_RESULT_LIST_SIZE = 100;
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
@@ -33,10 +36,13 @@ public class SolvleService {
 
     public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
-                         @Qualifier("bigDictionary") Dictionary bigDictionary) {
+                         @Qualifier("bigDictionary") Dictionary bigDictionary,
+                         @Qualifier("icelandicDictionary") Dictionary icelandicDictionary) {
         this.simpleDictionary = simpleDictionary;
         this.bigDictionary = bigDictionary;
         this.reducedDictionary = reducedDictionary;
+
+        this.icelandicDictionary = icelandicDictionary;
     }
 
     @Cacheable("validWords")
@@ -228,6 +234,7 @@ public class SolvleService {
         Dictionary dictionary = switch (wordList) {
             case "reduced" -> reducedDictionary;
             case "simple" -> simpleDictionary;
+            case "iceland" -> icelandicDictionary;
             default -> bigDictionary;
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);
@@ -235,7 +242,11 @@ public class SolvleService {
 
     private Set<Word> getFishingSet(String wordList) {
         // use the big dictionary for fishing simple words, because answers are not required to be valid
-        return bigDictionary.wordsBySize().get(DEFAULT_LENGTH);
+        Dictionary dictionary = switch (wordList) {
+            case "iceland" -> icelandicDictionary;
+            default -> bigDictionary;
+        };
+        return dictionary.wordsBySize().get(DEFAULT_LENGTH);
     }
 
     public SharedPositions findSharedWordRestrictions(String wordList) {

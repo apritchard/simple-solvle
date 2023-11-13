@@ -34,6 +34,11 @@ public class SolvleConfig {
         return readResourceToDictionary("/dict2/remaining-solutions.txt");
     }
 
+    @Bean(name = "icelandicDictionary")
+    Dictionary getIcelandicDictionr() {
+        return readResourceToDictionary("/dict2/iceland.txt");
+    }
+
     private Dictionary readResourceToDictionary(String path) {
         InputStream is = this.getClass().getResourceAsStream(path);
         Map<Integer, Set<Word>> dict = new HashMap<>();

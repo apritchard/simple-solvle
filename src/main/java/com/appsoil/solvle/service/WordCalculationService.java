@@ -262,11 +262,11 @@ public class WordCalculationService {
         }
 
         double numKnownLetters = wordRestrictions.letterPositions().keySet().size();
-        double wordLength = wordRestrictions.word().getLength();
+        double wordLength = word.getLength();
 
 
         //scale location bonus based on number of positions known
-        double locationAdjustment = 1 - ((numKnownLetters / word.getLength()) * locationAdjustmentScale);
+        double locationAdjustment = 1 - ((numKnownLetters / wordLength) * locationAdjustmentScale);
 
         //scale unique bonus based on number of letters remaining
         double uniqueAdjustment = 1 - ((1 - (wordLength / WordRestrictions.NO_RESTRICTIONS.word().getLength())) * uniqueAdjustmentScale);

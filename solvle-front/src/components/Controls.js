@@ -71,6 +71,12 @@ function Controls() {
                     <input id="bigRadio" defaultChecked={dictionary === "big"} type="radio" value="big" name="dict"/>
                     <label htmlFor="bigRadio">All Allowable</label>
                 </span>
+                <br />
+                International:
+                <span title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
+                    <input id="icelandRadio" defaultChecked={dictionary === "iceland"} type="radio" value="iceland" name="dict" />
+                    <label htmlFor="icelandRadio">Íslensku</label>
+                </span>
             </div>
             <hr/>
             <div>
