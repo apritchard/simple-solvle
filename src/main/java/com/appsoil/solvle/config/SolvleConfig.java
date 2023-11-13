@@ -35,7 +35,7 @@ public class SolvleConfig {
     }
 
     @Bean(name = "icelandicDictionary")
-    Dictionary getIcelandicDictionr() {
+    Dictionary getIcelandicDictionry() {
         return readResourceToDictionary("/dict2/iceland.txt");
     }
 
