@@ -28,6 +28,7 @@ public class SolvleService {
 
     //international word lists
     private final Dictionary icelandicDictionary;
+    private final Dictionary icelandicCommonDictionary;
 
     private final int MAX_RESULT_LIST_SIZE = 100;
     private final int FISHING_WORD_SIZE = 200;
@@ -37,12 +38,15 @@ public class SolvleService {
     public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
                          @Qualifier("bigDictionary") Dictionary bigDictionary,
-                         @Qualifier("icelandicDictionary") Dictionary icelandicDictionary) {
+                         @Qualifier("icelandicDictionary") Dictionary icelandicDictionary,
+                         @Qualifier("icelandicCommonDictionary") Dictionary icelandicCommonDictionary
+    ) {
         this.simpleDictionary = simpleDictionary;
         this.bigDictionary = bigDictionary;
         this.reducedDictionary = reducedDictionary;
 
         this.icelandicDictionary = icelandicDictionary;
+        this.icelandicCommonDictionary = icelandicCommonDictionary;
     }
 
     @Cacheable("validWords")
@@ -234,7 +238,7 @@ public class SolvleService {
         Dictionary dictionary = switch (wordList) {
             case "reduced" -> reducedDictionary;
             case "simple" -> simpleDictionary;
-            case "iceland" -> icelandicDictionary;
+            case "iceland" -> icelandicCommonDictionary;
             default -> bigDictionary;
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);
