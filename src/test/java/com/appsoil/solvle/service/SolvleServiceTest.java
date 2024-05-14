@@ -25,7 +25,7 @@ public class SolvleServiceTest {
 
     @TestConfiguration
     public static class SolvleTestConfiguration {
-        @Bean(name = {"simpleDictionary", "bigDictionary", "hugeDictionary", "reducedDictionary", "icelandicDictionary", "icelandicCommonDictionary"})
+        @Bean(name = {"simpleDictionary", "extendedDictionary", "bigDictionary", "hugeDictionary", "reducedDictionary", "icelandicDictionary", "icelandicCommonDictionary"})
         Dictionary getTestDictionary() {
             Set<Word> words = Stream.of("aaaaa", "aaaab", "aaabc", "aabcd", "abcde", "bcdea").map(Word::new).collect(Collectors.toSet());
             Dictionary dictionary = new Dictionary(Map.of(5, words));
