@@ -55,11 +55,18 @@ function Controls() {
         <div className="controls">
             <div onChange={toggleResetWords} className="wordLists">
                 Word List:
+                <br/>
                 <span
                     title="Only valid solutions.">
                     <input id="simpleRadio" defaultChecked={dictionary === "simple"} type="radio" value="simple"
                            name="dict"/>
-                    <label htmlFor="simpleRadio">Solutions Only</label>
+                    <label htmlFor="simpleRadio">Solutions</label>
+                </span>
+                <span
+                    title="Expanded list of valid solutions to include potential new additions by NYT">
+                    <input id="extendedRadio" defaultChecked={dictionary === "extended"} type="radio" value="extended"
+                           name="dict"/>
+                    <label htmlFor="extendedRadio">NYT Extended</label>
                 </span>
                 <span
                     title="Only solutions that have not been used yet">
@@ -71,10 +78,13 @@ function Controls() {
                     <input id="bigRadio" defaultChecked={dictionary === "big"} type="radio" value="big" name="dict"/>
                     <label htmlFor="bigRadio">All Allowable</label>
                 </span>
-                <br />
+                <br/>
                 International:
-                <span title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
-                    <input id="icelandRadio" defaultChecked={dictionary === "iceland"} type="radio" value="iceland" name="dict" />
+                <br/>
+                <span
+                    title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
+                    <input id="icelandRadio" defaultChecked={dictionary === "iceland"} type="radio" value="iceland"
+                           name="dict"/>
                     <label htmlFor="icelandRadio">Íslensku</label>
                 </span>
             </div>

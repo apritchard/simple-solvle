@@ -29,6 +29,11 @@ public class SolvleConfig {
         return readResourceToDictionary("/dict2/simple-solutions.txt");
     }
 
+    @Bean(name = "extendedDictionary")
+    Dictionary getExtendedDictionary() {
+        return readResourceToDictionary("/dict2/extended-solutions.txt");
+    }
+
     @Bean(name = "reducedDictionary")
     Dictionary getReducedDictionary() {
         return readResourceToDictionary("/dict2/remaining-solutions.txt");

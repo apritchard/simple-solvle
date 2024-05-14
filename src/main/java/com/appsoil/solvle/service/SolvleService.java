@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class SolvleService {
 
     private final Dictionary simpleDictionary;
+    private final Dictionary extendedDictionary;
     private final Dictionary reducedDictionary;
     private final Dictionary bigDictionary;
 
@@ -36,12 +37,14 @@ public class SolvleService {
     private final int DEFAULT_LENGTH = 5;
 
     public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
+                         @Qualifier("extendedDictionary") Dictionary extendedDictionary,
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
                          @Qualifier("bigDictionary") Dictionary bigDictionary,
                          @Qualifier("icelandicDictionary") Dictionary icelandicDictionary,
                          @Qualifier("icelandicCommonDictionary") Dictionary icelandicCommonDictionary
     ) {
         this.simpleDictionary = simpleDictionary;
+        this.extendedDictionary = extendedDictionary;
         this.bigDictionary = bigDictionary;
         this.reducedDictionary = reducedDictionary;
 
@@ -238,6 +241,7 @@ public class SolvleService {
         Dictionary dictionary = switch (wordList) {
             case "reduced" -> reducedDictionary;
             case "simple" -> simpleDictionary;
+            case "extended" -> extendedDictionary;
             case "iceland" -> icelandicCommonDictionary;
             default -> bigDictionary;
         };
