@@ -22,7 +22,7 @@ public record WordRestrictions(Word word,
 
     private static int MAX_WORD_LENGTH = 9;
 
-    public static final WordRestrictions NO_RESTRICTIONS = new WordRestrictions("aábcdðeéfghiíjklmnoópqrstuúvwxyýzþæö");
+    public static final WordRestrictions NO_RESTRICTIONS = new WordRestrictions("aábcdðeéfghiíjklmnñoópqrstuúvwxyýzþæö");
 
     /**
      * Creates a description of known restriction knowledge based on provided input string.

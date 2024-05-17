@@ -30,6 +30,7 @@ public class SolvleService {
     //international word lists
     private final Dictionary icelandicDictionary;
     private final Dictionary icelandicCommonDictionary;
+    private final Dictionary spanishDictionary;
 
     private final int MAX_RESULT_LIST_SIZE = 100;
     private final int FISHING_WORD_SIZE = 200;
@@ -41,7 +42,8 @@ public class SolvleService {
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
                          @Qualifier("bigDictionary") Dictionary bigDictionary,
                          @Qualifier("icelandicDictionary") Dictionary icelandicDictionary,
-                         @Qualifier("icelandicCommonDictionary") Dictionary icelandicCommonDictionary
+                         @Qualifier("icelandicCommonDictionary") Dictionary icelandicCommonDictionary,
+                         @Qualifier("spanishDictionary") Dictionary spanishDictionary
     ) {
         this.simpleDictionary = simpleDictionary;
         this.extendedDictionary = extendedDictionary;
@@ -50,6 +52,7 @@ public class SolvleService {
 
         this.icelandicDictionary = icelandicDictionary;
         this.icelandicCommonDictionary = icelandicCommonDictionary;
+        this.spanishDictionary = spanishDictionary;
     }
 
     @Cacheable("validWords")
@@ -243,6 +246,7 @@ public class SolvleService {
             case "simple" -> simpleDictionary;
             case "extended" -> extendedDictionary;
             case "iceland" -> icelandicCommonDictionary;
+            case "spanish" -> spanishDictionary;
             default -> bigDictionary;
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);
@@ -252,6 +256,7 @@ public class SolvleService {
         // use the big dictionary for fishing simple words, because answers are not required to be valid
         Dictionary dictionary = switch (wordList) {
             case "iceland" -> icelandicDictionary;
+            case "spanish" -> spanishDictionary;
             default -> bigDictionary;
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);

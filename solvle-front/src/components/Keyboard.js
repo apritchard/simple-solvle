@@ -9,7 +9,7 @@ function Keyboard() {
 
     //international rows
     const icelandic = ["Á", "Ð", "É", "Í", "Ó", "Ú", "Ý", "Þ", "Æ", "Ö" ];
-
+    const spanish = ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"];
     const {
         availableLetters,
         onSelectLetter,
@@ -49,6 +49,11 @@ function Keyboard() {
                         onSelectLetter(key);
                     }
                 })
+                spanish.forEach((key) => {
+                    if (event.key.toLowerCase() === key.toLowerCase()) {
+                        onSelectLetter(key);
+                    }
+                })
             }
         },
         [onDelete, onEnter, onSelectLetter]
@@ -76,7 +81,7 @@ function Keyboard() {
                 })}
             </div>
             <div className="keyboardLine">
-                {keys2.map((key) => {
+                {(dictionary === 'spanish' ? spanish : keys2).map((key) => {
                     return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
                 })}
             </div>

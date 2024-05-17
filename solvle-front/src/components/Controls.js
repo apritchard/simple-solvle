@@ -87,6 +87,12 @@ function Controls() {
                            name="dict"/>
                     <label htmlFor="icelandRadio">Íslensku</label>
                 </span>
+                <span
+                    title="Spanish Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Spanish.dic">
+                    <input id="spanishRadio" defaultChecked={dictionary === "spanish"} type="radio" value="spanish"
+                           name="dict"/>
+                    <label htmlFor="spanishRadio">Español</label>
+                </span>
             </div>
             <hr/>
             <div>
