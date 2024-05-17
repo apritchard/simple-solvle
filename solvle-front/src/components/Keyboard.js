@@ -16,7 +16,7 @@ function Keyboard() {
         onEnter,
         onDelete,
         solverOpen,
-        dictionary
+        boardState
     } = useContext(AppContext);
 
     const handleKeyboard = useCallback(
@@ -68,7 +68,7 @@ function Keyboard() {
 
     return (
         <div className="keyboard" onKeyDown={handleKeyboard}>
-            {dictionary === 'iceland' && (
+            {boardState.settings.dictionary === 'iceland' && (
                 <div className="keyboardLine">
                     {icelandic.map((key) => {
                         return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
@@ -81,7 +81,7 @@ function Keyboard() {
                 })}
             </div>
             <div className="keyboardLine">
-                {(dictionary === 'spanish' ? spanish : keys2).map((key) => {
+                {(boardState.settings.dictionary === 'spanish' ? spanish : keys2).map((key) => {
                     return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
                 })}
             </div>

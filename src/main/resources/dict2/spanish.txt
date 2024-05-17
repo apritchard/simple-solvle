@@ -1764,9 +1764,9 @@ gules
 gurdo
 gusto
 guzla
-güero
-güira
-güiro
+guero
+guira
+guiro
 habar
 haber
 habia
@@ -2400,7 +2400,7 @@ lutea
 luvia
 luxar
 luzon
-lülle
+lulle
 maama
 macal
 macar
@@ -2427,7 +2427,7 @@ magon
 magos
 magra
 magro
-magüi
+magui
 mahon
 maigo
 maino
@@ -3225,7 +3225,7 @@ picsi
 pieis
 piejo
 pieza
-pigüe
+pigue
 pijao
 pikit
 pilar
@@ -4169,7 +4169,7 @@ tocio
 tocon
 todos
 toesa
-togüi
+togui
 tojal
 tolla
 tollo
