@@ -1,18 +1,22 @@
 import React, {useContext} from 'react';
-import {Button} from 'react-bootstrap';
-import {MDBRange, MDBSwitch, MDBTooltip} from 'mdb-react-ui-kit';
+import {MDBSwitch} from 'mdb-react-ui-kit';
 import AppContext from "../contexts/contexts";
 
 function Controls() {
     const {
         boardState,
         setBoardState,
-        dictionary,
-        setDictionary,
     } = useContext(AppContext);
 
-    const toggleResetWords = (event) => {
-        setDictionary(event.target.value);
+    const toggleResetWords = (e) => {
+        localStorage.setItem("dictionary", e.target.value);
+        setBoardState(prev => ({
+            ...prev,
+            settings: {
+                ...prev.settings,
+                dictionary: e.target.value
+            }
+        }))
     }
 
     const updateSetting = (e) => {
@@ -28,11 +32,13 @@ function Controls() {
 
     const setPreset = (e) => {
         localStorage.setItem("wordConfig", e.target.value);
+        let usePartitioning = String(e.target.value != "SIMPLE" && e.target.value != "OPTIMAL_MEAN");
+        localStorage.setItem("usePartitioning", usePartitioning);
         setBoardState(prev => ({
             ...prev,
             settings: {
                 ...prev.settings,
-                usePartitioning: e.target.value != "SIMPLE" && e.target.value != "OPTIMAL_MEAN",
+                usePartitioning: usePartitioning,
                 wordConfig: e.target.value
             }
         }));
@@ -58,24 +64,24 @@ function Controls() {
                 <br/>
                 <span
                     title="Only valid solutions.">
-                    <input id="simpleRadio" defaultChecked={dictionary === "simple"} type="radio" value="simple"
-                           name="dict"/>
+                    <input id="simpleRadio" defaultChecked={boardState.settings.dictionary === "simple"} type="radio" value="simple"
+                           name="dict" />
                     <label htmlFor="simpleRadio">Solutions</label>
                 </span>
                 <span
                     title="Expanded list of valid solutions to include potential new additions by NYT">
-                    <input id="extendedRadio" defaultChecked={dictionary === "extended"} type="radio" value="extended"
+                    <input id="extendedRadio" defaultChecked={boardState.settings.dictionary === "extended"} type="radio" value="extended"
                            name="dict"/>
                     <label htmlFor="extendedRadio">NYT Extended</label>
                 </span>
                 <span
                     title="Only solutions that have not been used yet">
-                    <input id="reducedRadio" defaultChecked={dictionary === "reduced"} type="radio" value="reduced"
+                    <input id="reducedRadio" defaultChecked={boardState.settings.dictionary === "reduced"} type="radio" value="reduced"
                            name="dict"/>
                     <label htmlFor="reducedRadio">Reduced</label>
                 </span>
                 <span title="All words that are valid guesses">
-                    <input id="bigRadio" defaultChecked={dictionary === "big"} type="radio" value="big" name="dict"/>
+                    <input id="bigRadio" defaultChecked={boardState.settings.dictionary === "big"} type="radio" value="big" name="dict"/>
                     <label htmlFor="bigRadio">All Allowable</label>
                 </span>
                 <br/>
@@ -83,13 +89,13 @@ function Controls() {
                 <br/>
                 <span
                     title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
-                    <input id="icelandRadio" defaultChecked={dictionary === "iceland"} type="radio" value="iceland"
+                    <input id="icelandRadio" defaultChecked={boardState.settings.dictionary === "iceland"} type="radio" value="iceland"
                            name="dict"/>
                     <label htmlFor="icelandRadio">Íslensku</label>
                 </span>
                 <span
                     title="Spanish Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Spanish.dic">
-                    <input id="spanishRadio" defaultChecked={dictionary === "spanish"} type="radio" value="spanish"
+                    <input id="spanishRadio" defaultChecked={boardState.settings.dictionary === "spanish"} type="radio" value="spanish"
                            name="dict"/>
                     <label htmlFor="spanishRadio">Español</label>
                 </span>

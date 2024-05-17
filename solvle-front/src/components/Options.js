@@ -14,7 +14,6 @@ function Options(props) {
         unsureLetters,
         onSelectWord,
         boardState,
-        dictionary
     } = useContext(AppContext);
 
     const [loading, setLoading] = useState(true);
@@ -26,11 +25,11 @@ function Options(props) {
 
         let restrictionString = generateRestrictionString(availableLetters, knownLetters, unsureLetters);
 
-        console.log("Fetching " + restrictionString + " with bias:" + boardState.settings.useBias + " partitioning:" + boardState.settings.usePartitioning);
+        console.log("Fetching " + restrictionString + " dictionary:" + boardState.settings.dictionary + " partitioning:" + boardState.settings.usePartitioning);
 
         let configParams = generateConfigParams(boardState);
 
-        fetch('/solvle/' + restrictionString + "?wordLength=" + boardState.settings.wordLength + "&wordList=" + dictionary + configParams)
+        fetch('/solvle/' + restrictionString + "?wordLength=" + boardState.settings.wordLength + "&wordList=" + boardState.settings.dictionary + configParams)
             .then(res => {
                 if (res.ok) {
                     return res.json()
@@ -54,8 +53,8 @@ function Options(props) {
                 });
                 setLoading(false);
         });
-    }, [setCurrentOptions, boardState.settings.wordLength, boardState.settings.useBias, boardState.settings.usePartitioning, boardState.shouldUpdate,
-        availableLetters, knownLetters, unsureLetters, dictionary]);
+    }, [setCurrentOptions, boardState.settings.wordLength, boardState.settings.dictionary, boardState.settings.usePartitioning, boardState.shouldUpdate,
+        availableLetters, knownLetters, unsureLetters]);
 
     return (
 

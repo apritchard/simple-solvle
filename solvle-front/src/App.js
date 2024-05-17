@@ -41,12 +41,10 @@ function App() {
                 results: 50,
                 autoColorWord: "",
                 hardMode: localStorage.getItem("hardMode") === 'true',
-                useBias: localStorage.getItem("useBias") === 'true',
-                useFineTuning: localStorage.getItem("useFineTuning") === 'true',
                 usePartitioning: localStorage.getItem("usePartitioning") === 'true',
-                useRutBreaking: localStorage.getItem("useRutBreaking") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
-                wordConfig: localStorage.getItem("wordConfig") || "SIMPLE"
+                wordConfig: localStorage.getItem("wordConfig") || "SIMPLE",
+                dictionary: localStorage.getItem("dictionary") || "simple"
             },
             shouldUpdate: false
         }
@@ -89,7 +87,6 @@ function App() {
     const [knownLetters, setKnownLetters] = useState(initialKnownLetters(boardState.settings.wordLength));
     const [unsureLetters, setUnsureLetters] = useState(initialUnsureLetters(boardState.settings.wordLength));
     const [currentOptions, setCurrentOptions] = useState(initialOptions());
-    const [dictionary, setDictionary] = useState("simple");
     const [solverOpen, setSolverOpen] = useState(false);
     const [rowScores, setRowScores] = useState([])
 
@@ -210,7 +207,7 @@ function App() {
             let currentWord = "";
             boardState.board[boardState.currAttempt.attempt].map(letter => {currentWord+= letter});
 
-            fetch('/solvle/' + restrictionString + "/" + currentWord + "?wordList=" + dictionary + configParams)
+            fetch('/solvle/' + restrictionString + "/" + currentWord + "?wordList=" + boardState.settings.dictionary + configParams)
                 .then(res => {
                     if (res.ok) {
                         return res.json()
@@ -375,8 +372,6 @@ function App() {
                 availableLetters,
                 knownLetters,
                 unsureLetters,
-                dictionary,
-                setDictionary,
                 solverOpen,
                 setSolverOpen,
                 rowScores,
