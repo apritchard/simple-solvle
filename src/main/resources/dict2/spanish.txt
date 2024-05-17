@@ -61,6 +61,7 @@ aduar
 adven
 aerea
 aereo
+afear
 aforo
 agape
 agata
@@ -72,6 +73,7 @@ agraz
 agrio
 aguak
 aguao
+aguar
 aguas
 aguay
 aguda
@@ -86,7 +88,6 @@ aires
 airon
 aitor
 ajada
-ajarà
 ajear
 ajeno
 ajero
@@ -95,6 +96,7 @@ ajuar
 aklan
 alabe
 alada
+alado
 alaga
 alaju
 alama
@@ -153,6 +155,7 @@ altas
 altea
 alula
 alveo
+alzar
 amado
 amaga
 amago
@@ -221,6 +224,7 @@ aovar
 apata
 apaya
 apaza
+apear
 apego
 apiay
 apice
@@ -281,6 +285,7 @@ arije
 arilo
 arlar
 armad
+armar
 armas
 arnau
 arnes
@@ -302,6 +307,7 @@ asado
 asana
 asaro
 ascua
+asear
 asesi
 asina
 asmar
@@ -403,9 +409,11 @@ bahia
 baida
 baila
 baile
+bajar
 bajas
 bajel
 bajio
+bajon
 bakun
 balaj
 balar
@@ -453,6 +461,7 @@ barra
 barro
 barza
 basal
+basar
 basay
 basca
 basco
@@ -464,6 +473,7 @@ batac
 batan
 batea
 batel
+batir
 batos
 bauan
 baudo
@@ -477,9 +487,11 @@ bayas
 bayog
 bazan
 bazar
+bañar
 bañop
 baños
 beato
+beber
 becar
 bedel
 befar
@@ -500,6 +512,7 @@ berma
 berro
 berza
 besao
+besar
 beses
 besos
 besou
@@ -517,6 +530,7 @@ bilar
 bilis
 billa
 bimba
+binar
 binde
 bingo
 binza
@@ -585,6 +599,7 @@ bosco
 boson
 bossa
 bosta
+botar
 botas
 botic
 botin
@@ -688,6 +703,7 @@ cacra
 cacto
 cadiz
 cafre
+cagar
 cagua
 cagui
 caibe
@@ -737,6 +753,7 @@ canta
 cante
 canto
 caoba
+capar
 capas
 capaz
 capea
@@ -796,17 +813,21 @@ cauro
 causa
 cauta
 cauto
+cavar
 cayma
 cayna
+cazar
 cazon
 cazuz
 cañar
 cañas
 cañon
 ccapi
+cebar
 cebon
 cebra
 cecal
+ceder
 cedro
 cegar
 ceiba
@@ -817,12 +838,14 @@ celia
 cella
 celos
 celta
+cenar
 cenia
 cenit
 censo
 cequi
 ceral
 cerca
+cerco
 cerda
 cerdo
 cereo
@@ -930,6 +953,7 @@ cisco
 cisma
 cisne
 cista
+citar
 civil
 clara
 claro
@@ -960,6 +984,7 @@ cocuy
 codal
 cofia
 cofre
+coger
 cogua
 coime
 coipa
@@ -983,6 +1008,7 @@ comal
 comas
 comba
 combi
+comer
 comic
 comun
 conde
@@ -991,6 +1017,7 @@ congo
 conil
 conto
 coord
+copar
 coper
 copey
 copia
@@ -1019,6 +1046,7 @@ corva
 corvo
 corza
 corzo
+coser
 cosio
 cosme
 cosoa
@@ -1033,7 +1061,9 @@ coñoh
 crack
 craso
 cravo
+crear
 credo
+creer
 crema
 cresa
 creta
@@ -1079,6 +1109,7 @@ cuota
 cupon
 cuque
 cural
+curar
 curay
 curda
 curdo
@@ -1088,6 +1119,7 @@ curio
 curro
 curry
 cursi
+curso
 curul
 curva
 curvo
@@ -1146,11 +1178,13 @@ daros
 darse
 darte
 dasol
+datar
 datem
 datil
 dauin
 davao
 david
+dañar
 dañop
 deber
 debil
@@ -1161,6 +1195,7 @@ decir
 dedal
 dedil
 dejai
+dejar
 delas
 deles
 delga
@@ -1213,6 +1248,7 @@ dilas
 diles
 dilos
 dimas
+dimir
 dimos
 dinar
 dinde
@@ -1228,6 +1264,7 @@ diste
 diuca
 diuxi
 divan
+diñar
 djane
 doble
 doche
@@ -1242,11 +1279,14 @@ dolar
 doler
 doloc
 dolor
+domar
 dombo
+donar
 donde
 dones
 dopar
 doral
+dorar
 doria
 dorio
 doris
@@ -1257,6 +1297,7 @@ dosel
 doses
 dosis
 dotal
+dotar
 dovio
 draba
 draga
@@ -1273,6 +1314,7 @@ dubio
 ducal
 ducha
 ducho
+dudar
 duela
 duero
 dueto
@@ -1287,8 +1329,10 @@ dupdo
 dupla
 duque
 duran
+durar
 ebano
 ebrio
+echar
 ecija
 ecleo
 edema
@@ -1386,6 +1430,7 @@ facto
 faena
 fagot
 fagua
+fajar
 fajin
 fajon
 falan
@@ -1450,6 +1495,7 @@ fiera
 fiero
 figle
 figon
+fijar
 fijon
 filar
 filfa
@@ -1531,11 +1577,13 @@ fuere
 fuero
 fuese
 fufar
+fugar
 fugaz
 fugir
 fuina
 fular
 fulla
+fumar
 funda
 fundo
 funes
@@ -1569,6 +1617,7 @@ galoc
 galon
 gamba
 gamma
+ganar
 ganga
 gansa
 ganso
@@ -1607,6 +1656,7 @@ gibao
 gibar
 gijon
 giles
+girar
 giron
 glase
 gleba
@@ -1635,6 +1685,7 @@ gorja
 gorra
 gorro
 goteo
+gozar
 gozne
 grada
 grado
@@ -1699,16 +1750,13 @@ guato
 guayo
 guazo
 gubia
-guero
 gueto
 guiar
 guido
 guija
 guijo
 guion
-guira
 guiri
-guiro
 guisa
 guiso
 guiño
@@ -1716,6 +1764,9 @@ gules
 gurdo
 gusto
 guzla
+güero
+güira
+güiro
 habar
 haber
 habia
@@ -1888,6 +1939,7 @@ ichal
 ichus
 icono
 ideal
+idear
 idolo
 igual
 iguar
@@ -1964,6 +2016,7 @@ jagua
 jaiba
 jaime
 jairo
+jalar
 jalca
 jalda
 jaldo
@@ -2022,6 +2075,7 @@ jiron
 jisca
 jitar
 jivia
+joder
 jofor
 jolin
 jolon
@@ -2061,6 +2115,7 @@ junin
 junio
 junta
 junto
+jurar
 jurel
 jurgo
 jurof
@@ -2102,6 +2157,7 @@ lalin
 lamao
 lamas
 lamay
+lamer
 lamia
 lamin
 lampa
@@ -2148,6 +2204,7 @@ laudo
 launa
 laura
 lauro
+lavar
 laxar
 layar
 lazar
@@ -2157,6 +2214,7 @@ lebak
 leche
 lecho
 legal
+legar
 legua
 leida
 leidi
@@ -2178,7 +2236,6 @@ lerda
 lerdo
 lerma
 lesna
-lesog
 leste
 letal
 leteo
@@ -2202,6 +2259,7 @@ libis
 libjo
 libra
 libre
+libro
 licab
 lican
 liceo
@@ -2210,16 +2268,19 @@ lider
 lidia
 lieis
 ligao
+ligar
 ligas
 light
 ligia
 ligio
 ligua
 ligur
+lijar
 likud
 lilac
 lilao
 liloy
+limar
 limay
 limbo
 limen
@@ -2274,7 +2335,6 @@ llipa
 lloro
 llosa
 lluta
-loart
 loboc
 local
 locha
@@ -2321,7 +2381,6 @@ luisa
 lujan
 lujar
 lules
-lulle
 lumbo
 lumen
 lumia
@@ -2341,6 +2400,7 @@ lutea
 luvia
 luxar
 luzon
+lülle
 maama
 macal
 macar
@@ -2367,7 +2427,7 @@ magon
 magos
 magra
 magro
-magui
+magüi
 mahon
 maigo
 maino
@@ -2376,6 +2436,7 @@ maipu
 maisi
 maito
 majal
+majar
 majes
 malal
 malar
@@ -2384,11 +2445,13 @@ malla
 mallo
 malta
 malva
+mamar
 mambo
 mamby
 mamey
 mamon
 mamut
+manar
 manas
 manay
 manco
@@ -2426,6 +2489,7 @@ mario
 maroa
 maron
 marra
+marro
 marta
 marte
 marti
@@ -2438,6 +2502,7 @@ masma
 mason
 masse
 masto
+matar
 matas
 mateo
 matiz
@@ -2455,6 +2520,7 @@ mbini
 meado
 meaja
 meato
+mecer
 mecha
 media
 medio
@@ -2495,6 +2561,7 @@ meson
 mesto
 metal
 metan
+meter
 metra
 metro
 meusa
@@ -2516,6 +2583,7 @@ milan
 milla
 millo
 milpa
+mimar
 minal
 minar
 minas
@@ -2527,6 +2595,7 @@ minio
 minue
 mioma
 miope
+mirar
 mirla
 mirlo
 miron
@@ -2562,6 +2631,7 @@ mofar
 mogan
 mogol
 mojao
+mojar
 mojel
 mojon
 mojop
@@ -2776,8 +2846,10 @@ noria
 noris
 norma
 norte
+notar
 notro
 noval
+novar
 novel
 novia
 novio
@@ -2834,6 +2906,7 @@ ocuje
 oculo
 ocumo
 odeon
+odiar
 odioi
 odlot
 oeste
@@ -2852,6 +2925,7 @@ oiles
 oilos
 oinos
 ojala
+ojear
 ojeda
 ojete
 ojito
@@ -2930,6 +3004,7 @@ ostro
 osudo
 otaez
 otare
+otear
 otero
 othon
 otoba
@@ -2960,6 +3035,7 @@ pacto
 padre
 padua
 pafio
+pagar
 pagel
 pagok
 pagro
@@ -3023,6 +3099,7 @@ pared
 pares
 pargo
 paria
+parir
 parla
 paron
 paros
@@ -3080,9 +3157,12 @@ pecio
 pedal
 pedir
 pedro
+pegar
 pegue
 peina
+peine
 pelao
+pelar
 pelea
 pelis
 pella
@@ -3094,6 +3174,7 @@ pelta
 pelvi
 pemex
 penal
+penar
 penca
 penco
 penol
@@ -3113,6 +3194,7 @@ perra
 perro
 persa
 perta
+pesar
 pesca
 pesos
 peste
@@ -3132,6 +3214,7 @@ piang
 piano
 piara
 picao
+picar
 picea
 piceo
 piche
@@ -3142,7 +3225,7 @@ picsi
 pieis
 piejo
 pieza
-pigue
+pigüe
 pijao
 pikit
 pilar
@@ -3165,10 +3248,12 @@ piojo
 piola
 pipar
 pipil
+pirar
 piray
 pirla
 pisac
 pisao
+pisar
 pisba
 pisco
 pisoj
@@ -3176,6 +3261,7 @@ pista
 pisto
 pital
 pitao
+pitar
 piton
 piune
 piura
@@ -3211,6 +3297,7 @@ pobre
 pocha
 pocho
 pocsi
+podar
 poded
 poder
 podia
@@ -3304,6 +3391,7 @@ pugna
 pujar
 pulan
 pulga
+pulir
 pulla
 pullo
 pulpa
@@ -3380,6 +3468,7 @@ raido
 raijo
 rajah
 rajan
+rajar
 ralco
 rallo
 ramal
@@ -3391,6 +3480,7 @@ ranas
 ranco
 randa
 rango
+rapar
 rapaz
 rapto
 raque
@@ -3448,6 +3538,7 @@ resal
 resta
 resto
 retal
+retar
 retel
 reten
 retor
@@ -3458,6 +3549,7 @@ rever
 reves
 reyar
 reyes
+rezar
 rezno
 rezon
 reñir
@@ -3468,9 +3560,11 @@ ricia
 ricio
 riego
 riera
+rifar
 rifle
 rilar
 rimac
+rimar
 rinde
 rioja
 ripan
@@ -3480,8 +3574,10 @@ ritmo
 rival
 rivas
 rizal
+rizar
 rizon
 riñon
+robar
 roble
 robot
 robra
@@ -3533,6 +3629,7 @@ rotar
 rotor
 rouge
 roxas
+rozar
 rozas
 roñar
 ruano
@@ -3543,6 +3640,7 @@ rubio
 rublo
 rubor
 rubro
+rucar
 rucio
 rudal
 rueca
@@ -3552,6 +3650,7 @@ ruego
 ruejo
 rugar
 rugby
+rugir
 ruido
 ruina
 ruiza
@@ -3625,6 +3724,7 @@ sambo
 samio
 samoa
 sampa
+sanar
 sanco
 sande
 sango
@@ -3661,11 +3761,13 @@ sayan
 sayla
 sayon
 seais
+secar
 secos
 secta
 secua
 sedal
 sedan
+sedar
 segar
 segun
 segur
@@ -3759,6 +3861,7 @@ sitio
 sivia
 sixto
 soata
+sobar
 sobeo
 sobra
 sobre
@@ -3812,6 +3915,7 @@ suaza
 suazi
 subia
 subic
+subir
 sucat
 sucio
 sucre
@@ -3833,6 +3937,8 @@ suite
 suiza
 suizo
 sulop
+sumar
+sumir
 super
 supia
 supon
@@ -3890,11 +3996,13 @@ tamil
 tamiz
 tanda
 tanga
+tango
 tanor
 tanta
 tanti
 tanto
 tanza
+tapar
 tapay
 tapia
 tapir
@@ -3917,6 +4025,7 @@ tarra
 tarro
 tarso
 tarta
+tasar
 tasca
 tasco
 tasio
@@ -3947,6 +4056,7 @@ tegeo
 tegua
 teita
 tejar
+tejer
 tejon
 tekal
 tekax
@@ -3961,6 +4071,7 @@ tells
 telon
 telpi
 temax
+temer
 temor
 tempo
 tenaz
@@ -4009,6 +4120,7 @@ tilia
 tillo
 tilly
 tilma
+timar
 timba
 timbo
 timol
@@ -4030,6 +4142,7 @@ tipan
 tipeo
 tiple
 tique
+tirar
 tirio
 tirol
 tiron
@@ -4049,18 +4162,20 @@ tobal
 tobar
 tobia
 tobon
+tocar
 toche
 tocho
 tocio
 tocon
 todos
 toesa
-togui
+togüi
 tojal
 tolla
 tollo
 tolmo
 tolva
+tomar
 tomas
 tomay
 tomin
@@ -4075,6 +4190,7 @@ tonga
 tongo
 tonos
 tonto
+topar
 topia
 toque
 toral
@@ -4217,9 +4333,11 @@ unale
 unalo
 unase
 uncia
+uncir
 unete
 uneño
 ungar
+ungir
 unila
 unile
 unilo
@@ -4228,6 +4346,7 @@ union
 unios
 unite
 unsay
+untar
 upata
 uraba
 uraca
@@ -4308,9 +4427,11 @@ vater
 vatio
 vayan
 vayas
+vedar
 vedia
 vegas
 veira
+vejar
 vejez
 velar
 velez
@@ -4338,6 +4459,7 @@ verme
 vermu
 verso
 veste
+vetar
 vetas
 vezar
 viaje
@@ -4373,6 +4495,7 @@ vinto
 viola
 viota
 viral
+virar
 virgo
 viril
 virus
@@ -4403,6 +4526,7 @@ voila
 volar
 volvo
 voraz
+votar
 vuelo
 vulgo
 vulva
