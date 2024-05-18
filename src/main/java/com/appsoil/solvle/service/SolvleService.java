@@ -12,11 +12,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Log4j2
@@ -37,6 +40,8 @@ public class SolvleService {
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
 
+    private Map<String, Map<Word, Double>> firstPartitionData = new ConcurrentHashMap<>();
+
     public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
                          @Qualifier("extendedDictionary") Dictionary extendedDictionary,
                          @Qualifier("reducedDictionary") Dictionary reducedDictionary,
@@ -53,6 +58,30 @@ public class SolvleService {
         this.icelandicDictionary = icelandicDictionary;
         this.icelandicCommonDictionary = icelandicCommonDictionary;
         this.spanishDictionary = spanishDictionary;
+    }
+
+
+    private void timestamp(String name, LocalDateTime start){
+        log.info(name + " took " + Duration.between(start, LocalDateTime.now()));
+    }
+    public void preloadPartitionData() {
+        Stream.of("simple", "icelandic", "spanish").forEach(wordList -> {
+            Map<Word, Double> partitionData = new ConcurrentHashMap<>();
+            firstPartitionData.put(wordList, partitionData);
+            Set<Word> wordSet = getPrimarySet(wordList);
+            Set<Word> fishingSet = getFishingSet(wordList);
+            LocalDateTime start = LocalDateTime.now();
+            int i = 0;
+            for(Word word : fishingSet) {
+                WordCalculationService wordCalculationService = new WordCalculationService(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING.config);
+                Double stats = wordCalculationService.getPartitionStatsForWord(WordRestrictions.NO_RESTRICTIONS, wordSet, word).getMean();
+                partitionData.put(word, stats);
+                if (++i % 100 == 0) {
+                    timestamp(wordList + " preloaded " + i + " words", start);
+                }
+            }
+            timestamp(wordList + " finished", start);
+        } );
     }
 
     @Cacheable("validWords")
@@ -167,7 +196,6 @@ public class SolvleService {
 
         double score;
         double remaining;
-
         // generate a per-character bonus score based on their frequency in the shared position sets
         Map<Character, DoubleAdder> sharedPositionBonus = new HashMap<>();
         if(wordCalculationConfig.rutBreakThreshold() > 1 && wordCalculationConfig.rutBreakMultiplier() > 0 && containedWords.size() < SHARED_POSITION_LIMIT) {
@@ -190,7 +218,12 @@ public class SolvleService {
                     );
         }
 
-        remaining = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word).getMean();
+        if(wordRestrictions.equals(WordRestrictions.NO_RESTRICTIONS) && firstPartitionData.containsKey(wordList) && firstPartitionData.get(wordList).containsKey(word)){
+            log.info("No restrictions - using cached partition data");
+            remaining = firstPartitionData.get(wordList).get(word);
+        } else {
+            remaining = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word).getMean();
+        }
 
        return new WordScoreDTO(remaining, score);
     }

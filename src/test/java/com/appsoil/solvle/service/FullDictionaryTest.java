@@ -18,6 +18,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
 import java.util.function.Function;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 @Log4j2
 @Disabled
 @SpringBootTest(classes = {SolvleService.class, SolvleConfig.class})
+@ActiveProfiles("test")
 public class FullDictionaryTest {
 
     @Autowired

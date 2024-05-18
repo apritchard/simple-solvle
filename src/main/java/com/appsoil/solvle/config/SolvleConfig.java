@@ -5,6 +5,7 @@ import com.appsoil.solvle.data.Word;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.TreeSet;
 
 @Configuration
 @Log4j2
+@EnableAsync
 public class SolvleConfig {
 
     @Bean(name = "bigDictionary")
