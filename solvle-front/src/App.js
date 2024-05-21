@@ -402,7 +402,7 @@ function App() {
                         <Config/>
                         <div className="helpIcon">
                             <MdHelp
-                                title="This is a toy project built to learn React. Source code available at https://github.com/apritchard/solvle"/>
+                                title="This is a toy project built to learn React. Source code available at https://github.com/apritchard/simple-solvle"/>
                         </div>
                     </div>
                 </nav>

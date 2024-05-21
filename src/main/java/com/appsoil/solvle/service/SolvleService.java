@@ -10,12 +10,15 @@ import com.appsoil.solvle.service.solvers.Solver;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -64,24 +67,29 @@ public class SolvleService {
     private void timestamp(String name, LocalDateTime start){
         log.info(name + " took " + Duration.between(start, LocalDateTime.now()));
     }
-    public void preloadPartitionData() {
-        Stream.of("simple", "icelandic", "spanish").forEach(wordList -> {
-            Map<Word, Double> partitionData = new ConcurrentHashMap<>();
-            firstPartitionData.put(wordList, partitionData);
-            Set<Word> wordSet = getPrimarySet(wordList);
-            Set<Word> fishingSet = getFishingSet(wordList);
-            LocalDateTime start = LocalDateTime.now();
-            int i = 0;
-            for(Word word : fishingSet) {
-                WordCalculationService wordCalculationService = new WordCalculationService(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING.config);
-                Double stats = wordCalculationService.getPartitionStatsForWord(WordRestrictions.NO_RESTRICTIONS, wordSet, word).getMean();
-                partitionData.put(word, stats);
-                if (++i % 100 == 0) {
-                    timestamp(wordList + " preloaded " + i + " words", start);
-                }
-            }
-            timestamp(wordList + " finished", start);
-        } );
+
+    @Async
+    public CompletableFuture<Void> preloadPartitionData() {
+        return CompletableFuture.runAsync(() -> {
+            Stream.of("simple", "icelandic", "spanish").forEach(wordList -> {
+                Map<Word, Double> partitionData = new ConcurrentHashMap<>();
+                firstPartitionData.put(wordList, partitionData);
+                Set<Word> wordSet = getPrimarySet(wordList);
+                Set<Word> fishingSet = getFishingSet(wordList);
+                LocalDateTime start = LocalDateTime.now();
+                AtomicInteger i = new AtomicInteger(0);
+                fishingSet.parallelStream().forEach(word -> {
+                    WordCalculationService wordCalculationService = new WordCalculationService(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING.config);
+                    Double stats = wordCalculationService.getPartitionStatsForWord(WordRestrictions.NO_RESTRICTIONS, wordSet, word).getMean();
+                    partitionData.put(word, stats);
+                    int wordCount = i.incrementAndGet();
+                    if (wordCount % 100 == 0) {
+                        timestamp(wordList + " preloaded " + wordCount + " words", start);
+                    }
+                });
+                timestamp(wordList + " finished", start);
+            });
+        });
     }
 
     @Cacheable("validWords")
