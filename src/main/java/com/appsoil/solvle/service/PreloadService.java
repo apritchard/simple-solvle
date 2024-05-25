@@ -19,11 +19,11 @@ public class PreloadService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        solvleService.preloadPartitionData().thenAccept(result -> {
-            log.info("Ppreload Finished");
-        }).exceptionally(ex -> {
-            log.error("Preload failed", ex);
-            return null;
-        });
+//        solvleService.preloadPartitionData().thenAccept(result -> {
+//            log.info("Preload Finished");
+//        }).exceptionally(ex -> {
+//            log.error("Preload failed", ex);
+//            return null;
+//        });
     }
 }
