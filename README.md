@@ -13,13 +13,12 @@ was strictly for educational value.
 
 ## Running the Application
 
-There are two components to this application:
-1. The Spring Boot server. Assuming you have Java installed, you should simply be able to run
-the SolvleApplication class to launch the backend application. You can change the port in
-application.properties, but make sure to update setupProxy.js if you do.
-2. A react application. Assuming you have npm installed, run 'npm start' from the
-/solvle-front directory. It launches on port 80 by default, but you can edit the "start" script in 
-package.json to change this.
+The easiest way to run this application is through Docker. You should be able to clone this repo and run `docker-compose up`
+from the parent directory to start an instance of both the front and backend locally.
+
+If you prefer, you can start the apps outside of docker using your tools of choice. The back-end requires Java 18 or 
+higher and the front-end uses node. Run the SolvleApplication class to launch the backend application and run `npm start` from the
+/solvle-front directory.
 
 ## Using the Application
 The design is intended to be familiar to users of other similar word guessing games.
@@ -36,14 +35,13 @@ the highest frequency of *new* letters found in the remaining word options. This
 you don't think you can correctly guess on the next word and want to maximize the amount of 
 information gained.
 
-## Dictionaries Used
-There are currently 4 dictionaries supported by this application.
-1. The Wordle Solutions list. It contains 2315 words. I pulled this particular set of words from
-https://github.com/techtribeyt/Wordle/blob/main/wordle_answers.txt
-2. (deprecated) The Match-8 wordlist, which contains 108814 words found in at least 8 of the word corpus files
-aggregated here: https://www.keithv.com/software/wlist/
-3. The Official Scrabble Player's Dictionary, containing 172819 words found here: 172820 words: https://github.com/dolph/dictionary/
-4. The InfoChimps 370103 words dataset, found in text here: https://github.com/dwyl/english-words/
+## Dictionaries
+There are a variety of word lists included:
 
-The simple wordle solutions list is the default dictionary, but the scrabble dictionary is used as the
-medium size choice because it contains more normal word list than the match-8.
+* The Default 2315 wordlist that used to be the standard solution set.
+* An expanded wordlist of 3158 words that was briefly exposed on the NYT website.
+* A reduced list that for awhile I was manually removing used words from (not up to date any more)
+* A larger list of 14856 that may or may not be the full list of viable words you can type in.
+
+There are also a couple foreign language word lists, populated from this site:
+https://github.com/titoBouzout/Dictionaries

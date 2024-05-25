@@ -349,9 +349,9 @@ function App() {
         your performance after finishing a game.</div>
         <ul>
             <li>Press "Set Solution" if you already know the answer so that Solvle can color your tiles automatically.</li>
-            <li>Type letters or tap the on-screen keyboard to enter a word.</li>
-            <li>Click the letters you've entered to mark them gray (unavailable), yellow (required, but wrong position), or green (correct position).</li>
-            <li>Press ENTER to advance the word choice to the next line.</li>
+            <li>Tap a word on the right, type letters, or tap the on-screen keyboard to enter a word.</li>
+            <li>If you want to change the coloring, click the letters you've entered to mark them gray (unavailable), yellow (required, but wrong position), or green (correct position).</li>
+            <li>If you've manually entered a word, press ENTER to advance the word choice to the next line.</li>
             <li>Viable words appear on the right. You can click a word to fill in its letters on the current line.</li>
             <li>Numbers under each letter on the keyboard indicate how many of the available words include that letter.</li>
             <li>Fish🐟 words help you 'fish' for new letters without trying to reuse existing letters.</li>

@@ -130,7 +130,7 @@ function Controls() {
                     <label htmlFor="optimalMeanRadio">Optimal Mean</label>
                 </div>
                 <hr/>
-                With Cut✂ Enabled
+                With Cut✂ Enabled (may be slower)
                 <div
                     title={simplePartitionHelpText}>
                     <input id="simplePartitionStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE_WITH_PARTITIONING"} type="radio" value="SIMPLE_WITH_PARTITIONING"
