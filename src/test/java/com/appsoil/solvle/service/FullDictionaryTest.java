@@ -1,5 +1,6 @@
 package com.appsoil.solvle.service;
 
+import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.config.SolvleConfig;
 import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.controller.WordScoreDTO;
@@ -110,7 +111,7 @@ public class FullDictionaryTest {
     public void testConfig() {
         String firstWord = "";
         WordCalculationConfig config = WordCalculationConfig.FOUR_OR_LESS;
-        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple"));
+        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE));
     }
 
     @ParameterizedTest
@@ -123,7 +124,7 @@ public class FullDictionaryTest {
         log.info("Starting permutation solver {}, {}", fishingThreshold, permutationThreshold);
         String firstWord = "";
         WordCalculationConfig config = new WordCalculationConfig(3, 5, permutationThreshold, 0.0).withFishingThreshold(2);
-        solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple");
+        solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE);
     }
 
     @ParameterizedTest
@@ -146,7 +147,7 @@ public class FullDictionaryTest {
         WordCalculationConfig config = new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, permutationThreshold, viableWordPreference).withFishingThreshold(fishingThreshold)
                 .withFineTuning(locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier);
 //                .withRutBreak(1.0, 6);
-        var outcome = solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple");
+        var outcome = solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE);
         addStats(config, outcome);
     }
 
@@ -159,7 +160,7 @@ public class FullDictionaryTest {
         String firstWord = "";
         String startingRestrictions = "BCDFGHIJKMNOPQRUVWXYZ";
         WordCalculationConfig config = new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, permutationThreshold, viableWordPreference).withFishingThreshold(fishingThreshold);
-        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), List.of(firstWord), config, startingRestrictions, "simple"));
+        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), List.of(firstWord), config, startingRestrictions, DictionaryType.SIMPLE));
     }
 
     @ParameterizedTest
@@ -167,7 +168,7 @@ public class FullDictionaryTest {
     public void dictionaryRemainingPermutationSolver2( WordCalculationConfig config) {
         log.info("Starting permutation solver {}", config);
         String firstWord = "";
-        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, "simple"));
+        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE));
     }
 
     private static Stream<Arguments> dictionaryPermutationParameters() {
@@ -214,7 +215,7 @@ public class FullDictionaryTest {
         String firstWord = "";
         Arrays.stream(WordConfig.values()).forEach((config) -> {
             log.info("Running " + config.toString());
-            addStats(config.config, solvleService.solveDictionary(new RemainingSolver(solvleService, config.config), firstWord, config.config, "simple"));
+            addStats(config.config, solvleService.solveDictionary(new RemainingSolver(solvleService, config.config), firstWord, config.config, DictionaryType.SIMPLE));
         });
     }
 
@@ -223,7 +224,7 @@ public class FullDictionaryTest {
         WordConfig config = WordConfig.OPTIMAL_MEAN;
         String wordRestrictions = "bcde!5fghijklmnopquvwxyz";
         log.info("Playout requested with configuration {}", config);
-        Set<PlayOut> result = solvleService.playOutSolutions(wordRestrictions.toLowerCase(), "simple", config, false, 2);
+        Set<PlayOut> result = solvleService.playOutSolutions(wordRestrictions.toLowerCase(), DictionaryType.SIMPLE, config, false, 2);
         log.info(result);
     }
 
@@ -231,7 +232,7 @@ public class FullDictionaryTest {
     @Test
     public void findRestrictions() {
         final int wordLength = 5;
-        final String dictionary = "simple";
+        final DictionaryType dictionary = DictionaryType.SIMPLE;
         SharedPositions out = solvleService.findSharedWordRestrictions(dictionary);
 
         Word allLetters = new Word("aábcdðeéfghiíjklmnñoópqrstuúvwxyýzþæö");

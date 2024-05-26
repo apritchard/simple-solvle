@@ -44,7 +44,7 @@ function App() {
                 usePartitioning: localStorage.getItem("usePartitioning") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
                 wordConfig: localStorage.getItem("wordConfig") || "SIMPLE",
-                dictionary: localStorage.getItem("dictionary") || "simple"
+                dictionary: localStorage.getItem("dictionary") || "SIMPLE"
             },
             shouldUpdate: false
         }

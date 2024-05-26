@@ -9,4 +9,6 @@ RUN npm install
 
 COPY . .
 
+ENV DOCKER_ENV=true
+
 CMD ["npm", "start"]

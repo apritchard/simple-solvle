@@ -64,40 +64,46 @@ function Controls() {
                 <br/>
                 <span
                     title="Only valid solutions.">
-                    <input id="simpleRadio" defaultChecked={boardState.settings.dictionary === "simple"} type="radio" value="simple"
+                    <input id="simpleRadio" defaultChecked={boardState.settings.dictionary === "SIMPLE"} type="radio" value="SIMPLE"
                            name="dict" />
                     <label htmlFor="simpleRadio">Solutions</label>
                 </span>
                 <span
                     title="Expanded list of valid solutions to include potential new additions by NYT">
-                    <input id="extendedRadio" defaultChecked={boardState.settings.dictionary === "extended"} type="radio" value="extended"
+                    <input id="extendedRadio" defaultChecked={boardState.settings.dictionary === "EXTENDED"} type="radio" value="EXTENDED"
                            name="dict"/>
                     <label htmlFor="extendedRadio">NYT Extended</label>
                 </span>
                 <span
                     title="Only solutions that have not been used yet">
-                    <input id="reducedRadio" defaultChecked={boardState.settings.dictionary === "reduced"} type="radio" value="reduced"
+                    <input id="reducedRadio" defaultChecked={boardState.settings.dictionary === "REDUCED"} type="radio" value="REDUCED"
                            name="dict"/>
                     <label htmlFor="reducedRadio">Reduced</label>
                 </span>
                 <span title="All words that are valid guesses">
-                    <input id="bigRadio" defaultChecked={boardState.settings.dictionary === "big"} type="radio" value="big" name="dict"/>
+                    <input id="bigRadio" defaultChecked={boardState.settings.dictionary === "BIG"} type="radio" value="BIG" name="dict"/>
                     <label htmlFor="bigRadio">All Allowable</label>
                 </span>
                 <br/>
                 International:
                 <br/>
                 <span
-                    title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
-                    <input id="icelandRadio" defaultChecked={boardState.settings.dictionary === "iceland"} type="radio" value="iceland"
+                    title="German Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/German_de_DE.dic">
+                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN"} type="radio" value="GERMAN"
                            name="dict"/>
-                    <label htmlFor="icelandRadio">Íslensku</label>
+                    <label htmlFor="germanRadio">Deutsch</label>
                 </span>
                 <span
                     title="Spanish Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Spanish.dic">
-                    <input id="spanishRadio" defaultChecked={boardState.settings.dictionary === "spanish"} type="radio" value="spanish"
+                    <input id="spanishRadio" defaultChecked={boardState.settings.dictionary === "SPANISH"} type="radio" value="SPANISH"
                            name="dict"/>
                     <label htmlFor="spanishRadio">Español</label>
+                </span>
+                <span
+                    title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
+                    <input id="icelandRadio" defaultChecked={boardState.settings.dictionary === "ICELAND"} type="radio" value="ICELAND"
+                           name="dict"/>
+                    <label htmlFor="icelandRadio">Íslensku</label>
                 </span>
             </div>
             <hr/>

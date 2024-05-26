@@ -1,5 +1,6 @@
 package com.appsoil.solvle.controller;
 
+import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.data.PlayOut;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.service.SolvleService;
@@ -33,7 +34,7 @@ public class SolvleController {
 
     @GetMapping("/{wordRestrictions}")
     public SolvleDTO getWordAnalysis(@PathVariable String wordRestrictions,
-                                               @RequestParam(defaultValue = "simple") String wordList,
+                                               @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                                @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
                                                @RequestParam(defaultValue = "false") boolean hardMode
                                    ) {
@@ -49,7 +50,7 @@ public class SolvleController {
     @GetMapping("/{wordRestrictions}/{wordToScore}")
     public WordScoreDTO getWordScore(@PathVariable String wordRestrictions,
                                      @PathVariable String wordToScore,
-                                     @RequestParam(defaultValue = "simple") String wordList,
+                                     @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                      @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
                                      @RequestParam(defaultValue = "false") boolean hardMode
                                      ) {
@@ -64,7 +65,7 @@ public class SolvleController {
 
     @GetMapping("/{wordRestrictions}/playout")
     public Set<PlayOut> playOutSolution(@PathVariable String wordRestrictions,
-                                        @RequestParam(defaultValue = "simple") String wordList,
+                                        @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                         @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
                                         @RequestParam(defaultValue = "false") boolean hardMode,
                                         @RequestParam(defaultValue = "0") int guess
@@ -80,7 +81,7 @@ public class SolvleController {
     @GetMapping("/solve/{solution}")
     public List<String> solvePuzzle(@PathVariable String solution,
                                     @RequestParam(defaultValue = "") String firstWord,
-                                    @RequestParam(defaultValue = "simple") String wordList,
+                                    @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                     @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
                                     @RequestParam(defaultValue = "false") boolean hardMode
                                     ) {

@@ -11,49 +11,21 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Configuration
 @Log4j2
 @EnableAsync
 public class SolvleConfig {
 
-    @Bean(name = "bigDictionary")
-    Dictionary getBigDictionary() {
-        return readResourceToDictionary("/dict2/enable1.txt");
-    }
-
-    @Bean(name = "simpleDictionary")
-    Dictionary getSimpleDictionary() {
-        return readResourceToDictionary("/dict2/simple-solutions.txt");
-    }
-
-    @Bean(name = "extendedDictionary")
-    Dictionary getExtendedDictionary() {
-        return readResourceToDictionary("/dict2/extended-solutions.txt");
-    }
-
-    @Bean(name = "reducedDictionary")
-    Dictionary getReducedDictionary() {
-        return readResourceToDictionary("/dict2/remaining-solutions.txt");
-    }
-
-    @Bean(name = "icelandicDictionary")
-    Dictionary getIcelandicDictionary() {
-        return readResourceToDictionary("/dict2/iceland.txt");
-    }
-
-    @Bean(name = "icelandicCommonDictionary")
-    Dictionary getIcelandicCommonDictionary() {
-        return readResourceToDictionary("/dict2/iceland-common.txt");
-    }
-
-    @Bean(name = "spanishDictionary")
-    Dictionary getSpanishDictionary() {
-        return readResourceToDictionary("/dict2/spanish.txt");
+    @Bean
+    public Map<DictionaryType, Dictionary> allDictionaries() {
+        return Arrays.stream(DictionaryType.values())
+                .collect(Collectors.toMap(
+                        type -> type,
+                        type -> readResourceToDictionary(type.getPath())
+                ));
     }
 
     private Dictionary readResourceToDictionary(String path) {

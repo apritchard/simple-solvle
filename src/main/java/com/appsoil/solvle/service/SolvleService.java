@@ -1,5 +1,6 @@
 package com.appsoil.solvle.service;
 
+import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.controller.KnownPositionDTO;
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.controller.SolvleDTO;
@@ -8,7 +9,6 @@ import com.appsoil.solvle.data.Dictionary;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
 import com.appsoil.solvle.service.solvers.Solver;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -28,39 +28,17 @@ import java.util.stream.Stream;
 @Log4j2
 public class SolvleService {
 
-    private final Dictionary simpleDictionary;
-    private final Dictionary extendedDictionary;
-    private final Dictionary reducedDictionary;
-    private final Dictionary bigDictionary;
-
-    //international word lists
-    private final Dictionary icelandicDictionary;
-    private final Dictionary icelandicCommonDictionary;
-    private final Dictionary spanishDictionary;
+    private final Map<DictionaryType, Dictionary> dictionaries;
 
     private final int MAX_RESULT_LIST_SIZE = 100;
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
 
-    private Map<String, Map<Word, Double>> firstPartitionData = new ConcurrentHashMap<>();
+    private Map<DictionaryType, Map<Word, Double>> firstPartitionData = new ConcurrentHashMap<>();
 
-    public SolvleService(@Qualifier("simpleDictionary") Dictionary simpleDictionary,
-                         @Qualifier("extendedDictionary") Dictionary extendedDictionary,
-                         @Qualifier("reducedDictionary") Dictionary reducedDictionary,
-                         @Qualifier("bigDictionary") Dictionary bigDictionary,
-                         @Qualifier("icelandicDictionary") Dictionary icelandicDictionary,
-                         @Qualifier("icelandicCommonDictionary") Dictionary icelandicCommonDictionary,
-                         @Qualifier("spanishDictionary") Dictionary spanishDictionary
-    ) {
-        this.simpleDictionary = simpleDictionary;
-        this.extendedDictionary = extendedDictionary;
-        this.bigDictionary = bigDictionary;
-        this.reducedDictionary = reducedDictionary;
-
-        this.icelandicDictionary = icelandicDictionary;
-        this.icelandicCommonDictionary = icelandicCommonDictionary;
-        this.spanishDictionary = spanishDictionary;
+    public SolvleService(Map<DictionaryType, Dictionary> dictionaries) {
+        this.dictionaries = dictionaries;
     }
 
 
@@ -71,7 +49,7 @@ public class SolvleService {
     @Async
     public CompletableFuture<Void> preloadPartitionData() {
         return CompletableFuture.runAsync(() -> {
-            Stream.of("simple", "icelandic", "spanish").forEach(wordList -> {
+            Stream.of(DictionaryType.SIMPLE).forEach(wordList -> {
                 Map<Word, Double> partitionData = new ConcurrentHashMap<>();
                 firstPartitionData.put(wordList, partitionData);
                 Set<Word> wordSet = getPrimarySet(wordList);
@@ -93,7 +71,7 @@ public class SolvleService {
     }
 
     @Cacheable("validWords")
-    public SolvleDTO getWordAnalysis(String restrictionString, String wordList, WordConfig wordConfig, boolean hardMode) {
+    public SolvleDTO getWordAnalysis(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
 
         log.debug("Searching for words using {}", wordConfig);
 
@@ -106,7 +84,7 @@ public class SolvleService {
         return result;
     }
 
-    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, String wordList, WordConfig wordConfig, boolean hardMode) {
+    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
         Set<Word> wordSet = getPrimarySet(wordList);
         Set<Word> fishingSet = getFishingSet(wordList);
 
@@ -191,7 +169,7 @@ public class SolvleService {
     }
 
     @Cacheable("wordScore")
-    public WordScoreDTO getScore(String restrictionString, String wordToScore, String wordList, WordConfig wordConfig, boolean hardMode) {
+    public WordScoreDTO getScore(String restrictionString, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
         WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
 
@@ -244,7 +222,7 @@ public class SolvleService {
      * @param guess                     Which number guess this is, used for identifying failure state (exceeding 6 guesses)
      * @return
      */
-    public Set<PlayOut> playOutSolutions(String restrictionString, String wordList, WordConfig wordConfig, boolean hardMode, int guess) {
+    public Set<PlayOut> playOutSolutions(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, int guess) {
 
         WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
 
@@ -281,29 +259,21 @@ public class SolvleService {
         }));
     }
 
-    private Set<Word> getPrimarySet(String wordList) {
-        Dictionary dictionary = switch (wordList) {
-            case "reduced" -> reducedDictionary;
-            case "simple" -> simpleDictionary;
-            case "extended" -> extendedDictionary;
-            case "iceland" -> icelandicCommonDictionary;
-            case "spanish" -> spanishDictionary;
-            default -> bigDictionary;
-        };
-        return dictionary.wordsBySize().get(DEFAULT_LENGTH);
+    private Set<Word> getPrimarySet(DictionaryType wordList) {
+        return dictionaries.get(wordList).wordsBySize().get(DEFAULT_LENGTH);
     }
 
-    private Set<Word> getFishingSet(String wordList) {
+    private Set<Word> getFishingSet(DictionaryType wordList) {
         // use the big dictionary for fishing simple words, because answers are not required to be valid
         Dictionary dictionary = switch (wordList) {
-            case "iceland" -> icelandicDictionary;
-            case "spanish" -> spanishDictionary;
-            default -> bigDictionary;
+            case ICELANDIC -> dictionaries.get(DictionaryType.ICELANDIC_FISHING);
+            case SPANISH -> dictionaries.get(DictionaryType.SPANISH);
+            default -> dictionaries.get(DictionaryType.BIG);
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);
     }
 
-    public SharedPositions findSharedWordRestrictions(String wordList) {
+    public SharedPositions findSharedWordRestrictions(DictionaryType wordList) {
         WordCalculationService wordCalculationService= new WordCalculationService(WordCalculationConfig.SIMPLE);
         return wordCalculationService.findSharedWordRestrictions(getPrimarySet(wordList));
     }
@@ -317,7 +287,7 @@ public class SolvleService {
      * @param wordCalculationConfig
      * @return
      */
-    public Map<String, List<String>> solveDictionary(Solver solver, String firstWord, WordCalculationConfig wordCalculationConfig, String wordList) {
+    public Map<String, List<String>> solveDictionary(Solver solver, String firstWord, WordCalculationConfig wordCalculationConfig, DictionaryType wordList) {
 
         Set<Word> words = getPrimarySet(wordList);
 
@@ -337,9 +307,9 @@ public class SolvleService {
         return outcome;
     }
 
-    public Map<String, List<String>> solveDictionary(Solver solver, List<String> previousGuesses, WordCalculationConfig wordCalculationConfig, String startingRestrictions, String wordList) {
-        Set<Word> words = getPrimarySet("simple");
-        SolvleDTO guess = getWordAnalysis(new WordRestrictions(startingRestrictions.toLowerCase()), words, getFishingSet("simple"), wordCalculationConfig);
+    public Map<String, List<String>> solveDictionary(Solver solver, List<String> previousGuesses, WordCalculationConfig wordCalculationConfig, String startingRestrictions, DictionaryType wordList) {
+        Set<Word> words = getPrimarySet(DictionaryType.SIMPLE);
+        SolvleDTO guess = getWordAnalysis(new WordRestrictions(startingRestrictions.toLowerCase()), words, getFishingSet(DictionaryType.SIMPLE), wordCalculationConfig);
         final String firstWord = guess.fishingWords().stream().findFirst().get().word();
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
@@ -352,7 +322,7 @@ public class SolvleService {
     }
 
 
-    public List<String> solveWord(Word word, String wordList) {
+    public List<String> solveWord(Word word, DictionaryType wordList) {
         return solveWord(new RemainingSolver(this, WordCalculationConfig.SIMPLE), word, "", wordList);
     }
 
@@ -362,7 +332,7 @@ public class SolvleService {
      * @param word The solution
      * @return An ordered list of guesses, of which the final one is the solution
      */
-    public List<String> solveWord(Solver solver, Word word, String firstWord, String wordList) {
+    public List<String> solveWord(Solver solver, Word word, String firstWord, DictionaryType wordList) {
 
         //get initial restrictions
         Set<Word> wordSet = getPrimarySet(wordList);

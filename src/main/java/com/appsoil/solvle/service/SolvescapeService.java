@@ -1,5 +1,6 @@
 package com.appsoil.solvle.service;
 
+import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.data.Dictionary;
 import com.appsoil.solvle.data.Word;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,8 +17,8 @@ public class SolvescapeService {
 
     private final Dictionary bigDictionary;
 
-    public SolvescapeService(@Qualifier("bigDictionary") Dictionary bigDictionary) {
-        this.bigDictionary = bigDictionary;
+    public SolvescapeService(Map<DictionaryType, Dictionary> allDictionaries) {
+        this.bigDictionary = allDictionaries.get(DictionaryType.BIG);
     }
 
     public Map<Integer, List<String>> getAnagrams(String availableLetters) {

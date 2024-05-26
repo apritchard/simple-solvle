@@ -1,5 +1,6 @@
 package com.appsoil.solvle.service;
 
+import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.data.Dictionary;
 import com.appsoil.solvle.data.Word;
@@ -27,13 +28,16 @@ public class SolvleServiceTest {
 
     @TestConfiguration
     public static class SolvleTestConfiguration {
-        @Bean(name = {"simpleDictionary", "extendedDictionary", "bigDictionary", "hugeDictionary", "reducedDictionary", "icelandicDictionary", "icelandicCommonDictionary", "spanishDictionary"})
-        Dictionary getTestDictionary() {
+        @Bean
+         Map<DictionaryType, Dictionary> allDictionaries() {
             Set<Word> words = Stream.of("aaaaa", "aaaab", "aaabc", "aabcd", "abcde", "bcdea").map(Word::new).collect(Collectors.toSet());
             Dictionary dictionary = new Dictionary(Map.of(5, words));
-            return dictionary;
+            return Arrays.stream(DictionaryType.values())
+                    .collect(Collectors.toMap(
+                            type -> type,
+                            type -> dictionary
+                    ));
         }
-
     }
 
     @Autowired
@@ -52,7 +56,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_lettersAvailable_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, DictionaryType.SIMPLE, config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -69,7 +73,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_requiredPosition_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, DictionaryType.SIMPLE, config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -85,7 +89,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_excludedPosition_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, DictionaryType.SIMPLE, config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -102,7 +106,7 @@ public class SolvleServiceTest {
     }, delimiter = '|')
     void getWordAnalysis_excludeAndRequired_matchesWords(String restrictionString, String matches) {
         Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
-        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, "simple", config, hardMode);
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, DictionaryType.SIMPLE, config, hardMode);
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
@@ -186,7 +190,7 @@ public class SolvleServiceTest {
             "bcdea | abcde,bcdea",
     }, delimiter = '|')
     void solveWord_wordIsTopChoice_solves(String solution, String expectedResultString) {
-        List<String> results = solvleService.solveWord(new Word(solution), "simple");
+        List<String> results = solvleService.solveWord(new Word(solution), DictionaryType.SIMPLE);
         List<String> expectedResults = Arrays.stream(expectedResultString.split(",")).toList();
 
         Assertions.assertEquals(expectedResults, results);
