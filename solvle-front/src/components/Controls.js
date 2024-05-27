@@ -88,17 +88,17 @@ function Controls() {
                 International:
                 <br/>
                 <span
-                    title="German Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/German_de_DE.dic">
-                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN_6MAL5"} type="radio" value="GERMAN_6MAL5"
+                    title="German Dictionary used by 6mal5.com">
+                    <input id="german6mal5Radio" defaultChecked={boardState.settings.dictionary === "GERMAN_6MAL5"} type="radio" value="GERMAN_6MAL5"
                            name="dict"/>
-                    <label htmlFor="germanRadio">Deutsch (6mal5.com)</label>
+                    <label htmlFor="german6mal5Radio">Deutsch (6mal5.com)</label>
                 </span>
                 <br/>
                 <span
-                    title="German Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/German_de_DE.dic">
-                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN_WORDLE_GLOBAL"} type="radio" value="GERMAN_WORDLE_GLOBAL"
+                    title="German Dictionary used by wordle.global/de">
+                    <input id="germanGlobalRadio" defaultChecked={boardState.settings.dictionary === "GERMAN_WORDLE_GLOBAL"} type="radio" value="GERMAN_WORDLE_GLOBAL"
                            name="dict"/>
-                    <label htmlFor="germanRadio">Deutsch (wordle.global/de)</label>
+                    <label htmlFor="germanGlobalRadio">Deutsch (wordle.global/de)</label>
                 </span>
                 <br/>
                 <span
