@@ -235,7 +235,7 @@ public class FullDictionaryTest {
         final DictionaryType dictionary = DictionaryType.SIMPLE;
         SharedPositions out = solvleService.findSharedWordRestrictions(dictionary);
 
-        Word allLetters = new Word("aábcdðeéfghiíjklmnñoópqrstuúvwxyýzþæö");
+        Word allLetters = new Word("aáäbcdðeéfghiíjklmnñoópqrsßtuúüvwxyýzþæö");
         out.sortedPositionStream().forEach(es -> {
             if(es.getKey().getShared() > 2 && es.getValue().size() > 5) { // && notEndInS(es.getKey(), wordLength) && notEndinEd(es.getKey(), wordLength) && notEndinIng(es.getKey(), wordLength) ) {
                 WordRestrictions restrictions = new WordRestrictions(allLetters, new HashSet<>(es.getKey().pos().values()), es.getKey().pos(), new HashMap<>());

@@ -89,19 +89,28 @@ function Controls() {
                 <br/>
                 <span
                     title="German Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/German_de_DE.dic">
-                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN"} type="radio" value="GERMAN"
+                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN_6MAL5"} type="radio" value="GERMAN_6MAL5"
                            name="dict"/>
-                    <label htmlFor="germanRadio">Deutsch</label>
+                    <label htmlFor="germanRadio">Deutsch (6mal5.com)</label>
                 </span>
+                <br/>
+                <span
+                    title="German Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/German_de_DE.dic">
+                    <input id="germanRadio" defaultChecked={boardState.settings.dictionary === "GERMAN_WORDLE_GLOBAL"} type="radio" value="GERMAN_WORDLE_GLOBAL"
+                           name="dict"/>
+                    <label htmlFor="germanRadio">Deutsch (wordle.global/de)</label>
+                </span>
+                <br/>
                 <span
                     title="Spanish Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Spanish.dic">
                     <input id="spanishRadio" defaultChecked={boardState.settings.dictionary === "SPANISH"} type="radio" value="SPANISH"
                            name="dict"/>
                     <label htmlFor="spanishRadio">Español</label>
                 </span>
+                <br/>
                 <span
                     title="Icelandic Dictionary: https://github.com/titoBouzout/Dictionaries/blob/master/Icelandic.dic">
-                    <input id="icelandRadio" defaultChecked={boardState.settings.dictionary === "ICELAND"} type="radio" value="ICELAND"
+                    <input id="icelandRadio" defaultChecked={boardState.settings.dictionary === "ICELANDIC"} type="radio" value="ICELANDIC"
                            name="dict"/>
                     <label htmlFor="icelandRadio">Íslensku</label>
                 </span>

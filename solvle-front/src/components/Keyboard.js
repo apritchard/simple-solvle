@@ -3,13 +3,17 @@ import Key from "./Key";
 import AppContext from "../contexts/contexts";
 
 function Keyboard() {
-    const keys1 = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
-    const keys2 = ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
-    const keys3 = ["Z", "X", "C", "V", "B", "N", "M"];
+    const keyboardLayouts = {
+        keys1: ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+        keys2: ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+        keys3: ["Z", "X", "C", "V", "B", "N", "M"],
+        icelandic: ["Á", "Ð", "É", "Í", "Ó", "Ú", "Ý", "Þ", "Æ", "Ö"],
+        spanish: ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
+        german1: ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
+        german2: ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
+        german3: ["Y", "X", "C", "V", "B", "N", "M", "ẞ"]
+    };
 
-    //international rows
-    const icelandic = ["Á", "Ð", "É", "Í", "Ó", "Ú", "Ý", "Þ", "Æ", "Ö" ];
-    const spanish = ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"];
     const {
         availableLetters,
         onSelectLetter,
@@ -29,31 +33,13 @@ function Keyboard() {
             } else if (event.key === "Backspace") {
                 onDelete();
             } else {
-                keys1.forEach((key) => {
-                    if (event.key.toLowerCase() === key.toLowerCase()) {
-                        onSelectLetter(key);
-                    }
+                Object.values(keyboardLayouts).forEach((keysArray) => {
+                    keysArray.forEach((key) => {
+                        if (event.key.toLowerCase() === key.toLowerCase()) {
+                            onSelectLetter(key);
+                        }
+                    });
                 });
-                keys2.forEach((key) => {
-                    if (event.key.toLowerCase() === key.toLowerCase()) {
-                        onSelectLetter(key);
-                    }
-                });
-                keys3.forEach((key) => {
-                    if (event.key.toLowerCase() === key.toLowerCase()) {
-                        onSelectLetter(key);
-                    }
-                });
-                icelandic.forEach((key) => {
-                    if (event.key.toLowerCase() === key.toLowerCase()) {
-                        onSelectLetter(key);
-                    }
-                })
-                spanish.forEach((key) => {
-                    if (event.key.toLowerCase() === key.toLowerCase()) {
-                        onSelectLetter(key);
-                    }
-                })
             }
         },
         [onDelete, onEnter, onSelectLetter]
@@ -68,28 +54,29 @@ function Keyboard() {
 
     return (
         <div className="keyboard" onKeyDown={handleKeyboard}>
-            {boardState.settings.dictionary === 'iceland' && (
+            {boardState.settings.dictionary === 'ICELANDIC' && (
                 <div className="keyboardLine">
-                    {icelandic.map((key) => {
+                    {keyboardLayouts.icelandic.map((key) => {
                         return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
                     })}
                 </div>
             )}
             <div className="keyboardLine">
-                {keys1.map((key) => {
-                    return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
-                })}
+                {(boardState.settings.dictionary === 'GERMAN_WORDLE_GLOBAL' ? keyboardLayouts.german1 : keyboardLayouts.keys1).map((key) => (
+                    <Key key={key} keyVal={key} disabled={!availableLetters.has(key)} />
+                ))}
             </div>
             <div className="keyboardLine">
-                {(boardState.settings.dictionary === 'spanish' ? spanish : keys2).map((key) => {
-                    return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
-                })}
+                {(boardState.settings.dictionary === 'GERMAN_WORDLE_GLOBAL' ? keyboardLayouts.german2 :
+                    boardState.settings.dictionary === 'SPANISH' ? keyboardLayouts.spanish : keyboardLayouts.keys2).map((key) => (
+                    <Key key={key} keyVal={key} disabled={!availableLetters.has(key)} />
+                ))}
             </div>
             <div className="keyboardLine">
-                <Key keyVal={"ENTER"} bigKey/>
-                {keys3.map((key) => {
-                    return <Key key={key} keyVal={key} disabled={!availableLetters.has(key)}/>;
-                })}
+                <Key keyVal="ENTER" bigKey />
+                {(boardState.settings.dictionary === 'GERMAN_WORDLE_GLOBAL' ? keyboardLayouts.german3 : keyboardLayouts.keys3).map((key) => (
+                    <Key key={key} keyVal={key} disabled={!availableLetters.has(key)} />
+                ))}
                 <Key keyVal={"DELETE"} bigKey/>
             </div>
         </div>

@@ -8,7 +8,8 @@ public enum DictionaryType {
     ICELANDIC_FISHING("/dict2/iceland.txt"),
     ICELANDIC("/dict2/iceland-common.txt"),
     SPANISH("/dict2/spanish.txt"),
-    GERMAN("/dict2/german.txt");
+    GERMAN_6MAL5("/dict2/german-6mal5.txt"),
+    GERMAN_WORDLE_GLOBAL("/dict2/german-wordle-global.txt");
 
     private final String path;
 

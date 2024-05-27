@@ -268,7 +268,8 @@ public class SolvleService {
         Dictionary dictionary = switch (wordList) {
             case ICELANDIC -> dictionaries.get(DictionaryType.ICELANDIC_FISHING);
             case SPANISH -> dictionaries.get(DictionaryType.SPANISH);
-            case GERMAN -> dictionaries.get(DictionaryType.GERMAN);
+            case GERMAN_6MAL5 -> dictionaries.get(DictionaryType.GERMAN_6MAL5);
+            case GERMAN_WORDLE_GLOBAL -> dictionaries.get(DictionaryType.GERMAN_WORDLE_GLOBAL);
             default -> dictionaries.get(DictionaryType.BIG);
         };
         return dictionary.wordsBySize().get(DEFAULT_LENGTH);
