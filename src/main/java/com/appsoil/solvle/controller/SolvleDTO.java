@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.LongAdder;
 /**
  * Data used to display solvle data on the front end
  * @param restrictionString     The string representation of current knowledge about the solution
- * @param wordList              A list of viable solutions, priorized by letter match criteria
+ * @param wordList              A list of viable solutions, prioritized by letter match criteria
  * @param fishingWords          A list of all possible guesses disregarding restrictions, prioritized by letter match criteria
  * @param bestWords             A list of guesses that minimize the average wordList for possible current viable words
  * @param totalWords            Total number of viable words (returned wordList includes only top x words)

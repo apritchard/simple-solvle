@@ -3,6 +3,7 @@ import AppContext from "../contexts/contexts";
 import {Button, Form, FormControl, InputGroup, Modal} from "react-bootstrap";
 import SolveModal from "./SolveModal";
 import AutoColor from "./AutoColor";
+import RateMyGame from "./RateMyGame";
 
 function BoardActions() {
 
@@ -35,6 +36,7 @@ function BoardActions() {
             <Button title="set all letters unavailable" variant="danger" onClick={excludeCurrent}>Exclude All</Button>
             <SolveModal />
             <AutoColor />
+            <RateMyGame />
         </div>
     );
 }

@@ -1,8 +1,9 @@
+export const ALLOWABLE_CHARACTERS = "AÁÄBCDÐEÉFGHIÍJKLMNÑOÓPQRSẞTUÚÜVWXYÝZÞÆÖ"
 
 export function generateRestrictionString(availableLetters, knownLetters, unsureLetters) {
     let restrictionString = "";
 
-    "AÁÄBCDÐEÉFGHIÍJKLMNÑOÓPQRSẞTUÚÜVWXYÝZÞÆÖ".split("").filter(letter => availableLetters.has(letter)).forEach(letter => {
+    ALLOWABLE_CHARACTERS.split("").filter(letter => availableLetters.has(letter)).forEach(letter => {
         restrictionString += letter;
         knownLetters.forEach((l, pos) => {
             if (l === letter) {
@@ -41,9 +42,9 @@ export function generateAnagramString(board) {
 
 export function generateConfigParams(boardState) {
     let hardMode = boardState.settings.hardMode ?
-        "&hardMode=true" : "&hardMode=false";
+        "hardMode=true" : "hardMode=false";
 
-    let wordConfig = "&wordConfig=" + boardState.settings.wordConfig;
+    let wordConfig = "&wordLength=" + boardState.settings.wordLength + "&wordList=" + boardState.settings.dictionary + "&wordConfig=" + boardState.settings.wordConfig;
 
     return hardMode + wordConfig;
 }

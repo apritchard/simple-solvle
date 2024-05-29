@@ -13,7 +13,7 @@ import SolvleAlert from "./components/SolvleAlert";
 import Config from "./components/Config";
 import AppContext from "./contexts/contexts";
 import BoardActions from "./components/BoardActions";
-import {generateConfigParams, generateRestrictionString} from "./functions/functions";
+import {ALLOWABLE_CHARACTERS, generateConfigParams, generateRestrictionString} from "./functions/functions";
 
 function App() {
 
@@ -53,7 +53,7 @@ function App() {
     const [boardState, setBoardState] = useState(initialBoardState(6, 5));
 
     const initialAvailableLetters = () => {
-        return new Set("AÁÄBCDÐEÉFGHIÍJKLMNÑOÓPQRSẞTUÚÜVWXYÝZÞÆÖ".split(""));
+        return new Set(ALLOWABLE_CHARACTERS.split(""));
     }
 
     const initialKnownLetters = (width) => {
@@ -207,7 +207,7 @@ function App() {
             let currentWord = "";
             boardState.board[boardState.currAttempt.attempt].map(letter => {currentWord+= letter});
 
-            fetch('/solvle/' + restrictionString + "/" + currentWord + "?wordList=" + boardState.settings.dictionary + configParams)
+            fetch('/solvle/' + restrictionString + "/" + currentWord + "?" + configParams)
                 .then(res => {
                     if (res.ok) {
                         return res.json()
@@ -401,8 +401,9 @@ function App() {
                                      persistVariant={"dark"}/>
                         <Config/>
                         <div className="helpIcon">
-                            <MdHelp
-                                title="This is a toy project built to learn React. Source code available at https://github.com/apritchard/simple-solvle"/>
+                            <a href=" https://github.com/apritchard/simple-solvle">
+                                <MdHelp title="This is a toy project built to learn React. Source code available at https://github.com/apritchard/simple-solvle"/>
+                            </a>
                         </div>
                     </div>
                 </nav>

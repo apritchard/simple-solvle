@@ -50,6 +50,22 @@ public class RemainingSolver implements Solver {
 
     }
 
+    public static WordFrequencyScore getNextGuess(WordCalculationConfig config, SolvleDTO analysis, List<String> solution) {
+
+        //if we're above the partition threshold, fish as long as there are still enough words to warrant fishing
+        if(analysis.totalWords() > config.partitionThreshold() && analysis.totalWords() > config.fishingThreshold() &&
+                !solution.contains(analysis.fishingWords().stream().findFirst().get().word())) {
+            return analysis.fishingWords().stream().findFirst().get();
+        }
+        // partition until we are below the fishing threshold as long as there are words in the partition set
+        if(analysis.totalWords() > config.fishingThreshold() && analysis.bestWords()!= null && !analysis.bestWords().isEmpty()) {
+            return analysis.bestWords().stream().findFirst().get();
+        }
+        if(analysis.totalWords() > 0) {
+            return analysis.wordList().stream().findFirst().get();
+        }
+        return null;
+    }
 
     @Override
     public List<String> solve(Word word, Set<Word> viable, Set<Word> fishing, WordRestrictions wordRestrictions) {
@@ -57,59 +73,20 @@ public class RemainingSolver implements Solver {
 
 
         //get the first guess
-        SolvleDTO guess = solvleService.getWordAnalysis(wordRestrictions, viable, fishing, config);
+        SolvleDTO analysis;
+        WordFrequencyScore currentGuess;
 
-        // start by fishing until we are below the partition threshold
-        while(guess.totalWords() > config.partitionThreshold() && guess.totalWords() > config.fishingThreshold()) {
-            //guess the top fishing word
-            WordFrequencyScore currentGuess = guess.fishingWords().stream().findFirst().get();
-
-            //if we've already tried this word, we're stuck in a loop, switch to viable words
-            if(solution.contains(currentGuess.word())){
-                break;
+        do {
+            analysis = solvleService.getWordAnalysis(wordRestrictions, viable, fishing, config);
+            currentGuess = getNextGuess(config, analysis, solution);
+            if(solution.contains(currentGuess.word())) {
+                throw new IllegalStateException("Stuck in a loop guessing " + currentGuess.word() + " for " + word + " after " +  solution);
             }
             solution.add(currentGuess.word());
 
-            //if it's correct, bail
-            if(currentGuess.word().equals(word.word())) {
-                return solution;
-            }
-
-            //generate new restrictions and try again
             wordRestrictions = WordRestrictions.generateRestrictions(word, new Word(currentGuess.word(), currentGuess.naturalOrdering()), wordRestrictions);
-            guess = solvleService.getWordAnalysis(wordRestrictions, viable, fishing, config);
-        }
+        }while(!currentGuess.word().equals(word.word()));
 
-        // partition until we are below the fishing threshold as long as there are words in the partition set
-        while(guess.totalWords() > config.fishingThreshold() && guess.bestWords()!= null && !guess.bestWords().isEmpty()) {
-            WordFrequencyScore currentGuess = guess.bestWords().stream().findFirst().get();
-            if(solution.contains(currentGuess.word())){
-                break;
-            }
-            solution.add(currentGuess.word());
-
-            //if it's correct, bail
-            if(currentGuess.word().equals(word.word())) {
-                return solution;
-            }
-            wordRestrictions = WordRestrictions.generateRestrictions(word, new Word(currentGuess.word(), currentGuess.naturalOrdering()), wordRestrictions);
-            guess = solvleService.getWordAnalysis(wordRestrictions, viable, fishing, config);
-        }
-
-        // pick out of the viable set
-        while(guess.totalWords() > 0) {
-            WordFrequencyScore currentGuess = guess.wordList().stream().findFirst().get();
-            solution.add(currentGuess.word());
-            //if it's correct, bail
-            if(currentGuess.word().equals(word.word())) {
-                return solution;
-            }
-
-            //generate new restrictions and try again
-            wordRestrictions = WordRestrictions.generateRestrictions(word, new Word(currentGuess.word(), currentGuess.naturalOrdering()), wordRestrictions);
-            guess = solvleService.getWordAnalysis(wordRestrictions, viable, fishing, config);
-        }
-
-        throw new IllegalStateException("Failed to find word " + word.word());
+        return solution;
     }
 }

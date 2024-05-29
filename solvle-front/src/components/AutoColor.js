@@ -10,7 +10,7 @@ function AutoColor(props) {
         setAutoColorSolution
     } = useContext(AppContext);
 
-    const [solution, setSolution] = useState("");
+    const [solution, setSolution] = useState(boardState.settings.autoColorWord);
 
     const [valid, setValid] = useState(true);
 

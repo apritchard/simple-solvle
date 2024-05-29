@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 
@@ -41,7 +42,7 @@ public class SolvleController {
 
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
-        log.info("Valid words requested with configuration {} and hardMode={}", wordConfig, hardMode);
+        log.info("Valid words requested with configuration {} wordList {} and hardMode={}", wordConfig, wordList, hardMode);
         SolvleDTO result = solvleService.getWordAnalysis(wordRestrictions.toLowerCase(), wordList, wordConfig, hardMode);
         log.info("Valid words for {} took {}", wordRestrictions, Duration.between(start, LocalDateTime.now()));
         return SolvleDTO.appendRestrictionString(wordRestrictions, result);
@@ -89,6 +90,20 @@ public class SolvleController {
         log.info("Solution requested for [{}] with first word [{}] and configuration {}", solution, firstWord, wordConfig);
         Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode));
         return solvleService.solveWord(solver, new Word(solution.toLowerCase()), firstWord.toLowerCase(), wordList);
+    }
+
+    @GetMapping("/rate/{solution}")
+    public GameScoreDTO solvePuzzle(@PathVariable String solution,
+                                    @RequestParam(defaultValue = "") List<String> guesses,
+                                    @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
+                                    @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
+                                    @RequestParam(defaultValue = "false") boolean hardMode
+                                    ) {
+        logRequestsCount();
+        log.info("Solution requested for [{}] with guesses {} and configuration {}", solution, guesses, wordConfig);
+        Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode));
+        List<String> lowerGuesses = guesses.stream().map(String::toLowerCase).collect(Collectors.toList());
+        return solvleService.rateGame(solution.toLowerCase(), lowerGuesses, wordList, wordConfig, hardMode);
     }
 
     private void logRequestsCount() {

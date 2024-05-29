@@ -1,6 +1,7 @@
 package com.appsoil.solvle.service;
 
 import com.appsoil.solvle.config.DictionaryType;
+import com.appsoil.solvle.controller.GameScoreDTO;
 import com.appsoil.solvle.controller.KnownPositionDTO;
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.controller.SolvleDTO;
@@ -168,9 +169,47 @@ public class SolvleService {
         return new SolvleDTO("", wordFrequencyScores, fishingWordScores, remainingWords, containedWords.size(), characterCounts, knownPositions);
     }
 
+    public GameScoreDTO rateGame(String solution, List<String> guesses, DictionaryType wordList, WordConfig config, boolean hardMode) {
+        WordCalculationConfig wordCalculationConfig = config.config.withHardMode(hardMode);
+        WordCalculationService wordCalculationService = new WordCalculationService(wordCalculationConfig);
+        Set<Word> wordSet = getPrimarySet(wordList);
+
+        GameScoreDTO gameScoreDTO = new GameScoreDTO();
+
+        WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
+        Word solutionWord = new Word(solution);
+        List<String> currentGuesses = new ArrayList<>();
+
+        for(String guess : guesses) {
+            log.info("Evaluating " + guess);
+            //score player's guess
+            WordScoreDTO playerScore = getScore(restrictions, guess, wordList, config, hardMode);
+
+            //get Solvle's guess and score it as well
+            SolvleDTO analysis = getWordAnalysis(restrictions, wordList, config, hardMode);
+            WordFrequencyScore solvleGuess = RemainingSolver.getNextGuess(wordCalculationConfig, analysis, currentGuesses);
+            WordScoreDTO solvleScore = getScore(restrictions, solvleGuess.word(), wordList, config, hardMode);
+
+
+            restrictions = WordRestrictions.generateRestrictions(solutionWord, new Word(guess), restrictions);
+            Set<Word> newWords = wordCalculationService.findMatchingWords(wordSet, restrictions);
+            int actualRemaining = newWords.size();
+
+            log.info("Adding scores: {}:{} {}:{} actualRemaining:{}", guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining );
+            gameScoreDTO.addRow(guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining, analysis.fishingWords().stream().findFirst().get());
+            currentGuesses.add(guess); //to make sure Solvle doesn't guess an already chosen word
+        }
+
+        return gameScoreDTO;
+    }
+
     @Cacheable("wordScore")
     public WordScoreDTO getScore(String restrictionString, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
+        return getScore(wordRestrictions, wordToScore, wordList, wordConfig, hardMode);
+    }
+
+    public WordScoreDTO getScore(WordRestrictions wordRestrictions, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
         WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
 
         Word word = new Word(wordToScore, 0);

@@ -29,7 +29,7 @@ function Options(props) {
 
         let configParams = generateConfigParams(boardState);
 
-        fetch('/solvle/' + restrictionString + "?wordLength=" + boardState.settings.wordLength + "&wordList=" + boardState.settings.dictionary + configParams)
+        fetch('/solvle/' + restrictionString + "?" + configParams)
             .then(res => {
                 if (res.ok) {
                     return res.json()
