@@ -19,6 +19,8 @@ function RateMyGame(props) {
     const [isLoading, setIsLoading] = useState(false);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
 
+    const clipboardAvailable = navigator.clipboard !== null && navigator.clipboard !== undefined;
+
     const handleShow = (e) => {
         if (e && e.target) {
             e.target.blur();
@@ -226,8 +228,8 @@ function RateMyGame(props) {
                                 (<div className="spaced-buttons"><Button variant="primary" type="submit" disabled={isLoading}>
                                     Rate!
                                     </Button>
-                                        {rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(false)}>Copy</Button>}
-                                        {rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(true)}>Copy (spoiler-free)</Button>}
+                                        {clipboardAvailable && rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(false)}>Copy</Button>}
+                                        {clipboardAvailable && rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(true)}>Copy (spoiler-free)</Button>}
                                         {showCopiedMessage && (
                                             <span className="fade-out">Score copied</span>
                                         )}
