@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {Button, Col, Form, Modal, Row, Spinner} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {ALLOWABLE_CHARACTERS, generateConfigParams} from "../functions/functions";
@@ -17,6 +17,7 @@ function RateMyGame(props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [rateData, setRateData] = useState();
     const [isLoading, setIsLoading] = useState(false);
+    const [showCopiedMessage, setShowCopiedMessage] = useState(false);
 
     const handleShow = (e) => {
         if (e && e.target) {
@@ -91,26 +92,80 @@ function RateMyGame(props) {
 
         if(lucky) {
             if(strategic && !fishy) {
-                return "Use Math"
+                return "Aspect of Owl 🦉"
             } else if (strategic && fishy) {
-                return "Smart AND Lucky?"
+                return "Aspect of Fox 🦊"
             } else if (!strategic && fishy) {
-                return "Makes sense"
+                return "Aspect of Whale 🐋"
             } else if (!strategic && !fishy) {
-                return "That's one way to do it"
+                return "Aspect of Rhino 🦏"
             }
         } else {
             if(strategic && !fishy) {
-                return "Better luck next time"
+                return "Aspect of Horse 🐴"
             } else if (strategic && fishy) {
-                return "Thems the breaks"
+                return "Aspect of Chameleon 🦎"
             } else if (!strategic && fishy) {
-                return "Could happen to anyone"
+                return "Aspect of Salmon 🐟"
             } else if (!strategic && !fishy) {
-                return "Ouch"
+                return "Aspect of Turtle 🐢"
             }
         }
     }
+
+    function copyGameDataToClipboard(hideSpoilers = false) {
+        const colorizeWord = (guess, finalWord) => {
+            const result = [];
+            const finalWordLetters = finalWord.split('');
+
+            const letterCounts = finalWordLetters.reduce((acc, letter) => {
+                acc[letter] = (acc[letter] || 0) + 1;
+                return acc;
+            }, {});
+
+            // Loop over each letter in guess to determine color
+            guess.forEach((letter, index) => {
+                if (letter === finalWordLetters[index]) {
+                    result.push('🟩'); // Correct position
+                    letterCounts[letter]--; // Reduce count of this letter
+                } else if (letterCounts[letter] > 0) {
+                    result.push('🟨'); // Correct letter, wrong position
+                    letterCounts[letter]--; // Reduce count to prevent over marking
+                } else {
+                    result.push('⬜'); // Letter not in finalWord at all
+                }
+            });
+            return result.join('') + (hideSpoilers ? '' : ' ' + guess.join('').toUpperCase());
+        };
+
+        let clipboardText = board.map((row, index) => {
+            if(index >= rateData.rows.length) {
+                return;
+            }
+            const finalWord = rateData.rows[rateData.rows.length-1].playerWord.toUpperCase();
+            const coloredGuess = colorizeWord(row, finalWord);
+            const remaining = rateData?.rows[index]?.actualRemaining.toString().padStart(4, ' ');
+            const skill = Math.round(rateData?.rows[index]?.skill * 100).toString().padStart(3, ' ');
+            const luck = Math.round(rateData?.rows[index]?.luck * 100).toString().padStart(3, ' ');
+            const fish = Math.round(rateData?.rows[index]?.heuristic * 100).toString().padStart(3, ' ');
+            return `${coloredGuess} (${remaining}) L:${luck} S✂:${skill} S🐟:${fish}`;
+        }).join('\n');
+
+
+
+        clipboardText += `Luck: ${Math.round(rateData.luck * 100)} Skill✂: ${Math.round(rateData.skill * 100)} Skill🐟: ${Math.round(rateData.heuristic * 100)} \n`;
+        clipboardText += calculateRating(rateData);
+        clipboardText += "\nhttp://solvle.appsoil.com";
+
+        navigator.clipboard.writeText(clipboardText).then(() => {
+            console.log(clipboardText);
+            setShowCopiedMessage(true);
+            setTimeout(() => setShowCopiedMessage(false), 2000);
+        }).catch(err => {
+            console.error('Failed to copy data:', err);
+        });
+    }
+
 
     let buttonText = "Rate My Game";
 
@@ -119,7 +174,7 @@ function RateMyGame(props) {
             <Button title="Rate Performance of a Completed Game" variant="primary"
                     onClick={handleShow}>{buttonText}</Button>
 
-            <Modal className="rateMyGameModal" show={modalOpen} onHide={handleClose} >
+            <Modal className="rateMyGameModal" size="lg" show={modalOpen} onHide={handleClose} >
                 <Modal.Header closeButton>
                     <Modal.Title>Rate My Game</Modal.Title>
                 </Modal.Header>
@@ -132,6 +187,8 @@ function RateMyGame(props) {
                         </Form.Group>
                         <Row>
                             <Col md={3}><strong>Guess</strong></Col>
+                            <Col><strong>Expected</strong></Col>
+                            <Col><strong>Actual</strong></Col>
                             <Col><strong>Luck</strong></Col>
                             <Col><strong>Skill ✂</strong></Col>
                             <Col><strong>Skill 🐟</strong></Col>
@@ -147,6 +204,8 @@ function RateMyGame(props) {
                                         onChange={e => changeRow(e, index)}
                                     />
                                 </Col>
+                                <Col>{Math.round(rateData?.rows[index]?.playerScore.remainingWords) || "-"}</Col>
+                                <Col>{rateData?.rows[index]?.actualRemaining}</Col>
                                 <Col className={!isLoading ? 'fade-in' : ''}>{Math.round(rateData?.rows[index]?.luck * 100) || "-"}</Col>
                                 <Col className={!isLoading ? 'fade-in' : ''}>{Math.round(rateData?.rows[index]?.skill * 100) || "-"}</Col>
                                 <Col className={!isLoading ? 'fade-in' : ''}>{Math.round(rateData?.rows[index]?.heuristic * 100) || "-"}</Col>
@@ -155,18 +214,27 @@ function RateMyGame(props) {
                         ))}
                         <Row className={!isLoading ? 'fade-in' : ''}>
                             <Col md={3}><strong>Overall:</strong></Col>
-                            <Col>{Math.round(rateData?.skill * 100)}</Col>
-                            <Col>{Math.round(rateData?.luck * 100)}</Col>
-                            <Col>{Math.round(rateData?.heuristic * 100)}</Col>
+                            <Col md={3}>{calculateRating(rateData)}</Col>
+                            <Col>{Math.round(rateData?.luck * 100) || "-"}</Col>
+                            <Col>{Math.round(rateData?.skill * 100) || "-"}</Col>
+                            <Col>{Math.round(rateData?.heuristic * 100) || "-"}</Col>
                             <Col></Col>
                         </Row>
-                        {isLoading ? (<Spinner animation="border" role="status"><span
-                            className="visually-hidden">Loading...</span></Spinner>) :
-                            (<div><Button variant="primary" type="submit" disabled={isLoading}>
-                                Rate!
-                                </Button><span className="ms-3">{calculateRating(rateData)}</span></div>
-                            )
-                        }
+                        <div className="rate-buttons">
+                            {isLoading ? (<Spinner animation="border" role="status"><span
+                                className="visually-hidden">Loading...</span></Spinner>) :
+                                (<div className="spaced-buttons"><Button variant="primary" type="submit" disabled={isLoading}>
+                                    Rate!
+                                    </Button>
+                                        {rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(false)}>Copy</Button>}
+                                        {rateData?.luck && <Button variant="info" onClick={() => copyGameDataToClipboard(true)}>Copy (spoiler-free)</Button>}
+                                        {showCopiedMessage && (
+                                            <span className="fade-out">Score copied</span>
+                                        )}
+                                </div>
+                                )
+                            }
+                        </div>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

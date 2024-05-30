@@ -279,6 +279,9 @@ nav h1 {
 .fade-in {
   animation: fadeIn 0.5s;
 }
+.fade-out {
+  animation: fadeOut 2s forwards;
+}
 
 @keyframes fadeIn {
   from {
@@ -287,4 +290,16 @@ nav h1 {
   to {
     opacity: 1;
   }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.spaced-buttons button {
+  margin-right: 20px;
+}
+
+.rate-buttons {
+  margin-top: 10px;
 }
