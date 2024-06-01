@@ -157,7 +157,7 @@ function RateMyGame(props) {
 
         clipboardText += `Luck: ${Math.round(rateData.luck * 100)} Skill✂: ${Math.round(rateData.skill * 100)} Skill🐟: ${Math.round(rateData.heuristic * 100)} \n`;
         clipboardText += calculateRating(rateData);
-        clipboardText += "\nhttp://solvle.appsoil.com";
+        clipboardText += "\nhttps://solvle.appsoil.com";
 
         navigator.clipboard.writeText(clipboardText).then(() => {
             console.log(clipboardText);
@@ -181,24 +181,24 @@ function RateMyGame(props) {
                     <Modal.Title>Rate My Game</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form onSubmit={rateGame}>
+                    <Form onSubmit={rateGame} className="flex-form">
                         <Form.Group className="mb-3" controlId="formSolution">
                             <Form.Label>Solution</Form.Label>
                             <Form.Control value={solution} onChange={changeSolution} autoComplete="off" autoFocus
                                           type="text" placeholder="The answer to today's puzzle goes here"/>
                         </Form.Group>
-                        <Row>
-                            <Col md={3}><strong>Guess</strong></Col>
+                        <Row className="narrow-row rate-game-header">
+                            <Col md={3} s={3} xs={3}><strong>Guess</strong></Col>
                             <Col><strong>Expected</strong></Col>
                             <Col><strong>Actual</strong></Col>
                             <Col><strong>Luck</strong></Col>
-                            <Col><strong>Skill ✂</strong></Col>
-                            <Col><strong>Skill 🐟</strong></Col>
+                            <Col><strong>✂Skill</strong></Col>
+                            <Col><strong>🐟Skill</strong></Col>
                             <Col><strong>Suggestion</strong></Col>
                         </Row>
                         {board.map((row, index) => (
-                            <Row key={"row" + index} className="mb-3">
-                                <Col md={3}>
+                            <Row key={"row" + index} className="mb-3 narrow-row">
+                                <Col md={3} s={3} xs={3}>
                                     <Form.Control
                                         type="text"
                                         placeholder={"Guess " + (index + 1)}
@@ -215,8 +215,8 @@ function RateMyGame(props) {
                             </Row>
                         ))}
                         <Row className={!isLoading ? 'fade-in' : ''}>
-                            <Col md={3}><strong>Overall:</strong></Col>
-                            <Col md={3}>{calculateRating(rateData)}</Col>
+                            <Col md={3} s={3} xs={3}><strong>Overall:</strong></Col>
+                            <Col md={3} s={3} xs={3}>{calculateRating(rateData)}</Col>
                             <Col>{Math.round(rateData?.luck * 100) || "-"}</Col>
                             <Col>{Math.round(rateData?.skill * 100) || "-"}</Col>
                             <Col>{Math.round(rateData?.heuristic * 100) || "-"}</Col>

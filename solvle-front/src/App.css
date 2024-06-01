@@ -303,3 +303,34 @@ nav h1 {
 .rate-buttons {
   margin-top: 10px;
 }
+
+@media (max-width: 768px) {
+  .flex-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rate-buttons {
+    order: -1;  /* Makes this div appear first on small screens */
+  }
+}
+@media (max-width: 991.98px) {  /* Bootstrap's xs breakpoint upper limit */
+  .narrow-row .col {
+    max-width: 10%; /* or any percentage or fixed width you prefer */
+    flex: 0 0 10%; /* This prevents flex items from growing */
+  }
+}
+.rate-game-header .col {
+  font-size: 16px; /* Adjust font size based on breakpoint */
+  padding-left: 2px;
+  padding-right: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Adds "..." if the text overflows the container width */
+}
+
+@media (max-width: 767.98px) {
+  .rate-game-header .col {
+    font-size: 12px;
+  }
+}
