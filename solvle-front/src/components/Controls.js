@@ -54,6 +54,7 @@ function Controls() {
     const simplePartitionHelpText = "Does not employ letter position heuristics, but enables partitioning. Mean: 3.6307, StDv: 0.6227, Median: 4.0, Counts: {2=62, 3=848, 4=1288, 5=117}"
     const lowestAverageHelpText = "Uses letter position heuristics to minimize the average score. Mean: 3.5965, StDv: 0.6701, Median: 4.0, Counts: {1=1, 2=56, 3=992, 4=1102, 5=155, 6=9}";
     const lowestAveragePartitionHelpText = "Uses letter position heuristics and partitioning to minimize the average score. Mean: 3.4570, StDv: 0.6005, Median: 3.0, Counts: {1=1, 2=71, 3=1168, 4=1019, 5=56}";
+    const lowestAverageExtendedPartitionHelpText = "Enable partitioning up to 400 remaining words. May cause app instability due to slow response.";
     const most2HelpText = "Adjusts heuristics to maximize the odds of getting a score in 2 or 3, but risks failure. Mean: 3.5598, StDv: 0.8170, Median: 4.0, Counts: {1=1, 2=146, 3=996, 4=953, 5=177, 6=33, 7=7, 8=2}";
 
 
@@ -134,13 +135,15 @@ function Controls() {
                 Heuristics only:
                 <div
                     title={simpleHelpText}>
-                    <input id="simpleStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE"} type="radio" value="SIMPLE"
+                    <input id="simpleStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE"}
+                           type="radio" value="SIMPLE"
                            name="strat"/>
                     <label htmlFor="simpleStratRadio">Simple</label>
                 </div>
                 <div
                     title={lowestAverageHelpText}>
-                    <input id="optimalMeanRadio" defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN"} type="radio" value="OPTIMAL_MEAN"
+                    <input id="optimalMeanRadio" defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN"}
+                           type="radio" value="OPTIMAL_MEAN"
                            name="strat"/>
                     <label htmlFor="optimalMeanRadio">Optimal Mean</label>
                 </div>
@@ -148,21 +151,34 @@ function Controls() {
                 With Cut✂ Enabled (may be slower)
                 <div
                     title={simplePartitionHelpText}>
-                    <input id="simplePartitionStratRadio" defaultChecked={boardState.settings.wordConfig === "SIMPLE_WITH_PARTITIONING"} type="radio" value="SIMPLE_WITH_PARTITIONING"
+                    <input id="simplePartitionStratRadio"
+                           defaultChecked={boardState.settings.wordConfig === "SIMPLE_WITH_PARTITIONING"} type="radio"
+                           value="SIMPLE_WITH_PARTITIONING"
                            name="strat"/>
                     <label htmlFor="simplePartitionStratRadio">Simple</label>
                 </div>
                 <div
                     title={lowestAveragePartitionHelpText}>
-                    <input id="optimalMeanPartitionRadio" defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN_WITH_PARTITIONING"} type="radio" value="OPTIMAL_MEAN_WITH_PARTITIONING"
+                    <input id="optimalMeanPartitionRadio"
+                           defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN_WITH_PARTITIONING"}
+                           type="radio" value="OPTIMAL_MEAN_WITH_PARTITIONING"
                            name="strat"/>
                     <label htmlFor="optimalMeanPartitionRadio">Optimal Mean</label>
                 </div>
                 <div
                     title={most2HelpText}>
-                    <input id="most2Radio" defaultChecked={boardState.settings.wordConfig === "TWO_OR_LESS"} type="radio" value="TWO_OR_LESS"
+                    <input id="most2Radio" defaultChecked={boardState.settings.wordConfig === "TWO_OR_LESS"}
+                           type="radio" value="TWO_OR_LESS"
                            name="strat"/>
                     <label htmlFor="most2Radio">Most Twos</label>
+                </div>
+                <div
+                    title={lowestAverageExtendedPartitionHelpText}>
+                    <input id="optimalMeanExtendedPartitionRadio"
+                           defaultChecked={boardState.settings.wordConfig === "OPTIMAL_MEAN_EXTENDED_PARTITIONING"}
+                           type="radio" value="OPTIMAL_MEAN_EXTENDED_PARTITIONING"
+                           name="strat"/>
+                    <label htmlFor="optimalMeanExtendedPartitionRadio">Extended Partitioning (experimental - slow)</label>
                 </div>
             </div>
         </div>

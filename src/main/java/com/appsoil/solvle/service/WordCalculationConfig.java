@@ -97,6 +97,9 @@ public record  WordCalculationConfig (
     public static WordCalculationConfig OPTIMAL_MEAN =  new WordCalculationConfig(3, 8, 110, .007)
             .withFineTuning(1, 0, 0.0, 0.7);
 
+    public static WordCalculationConfig OPTIMAL_MEAN_EXTENDED_PARTITIONING =  new WordCalculationConfig(3, 8, 400, .0001)
+            .withFineTuning(1, 0, 0.0, 0.7);
+
     /**
      * Optimal mean but with partitioning disabled
      * {1=1, 2=56, 3=992, 4=1102, 5=155, 6=9}

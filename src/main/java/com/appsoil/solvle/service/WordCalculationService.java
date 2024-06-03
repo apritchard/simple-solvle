@@ -144,7 +144,7 @@ public class WordCalculationService {
     public Set<WordFrequencyScore> calculateViableWords(Set<Word> words, Map<Character, LongAdder> characterCounts, int viableWordsCount, int requiredCharCount, int sizeLimit, Map<Character, DoubleAdder> positionBonus) {
         return words.parallelStream()
                 .map(word -> new WordFrequencyScore(word.getOrder(), word.word(),
-                        calculateFreqScore(word, characterCounts, viableWordsCount, word.getLength() - requiredCharCount, positionBonus)))
+                        calculateFreqScore(word, characterCounts, viableWordsCount, word.getLength() - requiredCharCount, positionBonus), 0.0))
                 .sorted()
                 .limit(sizeLimit)
                 .collect(Collectors.toCollection(() -> new TreeSet<>()));
@@ -154,7 +154,7 @@ public class WordCalculationService {
                                                                   int requiredCharCount, int sizeLimit, WordRestrictions wordRestrictions, Map<Character, DoubleAdder> positionBonus) {
         return words.parallelStream()
                 .map(word -> new WordFrequencyScore(word.getOrder(), word.word(),
-                        calculateFreqScoreByPosition(word, characterCounts, containedWords, word.getLength() - requiredCharCount, wordRestrictions, positionBonus)))
+                        calculateFreqScoreByPosition(word, characterCounts, containedWords, word.getLength() - requiredCharCount, wordRestrictions, positionBonus), 0.0))
                 .sorted()
                 .limit(sizeLimit)
                 .collect(Collectors.toCollection(() -> new TreeSet<>()));
@@ -341,7 +341,7 @@ public class WordCalculationService {
     public Set<WordFrequencyScore> wordsByRemainingGuesses(WordRestrictions startingRestrictions, Set<Word> containedWords, Set<Word> wordPool) {
         if(containedWords.size() <= 2) {
             //50/50 shot either way, so don't bother calculating
-            return containedWords.stream().map(word -> new WordFrequencyScore(word.getOrder(), word.word(), 1.0 / containedWords.size())).collect(Collectors.toSet());
+            return containedWords.stream().map(word -> new WordFrequencyScore(word.getOrder(), word.word(), 1.0 / containedWords.size(), 1.0)).collect(Collectors.toSet());
         }
 
         Set<WordFrequencyScore> scores = new TreeSet<>();
@@ -359,7 +359,8 @@ public class WordCalculationService {
         statSummary.forEach((k, v) ->
                 scores.add(new WordFrequencyScore(k.getOrder(), k.word(),
                         ((1.0 - (v.getMean() / containedWords.size()))
-                                + (containedWords.contains(k) ? (viableWordPreference / (1 + startingRestrictions.letterPositions().keySet().size() * viableWordAdjustmentScale)) : 0))))); // add tiny bonus to viable words so they are prioritized
+                                + (containedWords.contains(k) ? (viableWordPreference / (1 + startingRestrictions.letterPositions().keySet().size() * viableWordAdjustmentScale)) : 0)),
+                        v.getMean()))); // add tiny bonus to viable words so they are prioritized
         return scores;
     }
 

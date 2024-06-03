@@ -5,6 +5,7 @@ public enum WordConfig {
     SIMPLE_WITH_PARTITIONING(WordCalculationConfig.SIMPLE_WITH_PARTITIONING),
     OPTIMAL_MEAN(WordCalculationConfig.OPTIMAL_MEAN_WITHOUT_PARTITIONING),
     OPTIMAL_MEAN_WITH_PARTITIONING(WordCalculationConfig.OPTIMAL_MEAN),
+    OPTIMAL_MEAN_EXTENDED_PARTITIONING(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING),
     TWO_OR_LESS(WordCalculationConfig.TWO_OR_LESS);
 
     public WordCalculationConfig config;

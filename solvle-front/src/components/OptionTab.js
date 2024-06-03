@@ -7,8 +7,11 @@ function OptionTab({wordList, onSelectWord, heading}) {
             <ol>
                 {[...wordList].slice(0, 100).map((item, index) => (
                     <li className="optionItem" key={item.word} value={index + 1}
-                        onClick={() => onSelectWord(item.word.toUpperCase())}>{item.word + " (" + (item.freqScore * 100).toFixed(0) + "%)"}</li>
+                        onClick={() => onSelectWord(item.word.toUpperCase())}>
+                        {item.word + " (" + (item.remaining > 0 ? item.remaining.toFixed(1) : (item.freqScore * 100).toFixed(0) + "%") + ")"}
+                    </li>
                 ))}
+
             </ol>
         </div>
     );

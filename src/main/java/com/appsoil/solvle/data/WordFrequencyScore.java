@@ -1,6 +1,6 @@
 package com.appsoil.solvle.data;
 
-public record WordFrequencyScore(int naturalOrdering, String word, double freqScore) implements Comparable<WordFrequencyScore> {
+public record WordFrequencyScore(int naturalOrdering, String word, double freqScore, double remaining) implements Comparable<WordFrequencyScore> {
     @Override
     public int compareTo(WordFrequencyScore other) {
         if (freqScore == other.freqScore) {
