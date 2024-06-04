@@ -197,6 +197,10 @@ nav h1 {
   border: 2px solid #d4bf59;
 }
 
+.rutDetected {
+  color: #3a393c;
+}
+
 .keyboardLine {
   flex: 33%;
   display: flex;

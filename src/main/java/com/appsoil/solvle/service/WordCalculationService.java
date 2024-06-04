@@ -1,5 +1,6 @@
 package com.appsoil.solvle.service;
 
+import com.appsoil.solvle.controller.KnownPositionDTO;
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.service.solvers.Solver;
 import jakarta.servlet.http.Part;
@@ -31,6 +32,7 @@ public class WordCalculationService {
     private final double vowelAdjustment;
     private final double rutBreakMultiplier;
     private final int rutBreakThreshold;
+    private final boolean hardMode;
 
     private static final Set<Character> vowels = Set.of('a', 'e', 'i', 'o', 'u');
 
@@ -46,6 +48,7 @@ public class WordCalculationService {
         this.vowelAdjustment = config.vowelMultiplier();
         this.rutBreakMultiplier = config.rutBreakMultiplier();
         this.rutBreakThreshold = config.rutBreakThreshold();
+        this.hardMode = config.hardMode();
     }
 
     /**
@@ -375,6 +378,7 @@ public class WordCalculationService {
     public PartitionStats getPartitionStatsForWord(WordRestrictions startingRestrictions, Set<Word> containedWords, Word word) {
         //find all unique sets of restrictions and count how many words they apply to
         Map<WordRestrictions, Integer> groups = new HashMap<>();
+        List<SharedPositions> ruts = new ArrayList<>();
         for(Word solution : containedWords) {
             groups.merge(WordRestrictions.generateRestrictions(solution, word, startingRestrictions), 1, Integer::sum);
         }
@@ -384,9 +388,22 @@ public class WordCalculationService {
             Set<Word> newWords = findMatchingWords(containedWords, group.getKey());
             remaining += newWords.size() * group.getValue();
             double probability = (double)group.getValue() / containedWords.size();
+            //in hard mode, exclude potential ruts if we can
+            if(hardMode && newWords.size() < 30 && newWords.size() > 3) { //@todo configure rut break entropy limit
+                SharedPositions sharedPositions = findSharedWordRestrictions(newWords);
+                if(sharedPositions.largestSet() > 5 || (sharedPositions.largestSet() > 3 && sharedPositions.largestSet() > ((double)newWords.size() * 0.5))) {
+//                    log.info("De-prioritizing {} because max rut {} in {} for rut {}", word, sharedPositions.largestSet(), newWords, sharedPositions.sortedPositionStream().toList());
+                    entropy += probability * (Math.log(probability) / Math.log(2));
+                    ruts.add(sharedPositions);
+                    continue;
+                }
+            }
             entropy -= probability * (Math.log(probability) / Math.log(2));
         };
-        return new PartitionStats(remaining / containedWords.size(), groups.size(), entropy);
+
+        List<String> rutDescriptions = ruts.stream().map(SharedPositions::getDescription).flatMap(List::stream).toList();
+
+        return new PartitionStats(remaining / containedWords.size(), groups.size(), entropy, rutDescriptions);
     }
 
     public Set<PlayOut> getWordsBySolveLength(Set<Word> containedWords, Set<Word> fishing, Set<Word> wordPool, Solver solver, WordRestrictions startingRestrictions, int guessNumber) {
@@ -445,7 +462,7 @@ public class WordCalculationService {
                 Word w1 = words[i];
                 Word w2 = words[j];
                 Map<Integer, Character> sharedPositions = findSharedPositions(w1, w2);
-                if(sharedPositions.isEmpty() || sharedPositions.keySet().size() < 3 || sharedPositions.keySet().size() == w1.getLength()) {
+                if(sharedPositions.isEmpty() || sharedPositions.keySet().size() < 4 || sharedPositions.keySet().size() == w1.getLength()) {
                     continue; //don't bother saving all the tiny matches or cases where the only match is the full word
                 }
                 KnownPosition knownPosition = new KnownPosition(sharedPositions);

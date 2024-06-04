@@ -10,7 +10,10 @@ function OptionTab({wordList, onSelectWord, heading, solutionList}) {
             <div>{heading}</div>
             <ol>
                 {[...wordList].slice(0, 100).map((item, index) => (
-                    <li className="optionItem" key={item.word} value={index + 1}
+                    <li className={`optionItem ${item.partitionStats?.ruts && item.partitionStats.ruts.length > 0 ? 'rutDetected' : ''}`}
+                        key={item.word}
+                        value={index + 1}
+                        title={item.partitionStats?.ruts && item.partitionStats.ruts.length > 0 ? `Potential Ruts Detected: ${item.partitionStats.ruts.join(', ')}` : ''}
                         onClick={() => onSelectWord(item.word.toUpperCase())}>
                         {solutionList?.some(x => x.word === item.word) ?
                             <strong>{item.word}</strong> :

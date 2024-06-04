@@ -24,19 +24,27 @@ public record SharedPositions(Map<KnownPosition, Set<Word>> knownPositions, Map<
             if(entry.getValue().isEmpty() || entry.getValue().size() < threshold) {
                 return null;
             }
-            //build the string description
-            int wordLength = entry.getValue().stream().findFirst().get().getLength();
-            StringBuilder sb = new StringBuilder();
-            Map<Integer, Character> pos = entry.getKey().pos();
-            for(int i = 1; i <= wordLength; i++) {
-                sb.append(pos.getOrDefault(i, '_'));
-            }
 
             //create a list of words
             Set<String> words = entry.getValue().stream().map(Word::word).collect(Collectors.toSet());
 
-            return new KnownPositionDTO(sb.toString(), words, recommendations == null ? new HashSet<>() : recommendations.get(entry.getKey()));
+            return new KnownPositionDTO(buildStringDescription(entry), words, recommendations == null ? new HashSet<>() : recommendations.get(entry.getKey()));
         }).filter(Objects::nonNull).toList();
+    }
+
+    public List<String> getDescription(){
+        return sortedPositionStream().map(SharedPositions::buildStringDescription).toList();
+    }
+
+    private static String buildStringDescription(Map.Entry<KnownPosition, Set<Word>> entry) {
+        //build the string description
+        int wordLength = entry.getValue().stream().findFirst().get().getLength();
+        StringBuilder sb = new StringBuilder();
+        Map<Integer, Character> pos = entry.getKey().pos();
+        for(int i = 1; i <= wordLength; i++) {
+            sb.append(pos.getOrDefault(i, '_'));
+        }
+        return sb.toString();
     }
 
     public Stream<Map.Entry<KnownPosition, Set<Word>>> sortedPositionStream() {

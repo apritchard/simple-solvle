@@ -110,7 +110,7 @@ public class FullDictionaryTest {
     @Test
     public void testConfig() {
         String firstWord = "";
-        WordCalculationConfig config = WordCalculationConfig.FOUR_OR_LESS;
+        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(true);
         addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE));
     }
 
@@ -212,10 +212,10 @@ public class FullDictionaryTest {
 
     @Test
     public void compareStandardConfigs() {
-        String firstWord = "".toLowerCase();
+        String firstWord = "salet".toLowerCase();
         Arrays.stream(WordConfig.values()).forEach((config) -> {
             log.info("Running " + config.toString());
-            WordCalculationConfig c = config.config.withHardMode(false);
+            WordCalculationConfig c = config.config.withHardMode(true);
             addStats(c, solvleService.solveDictionary(new RemainingSolver(solvleService, c), firstWord, c, DictionaryType.SIMPLE));
         });
     }
