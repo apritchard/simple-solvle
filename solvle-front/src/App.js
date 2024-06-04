@@ -43,6 +43,7 @@ function App() {
                 hardMode: localStorage.getItem("hardMode") === 'true',
                 usePartitioning: localStorage.getItem("usePartitioning") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
+                displayEntropy: localStorage.getItem("displayEntropy") === 'true',
                 wordConfig: localStorage.getItem("wordConfig") || "SIMPLE",
                 dictionary: localStorage.getItem("dictionary") || "SIMPLE"
             },

@@ -2,6 +2,7 @@ package com.appsoil.solvle.service;
 
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.service.solvers.Solver;
+import jakarta.servlet.http.Part;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -144,7 +145,7 @@ public class WordCalculationService {
     public Set<WordFrequencyScore> calculateViableWords(Set<Word> words, Map<Character, LongAdder> characterCounts, int viableWordsCount, int requiredCharCount, int sizeLimit, Map<Character, DoubleAdder> positionBonus) {
         return words.parallelStream()
                 .map(word -> new WordFrequencyScore(word.getOrder(), word.word(),
-                        calculateFreqScore(word, characterCounts, viableWordsCount, word.getLength() - requiredCharCount, positionBonus), 0.0))
+                        calculateFreqScore(word, characterCounts, viableWordsCount, word.getLength() - requiredCharCount, positionBonus), null))
                 .sorted()
                 .limit(sizeLimit)
                 .collect(Collectors.toCollection(() -> new TreeSet<>()));
@@ -154,7 +155,7 @@ public class WordCalculationService {
                                                                   int requiredCharCount, int sizeLimit, WordRestrictions wordRestrictions, Map<Character, DoubleAdder> positionBonus) {
         return words.parallelStream()
                 .map(word -> new WordFrequencyScore(word.getOrder(), word.word(),
-                        calculateFreqScoreByPosition(word, characterCounts, containedWords, word.getLength() - requiredCharCount, wordRestrictions, positionBonus), 0.0))
+                        calculateFreqScoreByPosition(word, characterCounts, containedWords, word.getLength() - requiredCharCount, wordRestrictions, positionBonus), null))
                 .sorted()
                 .limit(sizeLimit)
                 .collect(Collectors.toCollection(() -> new TreeSet<>()));
@@ -341,26 +342,26 @@ public class WordCalculationService {
     public Set<WordFrequencyScore> wordsByRemainingGuesses(WordRestrictions startingRestrictions, Set<Word> containedWords, Set<Word> wordPool) {
         if(containedWords.size() <= 2) {
             //50/50 shot either way, so don't bother calculating
-            return containedWords.stream().map(word -> new WordFrequencyScore(word.getOrder(), word.word(), 1.0 / containedWords.size(), 1.0)).collect(Collectors.toSet());
+            return containedWords.stream().map(word -> new WordFrequencyScore(word.getOrder(), word.word(), 1.0 / containedWords.size(), PartitionStats.getBlank())).collect(Collectors.toSet());
         }
 
         Set<WordFrequencyScore> scores = new TreeSet<>();
-        Map<Word, DescriptiveStatistics> statSummary = new ConcurrentHashMap<>();
+        Map<Word, PartitionStats> statSummary = new ConcurrentHashMap<>();
 
         //for each word in the pool, create a new wordRequirements as if that word had been picked for each solution
         //  then calculate how many remaining words are left and average the results
         wordPool.parallelStream().forEach(word -> {
-            DescriptiveStatistics stats = getPartitionStatsForWord(startingRestrictions, containedWords, word);
+            PartitionStats stats = getPartitionStatsForWord(startingRestrictions, containedWords, word);
             if(stats != null ) {
                 statSummary.put(word, stats);
             }
         });
 
-        statSummary.forEach((k, v) ->
-                scores.add(new WordFrequencyScore(k.getOrder(), k.word(),
-                        ((1.0 - (v.getMean() / containedWords.size()))
-                                + (containedWords.contains(k) ? (viableWordPreference / (1 + startingRestrictions.letterPositions().keySet().size() * viableWordAdjustmentScale)) : 0)),
-                        v.getMean()))); // add tiny bonus to viable words so they are prioritized
+        statSummary.forEach((word, partitionStats) ->
+                scores.add(new WordFrequencyScore(word.getOrder(), word.word(),
+                        ((1.0 - (partitionStats.wordsRemaining() / containedWords.size()))
+                                + (containedWords.contains(word) ? (viableWordPreference / (1 + startingRestrictions.letterPositions().keySet().size() * viableWordAdjustmentScale)) : 0)),
+                        partitionStats))); // add tiny bonus to viable words so they are prioritized
         return scores;
     }
 
@@ -371,19 +372,21 @@ public class WordCalculationService {
      * @param word The word to be evaluated
      * @return A stats object populated with the counts of all the potential new words list
      */
-    public DescriptiveStatistics getPartitionStatsForWord(WordRestrictions startingRestrictions, Set<Word> containedWords, Word word) {
-        DescriptiveStatistics stats = null;
+    public PartitionStats getPartitionStatsForWord(WordRestrictions startingRestrictions, Set<Word> containedWords, Word word) {
+        //find all unique sets of restrictions and count how many words they apply to
+        Map<WordRestrictions, Integer> groups = new HashMap<>();
         for(Word solution : containedWords) {
-            WordRestrictions newRestrictions = WordRestrictions.generateRestrictions(solution, word, startingRestrictions);
-            Set<Word> newWords = findMatchingWords(containedWords, newRestrictions);
-            if(!newWords.isEmpty()) {
-                if(stats == null) {
-                    stats = new DescriptiveStatistics();
-                }
-                stats.addValue(newWords.size());
-            }
+            groups.merge(WordRestrictions.generateRestrictions(solution, word, startingRestrictions), 1, Integer::sum);
         }
-        return stats;
+        double remaining = 0.0;
+        double entropy = 0.0;
+        for(Map.Entry<WordRestrictions, Integer> group : groups.entrySet()) {
+            Set<Word> newWords = findMatchingWords(containedWords, group.getKey());
+            remaining += newWords.size() * group.getValue();
+            double probability = (double)group.getValue() / containedWords.size();
+            entropy -= probability * (Math.log(probability) / Math.log(2));
+        };
+        return new PartitionStats(remaining / containedWords.size(), groups.size(), entropy);
     }
 
     public Set<PlayOut> getWordsBySolveLength(Set<Word> containedWords, Set<Word> fishing, Set<Word> wordPool, Solver solver, WordRestrictions startingRestrictions, int guessNumber) {

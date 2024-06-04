@@ -1,6 +1,10 @@
-import React from 'react';
+import React, {useContext} from 'react';
+import AppContext from "../contexts/contexts";
 
-function OptionTab({wordList, onSelectWord, heading}) {
+function OptionTab({wordList, onSelectWord, heading, solutionList}) {
+    const {
+        boardState,
+    } = useContext(AppContext);
     return (
         <div>
             <div>{heading}</div>
@@ -8,7 +12,19 @@ function OptionTab({wordList, onSelectWord, heading}) {
                 {[...wordList].slice(0, 100).map((item, index) => (
                     <li className="optionItem" key={item.word} value={index + 1}
                         onClick={() => onSelectWord(item.word.toUpperCase())}>
-                        {item.word + " (" + (item.remaining > 0 ? item.remaining.toFixed(1) : (item.freqScore * 100).toFixed(0) + "%") + ")"}
+                        {solutionList?.some(x => x.word === item.word) ?
+                            <strong>{item.word}</strong> :
+                            item.word
+                        }
+                        {" ("}
+                        {item.partitionStats?.wordsRemaining > 0 ?
+                            boardState.settings.displayEntropy ?
+                                item.partitionStats.entropy.toFixed(2) :
+                                item.partitionStats.wordsRemaining.toFixed(1)
+                            :
+                            (item.freqScore * 100).toFixed(0) + "%"
+                        }
+                        {")"}
                     </li>
                 ))}
 

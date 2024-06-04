@@ -67,14 +67,14 @@ function Options(props) {
                 </Tab>
                 <Tab eventKey="fishing" title="Fish🐟" tabClassName="fishingTab" tabAttrs={{title:"Words that maximize revealing new letters based on their frequency in the viable word set. Includes non-viable solutions."}}>
                     {loading && <div>Loading...<Spinner animation="border" role="status" /> </div>}
-                    {!loading && <OptionTab wordList={currentOptions.fishingWords} onSelectWord={onSelectWord}
+                    {!loading && <OptionTab wordList={currentOptions.fishingWords} onSelectWord={onSelectWord} solutionList={currentOptions.wordList}
                                heading={"Fishing Words"}/> }
                 </Tab>
                 { boardState.settings.usePartitioning && currentOptions.bestWords !== null &&
                     <Tab eventKey="Remain" title="Cut✂" tabClassName="remTab" tabAttrs={{title:"Words that leave the fewest remaining choices."}}>
                     {loading && <div>Loading...<Spinner animation="border" role="status" /> </div>}
-                    {!loading && <OptionTab wordList={currentOptions.bestWords} onSelectWord={onSelectWord}
-                               heading={currentOptions.bestWords.length <= 0 ? "Too many viable words " : "Minimize Remaining"}/> }
+                    {!loading && <OptionTab wordList={currentOptions.bestWords} onSelectWord={onSelectWord} solutionList={currentOptions.wordList}
+                               heading={currentOptions.bestWords.length <= 0 ? "Too many viable words " : "Optimize Entropy"}/> }
                 </Tab> }
 
                 { (!boardState.settings.usePartitioning || currentOptions.bestWords === null) &&

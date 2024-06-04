@@ -1,8 +1,13 @@
 package com.appsoil.solvle.data;
 
-public record WordFrequencyScore(int naturalOrdering, String word, double freqScore, double remaining) implements Comparable<WordFrequencyScore> {
+public record WordFrequencyScore(int naturalOrdering, String word, double freqScore, PartitionStats partitionStats) implements Comparable<WordFrequencyScore> {
     @Override
     public int compareTo(WordFrequencyScore other) {
+        if(partitionStats != null && other.partitionStats != null) {
+            if(partitionStats.entropy() != other.partitionStats().entropy()) {
+                return Double.compare(other.partitionStats().entropy(), partitionStats().entropy());
+            }
+        }
         if (freqScore == other.freqScore) {
             return naturalOrdering - other.naturalOrdering;
         } else {

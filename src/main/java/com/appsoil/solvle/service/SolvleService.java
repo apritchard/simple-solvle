@@ -36,7 +36,7 @@ public class SolvleService {
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
 
-    private Map<DictionaryType, Map<Word, Double>> firstPartitionData = new ConcurrentHashMap<>();
+    private Map<DictionaryType, Map<Word, PartitionStats>> firstPartitionData = new ConcurrentHashMap<>();
 
     public SolvleService(Map<DictionaryType, Dictionary> dictionaries) {
         this.dictionaries = dictionaries;
@@ -47,29 +47,6 @@ public class SolvleService {
         log.info(name + " took " + Duration.between(start, LocalDateTime.now()));
     }
 
-    @Async
-    public CompletableFuture<Void> preloadPartitionData() {
-        return CompletableFuture.runAsync(() -> {
-            Stream.of(DictionaryType.SIMPLE).forEach(wordList -> {
-                Map<Word, Double> partitionData = new ConcurrentHashMap<>();
-                firstPartitionData.put(wordList, partitionData);
-                Set<Word> wordSet = getPrimarySet(wordList);
-                Set<Word> fishingSet = getFishingSet(wordList);
-                LocalDateTime start = LocalDateTime.now();
-                AtomicInteger i = new AtomicInteger(0);
-                fishingSet.parallelStream().forEach(word -> {
-                    WordCalculationService wordCalculationService = new WordCalculationService(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING.config);
-                    Double stats = wordCalculationService.getPartitionStatsForWord(WordRestrictions.NO_RESTRICTIONS, wordSet, word).getMean();
-                    partitionData.put(word, stats);
-                    int wordCount = i.incrementAndGet();
-                    if (wordCount % 100 == 0) {
-                        timestamp(wordList + " preloaded " + wordCount + " words", start);
-                    }
-                });
-                timestamp(wordList + " finished", start);
-            });
-        });
-    }
 
     @Cacheable("validWords")
     public SolvleDTO getWordAnalysis(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
@@ -133,13 +110,13 @@ public class SolvleService {
 
             wordFrequencyScores = wordCalculationService
                     .calculateViableWords(containedWords, characterCounts, containedWords.size(), 0, MAX_RESULT_LIST_SIZE, sharedPositionBonus);
-            fishingWordScores = containedWords.size() < 1 ? new HashSet<>() : wordCalculationService
+            fishingWordScores = containedWords.isEmpty() ? new HashSet<>() : wordCalculationService
                     .calculateFishingWords(fishingSet, characterCounts, containedWords.size(), FISHING_WORD_SIZE, wordRestrictions.requiredLetters(), sharedPositionBonus);
         } else {
             Map<Integer, Map<Character, LongAdder>> positionalCharCounts = wordCalculationService.calculateCharacterCountsByPosition(containedWords);
             wordFrequencyScores = wordCalculationService
                     .calculateViableWordsByPosition(containedWords, positionalCharCounts, containedWords, 0, MAX_RESULT_LIST_SIZE, wordRestrictions, sharedPositionBonus);
-            fishingWordScores = containedWords.size() < 1 ? new HashSet<>() : wordCalculationService
+            fishingWordScores = containedWords.isEmpty() ? new HashSet<>() : wordCalculationService
                     .calculateFishingWordsByPosition(fishingSet, positionalCharCounts, containedWords, FISHING_WORD_SIZE, wordRestrictions, sharedPositionBonus);
 
             //merge positional char counts for use in the DTO
@@ -220,7 +197,6 @@ public class SolvleService {
         Set<Word> containedWords = wordCalculationService.findMatchingWords(wordSet, wordRestrictions);
 
         double score;
-        double remaining;
         // generate a per-character bonus score based on their frequency in the shared position sets
         Map<Character, DoubleAdder> sharedPositionBonus = new HashMap<>();
         if(wordCalculationConfig.rutBreakThreshold() > 1 && wordCalculationConfig.rutBreakMultiplier() > 0 && containedWords.size() < SHARED_POSITION_LIMIT) {
@@ -243,14 +219,23 @@ public class SolvleService {
                     );
         }
 
-        if(wordRestrictions.equals(WordRestrictions.NO_RESTRICTIONS) && firstPartitionData.containsKey(wordList) && firstPartitionData.get(wordList).containsKey(word)){
+        PartitionStats stats;
+        if(wordRestrictions.equals(WordRestrictions.NO_RESTRICTIONS)) {
             log.info("No restrictions - using cached partition data");
-            remaining = firstPartitionData.get(wordList).get(word);
+            if (firstPartitionData.containsKey(wordList) && firstPartitionData.get(wordList).containsKey(word)) {
+                stats = firstPartitionData.get(wordList).get(word);
+            } else {
+                stats = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word);
+                if(!firstPartitionData.containsKey(wordList)) {
+                    firstPartitionData.put(wordList, new ConcurrentHashMap<>());
+                }
+                firstPartitionData.get(wordList).put(word, stats);
+            }
         } else {
-            remaining = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word).getMean();
+            stats = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word);
         }
 
-       return new WordScoreDTO(remaining, score);
+       return new WordScoreDTO(stats.wordsRemaining(), score, stats.entropy());
     }
 
     /**
@@ -334,7 +319,11 @@ public class SolvleService {
 
         if(firstWord == null || firstWord.isBlank()) {
             SolvleDTO guess = getWordAnalysis(WordRestrictions.noRestrictions(), words, getFishingSet(wordList), wordCalculationConfig);
-            firstWord = guess.fishingWords().stream().findFirst().get().word();
+            if(guess.bestWords() != null && !guess.bestWords().isEmpty()) {
+                firstWord = guess.bestWords().stream().findFirst().get().word();
+            } else {
+                firstWord = guess.fishingWords().stream().findFirst().get().word();
+            }
         }
 
         final String startingWord = firstWord;

@@ -212,10 +212,11 @@ public class FullDictionaryTest {
 
     @Test
     public void compareStandardConfigs() {
-        String firstWord = "";
+        String firstWord = "".toLowerCase();
         Arrays.stream(WordConfig.values()).forEach((config) -> {
             log.info("Running " + config.toString());
-            addStats(config.config, solvleService.solveDictionary(new RemainingSolver(solvleService, config.config), firstWord, config.config, DictionaryType.SIMPLE));
+            WordCalculationConfig c = config.config.withHardMode(false);
+            addStats(c, solvleService.solveDictionary(new RemainingSolver(solvleService, c), firstWord, c, DictionaryType.SIMPLE));
         });
     }
 

@@ -2957,4 +2957,4 @@ yrðum
 þýddi
 þýska
 þýtur
-þýðirF
+þýðir
