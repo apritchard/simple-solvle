@@ -110,8 +110,17 @@ public class FullDictionaryTest {
     @Test
     public void testConfig() {
         String firstWord = "";
-        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(true);
+        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false);
         addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE));
+    }
+
+    @Test
+    public void testWords() {
+        List<String> words = List.of("TARSE", "SALET", "REAST", "SLATE", "CRATE", "TRACE", "CARLE", "TORSE");
+        for(String firstWord : words) {
+            WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false);
+            addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord.toLowerCase(), config, DictionaryType.SIMPLE));
+        }
     }
 
     @ParameterizedTest
@@ -212,18 +221,18 @@ public class FullDictionaryTest {
 
     @Test
     public void compareStandardConfigs() {
-        String firstWord = "salet".toLowerCase();
+        String firstWord = "".toLowerCase();
         Arrays.stream(WordConfig.values()).forEach((config) -> {
             log.info("Running " + config.toString());
-            WordCalculationConfig c = config.config.withHardMode(true);
+            WordCalculationConfig c = config.config.withHardMode(false);
             addStats(c, solvleService.solveDictionary(new RemainingSolver(solvleService, c), firstWord, c, DictionaryType.SIMPLE));
         });
     }
 
     @Test
     public void playOut() {
-        WordConfig config = WordConfig.OPTIMAL_MEAN;
-        String wordRestrictions = "bcde!5fghijklmnopquvwxyz";
+        WordConfig config = WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING;
+        String wordRestrictions = "aáäbcdðeéfghiíjklmnñoópqrsßtuúüvwxyýzþæö";
         log.info("Playout requested with configuration {}", config);
         Set<PlayOut> result = solvleService.playOutSolutions(wordRestrictions.toLowerCase(), DictionaryType.SIMPLE, config, false, 2);
         log.info(result);
