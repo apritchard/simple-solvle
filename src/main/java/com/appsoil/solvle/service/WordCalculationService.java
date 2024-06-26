@@ -391,10 +391,14 @@ public class WordCalculationService {
             //in hard mode, exclude potential ruts if we can
             if(hardMode && newWords.size() < 30 && newWords.size() > 3) { //@todo configure rut break entropy limit
                 SharedPositions sharedPositions = findSharedWordRestrictions(newWords);
-                if(sharedPositions.largestSet() > 5 || (sharedPositions.largestSet() > 3 && sharedPositions.largestSet() > ((double)newWords.size() * 0.5))) {
-//                    log.info("De-prioritizing {} because max rut {} in {} for rut {}", word, sharedPositions.largestSet(), newWords, sharedPositions.sortedPositionStream().toList());
+                double sharedPositionSizeLimit = Math.min(5, Math.max(3, ((double)newWords.size() * 0.5)));
+                if(sharedPositions.largestSet() > sharedPositionSizeLimit) {
+                    //log.info("De-prioritizing {} because max rut {} in {} for rut {}", word, sharedPositions.largestSet(), newWords, sharedPositions.sortedPositionStream().toList());
                     entropy += probability * (Math.log(probability) / Math.log(2));
-                    ruts.add(sharedPositions);
+                    SharedPositions filteredPositions = new SharedPositions(sharedPositions.knownPositions().entrySet().stream()
+                            .filter(entry -> entry.getValue().size() > sharedPositionSizeLimit)
+                            .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())));
+                    ruts.add(filteredPositions);
                     continue;
                 }
             }
