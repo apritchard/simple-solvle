@@ -151,13 +151,13 @@ function RateMyGame(props) {
             const luck = Math.round(rateData?.rows[index]?.luck * 100).toString().padStart(3, ' ');
             const fish = Math.round(rateData?.rows[index]?.heuristic * 100).toString().padStart(3, ' ');
             return `${coloredGuess} (${remaining}) L:${luck} S✂:${skill} S🐟:${fish}`;
-        }).join('\n');
+        }).join('  \n');
 
 
 
-        clipboardText += `Luck: ${Math.round(rateData.luck * 100)} Skill✂: ${Math.round(rateData.skill * 100)} Skill🐟: ${Math.round(rateData.heuristic * 100)} \n`;
+        clipboardText += `  \nLuck: ${Math.round(rateData.luck * 100)} Skill✂: ${Math.round(rateData.skill * 100)} Skill🐟: ${Math.round(rateData.heuristic * 100)}  \n`;
         clipboardText += calculateRating(rateData);
-        clipboardText += "\nhttps://solvle.appsoil.com";
+        clipboardText += "  \nhttps://solvle.appsoil.com";
 
         navigator.clipboard.writeText(clipboardText).then(() => {
             console.log(clipboardText);
