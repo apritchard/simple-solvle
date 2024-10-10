@@ -5,12 +5,15 @@ public record WordFrequencyScore(int naturalOrdering, String word, double freqSc
     public int compareTo(WordFrequencyScore other) {
         if(partitionStats != null && other.partitionStats != null) {
             if(partitionStats.entropy() != other.partitionStats().entropy()) {
+                //return Double.compare(partitionStats().entropy(), other.partitionStats().entropy()); //reverse
                 return Double.compare(other.partitionStats().entropy(), partitionStats().entropy());
             }
         }
         if (freqScore == other.freqScore) {
+            //return other.naturalOrdering - naturalOrdering; //reverse
             return naturalOrdering - other.naturalOrdering;
         } else {
+            //return Double.compare(freqScore, other.freqScore); //reverse
             return Double.compare(other.freqScore, freqScore);
         }
     }

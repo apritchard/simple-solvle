@@ -59,10 +59,10 @@ public class RemainingSolver implements Solver {
         }
         // partition until we are below the fishing threshold as long as there are words in the partition set
         if(analysis.totalWords() > config.fishingThreshold() && analysis.bestWords()!= null && !analysis.bestWords().isEmpty()) {
-            return analysis.bestWords().stream().findFirst().get();
+            return analysis.bestWords().stream().filter(word -> !solution.contains(word.word())).findFirst().get();
         }
         if(analysis.totalWords() > 0) {
-            return analysis.wordList().stream().findFirst().get();
+            return analysis.wordList().stream().filter(word -> !solution.contains(word.word())).findFirst().get();
         }
         return null;
     }

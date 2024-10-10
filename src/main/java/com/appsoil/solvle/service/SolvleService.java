@@ -156,6 +156,7 @@ public class SolvleService {
         WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
         Word solutionWord = new Word(solution);
         List<String> currentGuesses = new ArrayList<>();
+        int previousRemaining = wordSet.size();
 
         for(String guess : guesses) {
             log.info("Evaluating " + guess);
@@ -173,8 +174,9 @@ public class SolvleService {
             int actualRemaining = newWords.size();
 
             log.info("Adding scores: {}:{} {}:{} actualRemaining:{}", guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining );
-            gameScoreDTO.addRow(guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining, analysis.fishingWords().stream().findFirst().get());
+            gameScoreDTO.addRow(guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining, previousRemaining, analysis.fishingWords().stream().findFirst().get());
             currentGuesses.add(guess); //to make sure Solvle doesn't guess an already chosen word
+            previousRemaining = actualRemaining;
         }
 
         return gameScoreDTO;

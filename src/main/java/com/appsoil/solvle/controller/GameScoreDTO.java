@@ -25,12 +25,19 @@ public class GameScoreDTO {
     private DescriptiveStatistics luckStats = new DescriptiveStatistics();
     private DescriptiveStatistics heuristicStats = new DescriptiveStatistics();
 
-    public void addRow(String playerWord, WordScoreDTO playerScore, String solvleWord, WordScoreDTO solvleScore, int actualRemaining, WordFrequencyScore bestFishing) {
+    public void addRow(String playerWord, WordScoreDTO playerScore, String solvleWord, WordScoreDTO solvleScore, int actualRemaining, int previousRemaining, WordFrequencyScore bestFishing) {
         double skill, luck, heuristic;
         if (playerScore.remainingWords() <= 0) {
             skill = 1;
             heuristic = 1;
             luck = 0;
+        } else if (actualRemaining == previousRemaining) {
+            skill = 0.01;
+            heuristic = 0.01;
+            luck = .5;
+            skillStats.addValue(skill);
+            luckStats.addValue(luck);
+            heuristicStats.addValue(heuristic);
         } else {
             skill = solvleScore.remainingWords() / playerScore.remainingWords();
             heuristic = bestFishing.freqScore() > 0 ? playerScore.fishingScore() /  bestFishing.freqScore() : 1.0;

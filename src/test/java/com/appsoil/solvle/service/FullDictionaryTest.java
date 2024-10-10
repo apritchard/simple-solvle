@@ -255,6 +255,16 @@ public class FullDictionaryTest {
         });
     }
 
+
+    @Test
+    public void findAnalysis() {
+        WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
+        var out = solvleService.getWordAnalysis(restrictions, DictionaryType.SIMPLE, WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING, false);
+        log.info("Words: " + out.wordList());
+        log.info("Fish: " + out.fishingWords());
+        log.info("Partition: " + out.bestWords());
+    }
+
     private static String formatKnownPosition(KnownPosition kp, int wordLength) {
         String out = "";
         for(int i = 0; i < wordLength; i++) {
