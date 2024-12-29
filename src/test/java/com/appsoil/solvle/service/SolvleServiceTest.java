@@ -196,4 +196,38 @@ public class SolvleServiceTest {
         Assertions.assertEquals(expectedResults, results);
     }
 
+    @ParameterizedTest
+    @CsvSource(value = {
+            "aaaaa | aaaaa | 5",  // Five A's in both - should find all five
+            "aaaaa | aaaab | 4",  // Five A's in solution, four in guess - should find four
+            "aaaab | aaaaa | 4",  // Four A's in solution, five in guess - should find four
+            "aabcd | aaaaa | 2",  // Two A's in solution, five in guess - should find two
+            "abcde | aaaaa | 1"   // One A in solution, five in guess - should find one
+    }, delimiter = '|')
+    void generateRestrictionsFromGuess_multipleLetters_correctMinimumFrequency(String solution, String guess, int expectedAFrequency) {
+        WordRestrictions restrictions = new WordRestrictions("abcdefghijklmnopqrstuvwxyz");
+
+        Word s = new Word(solution);
+        Word g = new Word(guess);
+
+        WordRestrictions newRestrictions = WordRestrictions.generateRestrictions(s, g, restrictions);
+
+        Assertions.assertEquals(expectedAFrequency, newRestrictions.minimumLetterFrequencies().getOrDefault('a', 0));
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "a^5bcde | aaaaa",                                  // Exactly 5 A's
+            "a^4bcde | aaaaa,aaaab",                            // At least 4 A's
+            "a^3bcde | aaaaa,aaaab,aaabc",                      // At least 3 A's
+            "a^2bcde | aaaaa,aaaab,aaabc,aabcd",                // At least 2 A's
+            "a^1bcde | aaaaa,aaaab,aaabc,aabcd,abcde,bcdea"     // At least 1 A
+    }, delimiter = '|')
+    void getWordAnalysis_letterFrequency_matchesWords(String restrictionString, String matches) {
+        Set<String> expectedWords = Arrays.stream(matches.split(",")).filter(s -> !s.equals("none")).collect(Collectors.toSet());
+        SolvleDTO result = solvleService.getWordAnalysis(restrictionString, DictionaryType.SIMPLE, config, hardMode);
+
+        Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
+    }
+
 }

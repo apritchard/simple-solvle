@@ -1,9 +1,7 @@
 package com.appsoil.solvle.service;
 
-import com.appsoil.solvle.controller.KnownPositionDTO;
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.service.solvers.Solver;
-import jakarta.servlet.http.Part;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,6 +87,13 @@ public class WordCalculationService {
                 return false;
             }
         }
+
+        //check minimum letter frequencies
+        for (Map.Entry<Character, Integer> entry : wordRestrictions.minimumLetterFrequencies().entrySet()) {
+            if (word.letters().getOrDefault(entry.getKey(), 0) < entry.getValue()) {
+                return false;
+            }
+        }        
 
         //then check if all letters in this word are available in the restrictions
         return wordRestrictions.word().letters().keySet().containsAll(word.letters().keySet());

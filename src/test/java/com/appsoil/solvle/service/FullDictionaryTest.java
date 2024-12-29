@@ -248,7 +248,7 @@ public class FullDictionaryTest {
         Word allLetters = new Word("aáäbcdðeéfghiíjklmnñoópqrsßtuúüvwxyýzþæö");
         out.sortedPositionStream().forEach(es -> {
             if(es.getKey().getShared() > 2 && es.getValue().size() > 5) { // && notEndInS(es.getKey(), wordLength) && notEndinEd(es.getKey(), wordLength) && notEndinIng(es.getKey(), wordLength) ) {
-                WordRestrictions restrictions = new WordRestrictions(allLetters, new HashSet<>(es.getKey().pos().values()), es.getKey().pos(), new HashMap<>());
+                WordRestrictions restrictions = new WordRestrictions(allLetters, new HashSet<>(es.getKey().pos().values()), es.getKey().pos(), new HashMap<>(), new HashMap<>());
                 SolvleDTO solution = solvleService.getWordAnalysis(restrictions, dictionary, WordConfig.OPTIMAL_MEAN, false);
                 log.warn("{} {} Words: {} \n{} Recommended: {}", es.getKey(), es.getValue().size(), es.getValue(), formatKnownPosition(es.getKey(), wordLength), solution.bestWords().stream().limit(5).map(WordFrequencyScore::word).collect(Collectors.toSet()));
             }

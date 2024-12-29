@@ -11,11 +11,14 @@ import java.util.regex.Pattern;
 public record WordRestrictions(Word word,
                                Set<Character> requiredLetters,
                                Map<Integer, Character> letterPositions,
-                               Map<Integer, Set<Character>> positionExclusions)  {
+                               Map<Integer, Set<Character>> positionExclusions,
+                               Map<Character, Integer> minimumLetterFrequencies)  {
 
     //parses a string of letters. Letters may be followed by numbers, an exclamation mark, or both
     // for example abc3d!e!45fg5!2 will be parsed into (a)(b)(c3)(d!)(e!45)(f)(g5!2)
-    private static Pattern restrictionsRegex = Pattern.compile("(\\S)(\\d*)(\\!\\d*)*");
+    // - e^2!45 -> e must appear at least twice, but not in positions 4 or 5
+    // - g5^2!2 -> g must be in position 5, appear at least twice, and not in position 2
+    private static Pattern restrictionsRegex = Pattern.compile("(\\S)(\\d*)(\\^\\d+)?(\\!\\d*)*");
 
     private static int MAX_WORD_LENGTH = 9;
 
@@ -38,6 +41,7 @@ public record WordRestrictions(Word word,
         this(new Word(word.replaceAll("[^\\p{L}]", ""), 0),
                 new HashSet<>(MAX_WORD_LENGTH),
                 new HashMap<>(MAX_WORD_LENGTH),
+                new HashMap<>(MAX_WORD_LENGTH),
                 new HashMap<>(MAX_WORD_LENGTH));
 
         log.debug("Parsing restriction characters " + word);
@@ -46,9 +50,10 @@ public record WordRestrictions(Word word,
         while(matcher.find()) {
             char c = matcher.group(1).charAt(0);
             boolean hasPos = matcher.group(2) != null && matcher.group(2) != "";
-            boolean required = matcher.group(3) != null && matcher.group(3) != "";
+            boolean hasFreq = matcher.group(3) != null && matcher.group(3) != "";
+            boolean required = matcher.group(4) != null && matcher.group(4) != "";
 
-            if(required || hasPos) {
+            if(required || hasPos || hasFreq) {
                 requiredLetters.add(c);
             }
             if(hasPos) {
@@ -56,15 +61,20 @@ public record WordRestrictions(Word word,
                     letterPositions.put(pos, c);
                 });
             }
+            if(hasFreq) {
+                int freq = Integer.parseInt(matcher.group(3).substring(1));
+                minimumLetterFrequencies.put(c, freq);
+            }
             //if we have position numbers after the '!', add those to the position exclusions map
             if(required) {
-                matcher.group(3).chars().mapToObj(i -> Character.getNumericValue(i)).skip(1).forEach(pos -> {
+                matcher.group(4).chars().mapToObj(i -> Character.getNumericValue(i)).skip(1).forEach(pos -> {
                     if(!positionExclusions.containsKey(pos)) {
                         positionExclusions.put(pos, new HashSet<>());
                     }
                     positionExclusions.get(pos).add(c);
                 });
             }
+            log.debug("Final minimumLetterFrequencies: {}", minimumLetterFrequencies);
         }
     }
 
@@ -77,7 +87,7 @@ public record WordRestrictions(Word word,
     public WordRestrictions withAdditionalLetterPositions(Map<Integer, Character> letterPositions) {
         Set<Character> newRequiredLetters = new HashSet<>(requiredLetters);
         newRequiredLetters.addAll(letterPositions.values());
-        return new WordRestrictions(word, newRequiredLetters, letterPositions, positionExclusions);
+        return new WordRestrictions(word, newRequiredLetters, letterPositions, positionExclusions, minimumLetterFrequencies);
     }
 
     public static WordRestrictions noRestrictions() {
@@ -88,6 +98,7 @@ public record WordRestrictions(Word word,
 
         String restrictionWord = currentRestrictions.word().word();
         Set<Character> newRequiredLetters = new HashSet<>(currentRestrictions.requiredLetters());
+        Map<Character, Integer> newMinimumLetterFrequencies = new HashMap<>(currentRestrictions.minimumLetterFrequencies());
 
         Map<Integer, Character> newLetterPositions = new HashMap<>();
         currentRestrictions.letterPositions().forEach((pos, c) -> newLetterPositions.put(pos, c));
@@ -98,18 +109,18 @@ public record WordRestrictions(Word word,
             currentRestrictions.positionExclusions.get(pos).forEach(c -> newCs.add(c));
             newPositionExclusions.put(pos, newCs);
         });
-
+        
         for(int i = 0; i < guess.getLength(); i++) {
             char c = guess.word().charAt(i);
 
             //if solution contains this letter, add it to required, otherwise remove it from the available chars
             if(solution.letters().containsKey(c)) {
                 newRequiredLetters.add(c);
+                newMinimumLetterFrequencies.put(c, Math.min(solution.letters().get(c), guess.letters().get(c)));
             } else {
                 restrictionWord = restrictionWord.replace("" + c, "");
                 continue;
             }
-
             // if the letter is in the correct spot, put it in solutions, otherwise, exclude this position
             if(c == solution.word().charAt(i)) {
                 newLetterPositions.put(i + 1, c);
@@ -119,6 +130,6 @@ public record WordRestrictions(Word word,
             }
         }
 
-        return new WordRestrictions(new Word(restrictionWord), newRequiredLetters, newLetterPositions, newPositionExclusions);
+        return new WordRestrictions(new Word(restrictionWord), newRequiredLetters, newLetterPositions, newPositionExclusions, newMinimumLetterFrequencies);
     }
 }
