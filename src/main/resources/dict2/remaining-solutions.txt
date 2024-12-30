@@ -853,7 +853,6 @@ stack
 stalk
 stamp
 stank
-stare
 stave
 steak
 steal
