@@ -110,7 +110,7 @@ public class FullDictionaryTest {
     @Test
     public void testConfig() {
         String firstWord = "";
-        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false);
+        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false).withRequireAnswer(true);
         addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord.toLowerCase(), config, DictionaryType.SIMPLE));
     }
 
@@ -249,7 +249,7 @@ public class FullDictionaryTest {
         out.sortedPositionStream().forEach(es -> {
             if(es.getKey().getShared() > 2 && es.getValue().size() > 5) { // && notEndInS(es.getKey(), wordLength) && notEndinEd(es.getKey(), wordLength) && notEndinIng(es.getKey(), wordLength) ) {
                 WordRestrictions restrictions = new WordRestrictions(allLetters, new HashSet<>(es.getKey().pos().values()), es.getKey().pos(), new HashMap<>(), new HashMap<>());
-                SolvleDTO solution = solvleService.getWordAnalysis(restrictions, dictionary, WordConfig.OPTIMAL_MEAN, false);
+                SolvleDTO solution = solvleService.getWordAnalysis(restrictions, dictionary, WordConfig.OPTIMAL_MEAN, false, false);
                 log.warn("{} {} Words: {} \n{} Recommended: {}", es.getKey(), es.getValue().size(), es.getValue(), formatKnownPosition(es.getKey(), wordLength), solution.bestWords().stream().limit(5).map(WordFrequencyScore::word).collect(Collectors.toSet()));
             }
         });
@@ -259,7 +259,7 @@ public class FullDictionaryTest {
     @Test
     public void findAnalysis() {
         WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
-        var out = solvleService.getWordAnalysis(restrictions, DictionaryType.SIMPLE, WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING, false);
+        var out = solvleService.getWordAnalysis(restrictions, DictionaryType.SIMPLE, WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING, false, false);
         log.info("Words: " + out.wordList());
         log.info("Fish: " + out.fishingWords());
         log.info("Partition: " + out.bestWords());

@@ -10,6 +10,7 @@ public record  WordCalculationConfig (
         boolean useHarmonic,                // scales down impact of more matches to prioritize new letters > important letters. Increases mean, but decreases max.
         int fishingThreshold,               // used by solvers to determine when to switch to only viable word choices. Best value is usually 2 or 3.
         boolean hardMode,                   // disables use of words that do not match restriction string
+        boolean requireAnswer,              // every guess must be a potential answer
         double locationAdjustmentScale,     // modifies the scaling of location mult based on number of known positions. 0 = no scaling, 1 = 100% reduction when all letters known
         double uniqueAdjustmentScale,       // modifies the scaling of unique mult based on number of remaining letters available. 0 = no scaling, 1 = 100% reduction when no letters available
         double viableWordAdjustmentScale,   // modifies the scaling of the viable preference bonus based on number of known positions. 0 = no scaling, 1 =
@@ -21,6 +22,7 @@ public record  WordCalculationConfig (
     private static final boolean defaultUseHarmonic = false;
     private static final int defaultFishingThreshold = 2;
     private static final boolean defaultHardMode = false;
+    private static final boolean defaultRequireAnswer = false;
     private static final double defaultLocationAdjustmentScale = 0;
     private static final double defaultUniqueAdjustmentScale = 0;
     private static final double defaultViableWordAdjustmentScale = 0;
@@ -30,27 +32,31 @@ public record  WordCalculationConfig (
 
 
     public WordCalculationConfig(double rightLocationMultiplier, double uniquenessMultiplier, int partitionThreshold, double viableWordPreference) {
-        this(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, defaultUseHarmonic, defaultFishingThreshold, defaultHardMode, defaultLocationAdjustmentScale, defaultUniqueAdjustmentScale, defaultViableWordAdjustmentScale, defaultVowelMultiplier, defaultRutBreakMultiplier, defaultRutBreakThreshold);
+        this(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, defaultUseHarmonic, defaultFishingThreshold, defaultHardMode, defaultRequireAnswer, defaultLocationAdjustmentScale, defaultUniqueAdjustmentScale, defaultViableWordAdjustmentScale, defaultVowelMultiplier, defaultRutBreakMultiplier, defaultRutBreakThreshold);
     }
 
     public WordCalculationConfig withFishingThreshold(int fishingThreshold) {
-        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
     public WordCalculationConfig withPartitionThreshold(int partitionThreshold) {
-        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
     public WordCalculationConfig withHardMode(boolean hardMode) {
-        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+    }
+
+    public WordCalculationConfig withRequireAnswer(boolean requireAnswer) {
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
     public WordCalculationConfig withFineTuning(double locationAdjustmentScale, double uniqueAdjustmentScale, double viableWordAdjustmentScale, double vowelMultiplier) {
-        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
     public WordCalculationConfig withRutBreak(double rutBreakMultiplier, int rutBreakThreshold) {
-        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
     /**

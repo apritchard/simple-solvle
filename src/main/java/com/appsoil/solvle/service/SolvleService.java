@@ -49,32 +49,36 @@ public class SolvleService {
 
 
     @Cacheable("validWords")
-    public SolvleDTO getWordAnalysis(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
+    public SolvleDTO getWordAnalysis(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
 
         log.debug("Searching for words using {}", wordConfig);
 
         // parse the string to identify required letters and position exclusions
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
-        SolvleDTO result = getWordAnalysis(wordRestrictions, wordList, wordConfig, hardMode);
+        SolvleDTO result = getWordAnalysis(wordRestrictions, wordList, wordConfig, hardMode, requireAnswer);
 
         log.info("Found {} matches for {}", result.totalWords(), restrictionString);
 
         return result;
     }
 
-    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
+    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
         Set<Word> wordSet = getPrimarySet(wordList);
         Set<Word> fishingSet = getFishingSet(wordList);
 
-        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig, hardMode);
+        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig, hardMode, requireAnswer);
 
     }
 
-    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordConfig wordConfig, boolean hardMode) {
+    public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
         return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig.config.withHardMode(hardMode));
     }
 
     public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordCalculationConfig wordCalculationConfig) {
+
+        if(wordCalculationConfig.requireAnswer()) {
+            fishingSet = wordSet;
+        }
 
         WordCalculationService wordCalculationService = new WordCalculationService(wordCalculationConfig);
 
@@ -146,8 +150,8 @@ public class SolvleService {
         return new SolvleDTO("", wordFrequencyScores, fishingWordScores, remainingWords, containedWords.size(), characterCounts, knownPositions);
     }
 
-    public GameScoreDTO rateGame(String solution, List<String> guesses, DictionaryType wordList, WordConfig config, boolean hardMode) {
-        WordCalculationConfig wordCalculationConfig = config.config.withHardMode(hardMode);
+    public GameScoreDTO rateGame(String solution, List<String> guesses, DictionaryType wordList, WordConfig config, boolean hardMode, boolean requireAnswer) {
+        WordCalculationConfig wordCalculationConfig = config.config.withHardMode(hardMode).withRequireAnswer(requireAnswer);
         WordCalculationService wordCalculationService = new WordCalculationService(wordCalculationConfig);
         Set<Word> wordSet = getPrimarySet(wordList);
 
@@ -161,12 +165,12 @@ public class SolvleService {
         for(String guess : guesses) {
             log.info("Evaluating " + guess);
             //score player's guess
-            WordScoreDTO playerScore = getScore(restrictions, guess, wordList, config, hardMode);
+            WordScoreDTO playerScore = getScore(restrictions, guess, wordList, config, hardMode, requireAnswer);
 
             //get Solvle's guess and score it as well
-            SolvleDTO analysis = getWordAnalysis(restrictions, wordList, config, hardMode);
+            SolvleDTO analysis = getWordAnalysis(restrictions, wordList, config, hardMode, requireAnswer);
             WordFrequencyScore solvleGuess = RemainingSolver.getNextGuess(wordCalculationConfig, analysis, currentGuesses);
-            WordScoreDTO solvleScore = getScore(restrictions, solvleGuess.word(), wordList, config, hardMode);
+            WordScoreDTO solvleScore = getScore(restrictions, solvleGuess.word(), wordList, config, hardMode, requireAnswer);
 
 
             restrictions = WordRestrictions.generateRestrictions(solutionWord, new Word(guess), restrictions);
@@ -183,14 +187,13 @@ public class SolvleService {
     }
 
     @Cacheable("wordScore")
-    public WordScoreDTO getScore(String restrictionString, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
+    public WordScoreDTO getScore(String restrictionString, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
         WordRestrictions wordRestrictions = new WordRestrictions(restrictionString.toLowerCase());
-        return getScore(wordRestrictions, wordToScore, wordList, wordConfig, hardMode);
+        return getScore(wordRestrictions, wordToScore, wordList, wordConfig, hardMode, requireAnswer);
     }
 
-    public WordScoreDTO getScore(WordRestrictions wordRestrictions, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode) {
-        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode);
-
+    public WordScoreDTO getScore(WordRestrictions wordRestrictions, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
+        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode). withRequireAnswer(requireAnswer);
         Word word = new Word(wordToScore, 0);
         Set<Word> wordSet = getPrimarySet(wordList);
 

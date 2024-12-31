@@ -37,13 +37,14 @@ public class SolvleController {
     public SolvleDTO getWordAnalysis(@PathVariable String wordRestrictions,
                                                @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                                @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
-                                               @RequestParam(defaultValue = "false") boolean hardMode
+                                               @RequestParam(defaultValue = "false") boolean hardMode,
+                                               @RequestParam(defaultValue = "false") boolean requireAnswer
                                    ) {
 
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
         log.info("Valid words requested with configuration {} wordList {} and hardMode={}", wordConfig, wordList, hardMode);
-        SolvleDTO result = solvleService.getWordAnalysis(wordRestrictions.toLowerCase(), wordList, wordConfig, hardMode);
+        SolvleDTO result = solvleService.getWordAnalysis(wordRestrictions.toLowerCase(), wordList, wordConfig, hardMode, requireAnswer);
         log.info("Valid words for {} took {}", wordRestrictions, Duration.between(start, LocalDateTime.now()));
         return SolvleDTO.appendRestrictionString(wordRestrictions, result);
     }
@@ -53,12 +54,13 @@ public class SolvleController {
                                      @PathVariable String wordToScore,
                                      @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                      @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
-                                     @RequestParam(defaultValue = "false") boolean hardMode
+                                     @RequestParam(defaultValue = "false") boolean hardMode,
+                                     @RequestParam(defaultValue = "false") boolean requireAnswer
                                      ) {
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
         log.info("Word Score requested for {} with configuration {}", wordToScore, wordConfig);
-        WordScoreDTO result = solvleService.getScore(wordRestrictions.toLowerCase(), wordToScore.toLowerCase(), wordList, wordConfig, hardMode);
+        WordScoreDTO result = solvleService.getScore(wordRestrictions.toLowerCase(), wordToScore.toLowerCase(), wordList, wordConfig, hardMode, requireAnswer);
         log.info("Word Score for {} took {}", wordToScore, Duration.between(start, LocalDateTime.now()));
 
         return result;
@@ -84,11 +86,12 @@ public class SolvleController {
                                     @RequestParam(defaultValue = "") String firstWord,
                                     @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                     @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
-                                    @RequestParam(defaultValue = "false") boolean hardMode
+                                    @RequestParam(defaultValue = "false") boolean hardMode,
+                                    @RequestParam(defaultValue = "false") boolean requireAnswer
                                     ) {
         logRequestsCount();
         log.info("Solution requested for [{}] with first word [{}] and configuration {}", solution, firstWord, wordConfig);
-        Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode));
+        Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer));
         return solvleService.solveWord(solver, new Word(solution.toLowerCase()), firstWord.toLowerCase(), wordList);
     }
 
@@ -97,13 +100,14 @@ public class SolvleController {
                                     @RequestParam(defaultValue = "") List<String> guesses,
                                     @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
                                     @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
-                                    @RequestParam(defaultValue = "false") boolean hardMode
+                                    @RequestParam(defaultValue = "false") boolean hardMode,
+                                    @RequestParam(defaultValue = "false") boolean requireAnswer
                                     ) {
         logRequestsCount();
         log.info("Solution requested for [{}] with guesses {} and configuration {}", solution, guesses, wordConfig);
-        Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode));
+        Solver solver = new RemainingSolver(solvleService, wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer));
         List<String> lowerGuesses = guesses.stream().map(String::toLowerCase).collect(Collectors.toList());
-        return solvleService.rateGame(solution.toLowerCase(), lowerGuesses, wordList, wordConfig, hardMode);
+        return solvleService.rateGame(solution.toLowerCase(), lowerGuesses, wordList, wordConfig, hardMode, requireAnswer);
     }
 
     private void logRequestsCount() {
