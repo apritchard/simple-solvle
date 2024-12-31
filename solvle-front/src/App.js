@@ -41,6 +41,7 @@ function App() {
                 results: 50,
                 autoColorWord: "",
                 hardMode: localStorage.getItem("hardMode") === 'true',
+                requireAnswer: localStorage.getItem("requireAnswer") === 'true',
                 usePartitioning: localStorage.getItem("usePartitioning") === 'true',
                 rateEnteredWords: localStorage.getItem("rateEnteredWords") === 'true',
                 displayEntropy: localStorage.getItem("displayEntropy") === 'true',

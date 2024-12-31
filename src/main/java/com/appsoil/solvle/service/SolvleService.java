@@ -71,7 +71,7 @@ public class SolvleService {
     }
 
     public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
-        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig.config.withHardMode(hardMode));
+        return getWordAnalysis(wordRestrictions, wordSet, fishingSet, wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer));
     }
 
     public SolvleDTO getWordAnalysis(WordRestrictions wordRestrictions, Set<Word> wordSet, Set<Word> fishingSet, WordCalculationConfig wordCalculationConfig) {

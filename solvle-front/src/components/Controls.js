@@ -45,6 +45,7 @@ function Controls() {
     }
 
     const hardModeHelpText = "Limit word suggestions to words that are available in hard mode."
+    const requireAnswerHelpText = "Limits word suggestions to words that are potential solutions for the current word list."
     const rateEnteredWordsHelpText = "Show fishing score and average words remaining for each word you enter. Calculates when you press ENTER using the currently selected letters, so" +
         " it will only be accurate if you mark the state of your previous words, but not your current word, before pressing enter.";
     const biasHelpText = "Calculation Bias enables Solvle to prioritize words that match the" +
@@ -131,6 +132,10 @@ function Controls() {
                 <div title={hardModeHelpText}>
                     <MDBSwitch id='hardModeSwitch' label="Hard Mode" name="hardMode"
                                defaultChecked={boardState.settings.hardMode} onChange={updateSetting}/>
+                </div>
+                <div title={requireAnswerHelpText}>
+                    <MDBSwitch id='requireAnswerSwitch' label="Only Use Potential Answers" name="requireAnswer"
+                               defaultChecked={boardState.settings.requireAnswer} onChange={updateSetting}/>
                 </div>
                 <div title={rateEnteredWordsHelpText}>
                     <MDBSwitch id='enableWordRatingSwitch' label="Rate Words As You Enter" name="rateEnteredWords"

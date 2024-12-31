@@ -44,7 +44,10 @@ export function generateConfigParams(boardState) {
     let hardMode = boardState.settings.hardMode ?
         "hardMode=true" : "hardMode=false";
 
+    let requireAnswer = boardState.settings.requireAnswer ?
+        "&requireAnswer=true" : "&requireAnswer=false";
+
     let wordConfig = "&wordLength=" + boardState.settings.wordLength + "&wordList=" + boardState.settings.dictionary + "&wordConfig=" + boardState.settings.wordConfig;
 
-    return hardMode + wordConfig;
+    return hardMode + requireAnswer + wordConfig;
 }

@@ -43,7 +43,7 @@ public class SolvleController {
 
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
-        log.info("Valid words requested with configuration {} wordList {} and hardMode={}", wordConfig, wordList, hardMode);
+        log.info("Valid words requested with configuration {} wordList {} hardMode={} requireAnswer={}", wordConfig, wordList, hardMode, requireAnswer);
         SolvleDTO result = solvleService.getWordAnalysis(wordRestrictions.toLowerCase(), wordList, wordConfig, hardMode, requireAnswer);
         log.info("Valid words for {} took {}", wordRestrictions, Duration.between(start, LocalDateTime.now()));
         return SolvleDTO.appendRestrictionString(wordRestrictions, result);
