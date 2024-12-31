@@ -56,7 +56,7 @@ public class FullDictionaryTest {
         String firstWord = solution.values().stream().findFirst().get().get(0);
         solution.forEach((k, v) -> {
             stats.addValue(v.size());
-            if(v.size() > 5) {
+            if(v.size() > 0) {
                 log.info(v);
                 problems.add(v);
             }
@@ -111,7 +111,7 @@ public class FullDictionaryTest {
     public void testConfig() {
         String firstWord = "";
         WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false);
-        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord, config, DictionaryType.SIMPLE));
+        addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord.toLowerCase(), config, DictionaryType.SIMPLE));
     }
 
     @Test

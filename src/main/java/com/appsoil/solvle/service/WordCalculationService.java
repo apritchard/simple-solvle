@@ -56,7 +56,7 @@ public class WordCalculationService {
      * @return
      */
     public Set<Word> findMatchingWords(Set<Word> wordSet, WordRestrictions wordRestrictions) {
-        return wordSet.parallelStream()
+        return wordSet.stream()
                 .filter(w -> isValidWord(w, wordRestrictions))
                 .collect(Collectors.toSet());
     }
