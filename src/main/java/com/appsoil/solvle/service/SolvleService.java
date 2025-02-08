@@ -423,7 +423,7 @@ public class SolvleService {
         final Set<Character> identifiedLetters = tuple.stream()
                 .flatMap(word -> word.letters().keySet().stream())
                 .collect(Collectors.toSet());
-        int maxOverlap = 1;
+        int maxOverlap = tuple.size() > 1 ? 1 : 0;
         return wordSet.parallelStream()
                 .filter(word -> !tuple.contains(word))
                 .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
