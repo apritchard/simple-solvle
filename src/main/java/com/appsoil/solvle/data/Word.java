@@ -1,5 +1,7 @@
 package com.appsoil.solvle.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class Word implements Serializable, Comparable<Word> {
         this(word, 0);
     }
 
+    @JsonProperty("word")
     public String word() {
         return word;
     }

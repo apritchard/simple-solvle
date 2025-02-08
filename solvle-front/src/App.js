@@ -209,7 +209,7 @@ function App() {
             let currentWord = "";
             boardState.board[boardState.currAttempt.attempt].map(letter => {currentWord+= letter});
 
-            fetch('/solvle/' + restrictionString + "/" + currentWord + "?" + configParams)
+            fetch('/solvle/score/' + restrictionString + "/" + currentWord + "?" + configParams)
                 .then(res => {
                     if (res.ok) {
                         return res.json()

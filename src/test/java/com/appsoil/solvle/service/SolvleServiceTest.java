@@ -7,11 +7,13 @@ import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.data.WordFrequencyScore;
 import com.appsoil.solvle.data.WordRestrictions;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 @SpringBootTest(classes = {SolvleService.class, SolvleServiceTest.SolvleTestConfiguration.class})
 @ActiveProfiles("test")
 public class SolvleServiceTest {
+
 
     @TestConfiguration
     public static class SolvleTestConfiguration {
@@ -230,5 +233,21 @@ public class SolvleServiceTest {
 
         Assertions.assertEquals(expectedWords, result.wordList().stream().map(WordFrequencyScore::word).collect(Collectors.toSet()));
     }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "1 | a,b,c,d,e",
+            "2 | ab,ac,ad,ae,bc,bd,be,cd,ce,de",
+            "3 | abc,abd,abe,acd,ace,ade,bcd,bce,bde,cde"
+    }, delimiter = '|')
+    void generateNWordLists(int n, String expectedString) {
+        Set<Word> dictionaryWords = Arrays.stream("abcde".split("")).map(Word::new).collect(Collectors.toSet());
+        Dictionary d = new Dictionary(Map.of(1, dictionaryWords));
+        Set<Word> dictionary = d.wordsBySize().get(1);
+        Set<Set<Word>> expected = Arrays.stream(expectedString.split(",")).map(s -> Arrays.stream(s.split("")).map(Word::new).collect(Collectors.toSet())).collect(Collectors.toSet());
+        var result = solvleService.generateNWordLists(dictionary, dictionary, n);
+        Assertions.assertEquals(expected, result);
+    }
+
 
 }

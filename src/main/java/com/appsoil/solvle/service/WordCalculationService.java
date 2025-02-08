@@ -383,10 +383,27 @@ public class WordCalculationService {
     public PartitionStats getPartitionStatsForWord(WordRestrictions startingRestrictions, Set<Word> containedWords, Word word) {
         //find all unique sets of restrictions and count how many words they apply to
         Map<WordRestrictions, Integer> groups = new HashMap<>();
-        List<SharedPositions> ruts = new ArrayList<>();
         for(Word solution : containedWords) {
             groups.merge(WordRestrictions.generateRestrictions(solution, word, startingRestrictions), 1, Integer::sum);
         }
+        return getPartitionStats(groups, containedWords);
+    }
+
+    public PartitionStats getPartitionStatsForTuple(WordRestrictions startingRestrictions, Set<Word> containedWords, Set<Word> tuple) {
+        Map<WordRestrictions, Integer> groups = new HashMap<>();
+        for (Word solution : containedWords) {
+            WordRestrictions effective = startingRestrictions;
+            // Apply each guess in the tuple in iteration order.
+            for (Word guess : tuple) {
+                effective = WordRestrictions.generateRestrictions(solution, guess, effective);
+            }
+            groups.merge(effective, 1, Integer::sum);
+        }
+        return getPartitionStats(groups, containedWords);
+    }
+
+    public PartitionStats getPartitionStats(Map<WordRestrictions, Integer> groups, Set<Word> containedWords) {
+        List<SharedPositions> ruts = new ArrayList<>();
         double remaining = 0.0;
         double entropy = 0.0;
         for(Map.Entry<WordRestrictions, Integer> group : groups.entrySet()) {

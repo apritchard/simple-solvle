@@ -11,19 +11,16 @@ import com.appsoil.solvle.service.solvers.RemainingSolver;
 import com.appsoil.solvle.service.solvers.Solver;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Log4j2
@@ -380,5 +377,130 @@ public class SolvleService {
         }
 
         return solver.solve(word, wordSet, fishingSet, firstWord);
+    }
+
+    public Set<TupleScore> findBestNWords(String startingWordRestrictions, Integer bestNWords, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
+        var config = wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer);
+        WordCalculationService wordCalculationService = new WordCalculationService(config);
+
+        WordRestrictions startingRestrictions = new WordRestrictions(startingWordRestrictions);
+
+        Set<Word> wordSet = wordCalculationService.findMatchingWords(getPrimarySet(wordList), startingRestrictions);
+        Set<Word> fishingSet = getFishingSet(wordList);
+
+        var guessTuples = generateNWordLists(wordSet, fishingSet, bestNWords);
+        //var guessTuples = generateNWordLists(wordSet, wordSet, bestNWords);
+        log.info("{} word lists generated", guessTuples.size());
+
+        Set<TupleScore> tupleScores = new TreeSet<>();
+        AtomicInteger tupleCounter = new AtomicInteger();
+
+        guessTuples.parallelStream().forEach( guessTuple -> {
+            PartitionStats stats = wordCalculationService.getPartitionStatsForTuple(startingRestrictions, wordSet, guessTuple);
+            if(stats != null ) {
+                tupleScores.add(new TupleScore(guessTuple, stats));
+            }
+            int i = tupleCounter.incrementAndGet();
+            if(i%100 == 0) {
+                log.info("{} tuples evaluated", i);
+            }
+        });
+
+        return tupleScores;
+    }
+
+    @Cacheable("tupleScore")
+    public TupleScore scoreTuple(Set<Word> tuple, DictionaryType wordList) {
+        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
+        return new TupleScore(tuple, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), tuple));
+    }
+
+    @Cacheable("finishTuple")
+    public Set<TupleScore> finishTuple(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+        Set<Word> wordSet = requireAnswer ? getPrimarySet(wordList) : getFishingSet(wordList);
+        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
+        log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
+        final Set<Character> identifiedLetters = tuple.stream()
+                .flatMap(word -> word.letters().keySet().stream())
+                .collect(Collectors.toSet());
+        int maxOverlap = 1;
+        return wordSet.parallelStream()
+                .filter(word -> !tuple.contains(word))
+                .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
+                .map(word -> {
+                    Set<Word> newSet = new HashSet<>(tuple);
+                    newSet.add(word);
+                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), newSet));
+                }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+
+    protected Set<Set<Word>> generateNWordLists(Set<Word> containedWords, Set<Word> fishingSet, int bestNWords) {
+        log.info("Generating {}-word lists for {} solutions using {} potential guesses", bestNWords, containedWords.size(), fishingSet.size());
+        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
+        WordRestrictions wordRestrictions = WordRestrictions.NO_RESTRICTIONS;
+        var wordsToCheck = wordCalculationService.wordsByRemainingGuesses(wordRestrictions, containedWords, fishingSet);
+
+        return generateNWordListsInner(null, wordsToCheck, bestNWords);
+    }
+
+    protected Set<Set<Word>> generateNWordListsInner(Set<Set<Word>> currentLists,
+                                              Set<WordFrequencyScore> fishingWordScores,
+                                              int bestNWords) {
+        // Base case: if no more words need to be added, return the current lists.
+        if (bestNWords == 0) {
+            return currentLists;
+        }
+
+        int wordHeuristicCutoff = 5;
+
+        // Initialization: if there are no current lists, start with one-word sets.
+        if (currentLists == null || currentLists.isEmpty()) {
+            currentLists = new HashSet<>();
+            int i = wordHeuristicCutoff;
+            for(WordFrequencyScore word : fishingWordScores) {
+                if(i-- <= 0 ) {
+                    break;
+                }
+                Set<Word> single = new TreeSet<>();
+                single.add(new Word(word.word(), word.naturalOrdering()));
+                currentLists.add(single);
+            }
+
+            return generateNWordListsInner(currentLists, fishingWordScores,bestNWords - 1);
+        }
+
+        Set<Set<Word>> response = new HashSet<>();
+        for (Set<Word> currentList : currentLists) {
+            //pre-calculate how many of each letter exist in our tuple so far
+            Set<Character> identifiedLetters = currentList.stream()
+                    .flatMap(word -> word.letters().keySet().stream())
+                    .collect(Collectors.toSet());
+            //log.info("Evaluating {} for new words, already have {}", currentList, identifiedLetters);
+
+            fishingWordScores.stream()
+                    .filter(wfs -> currentList.stream().noneMatch(word -> word.getOrder() == wfs.naturalOrdering()))
+                    .filter(wfs -> {
+                String word = wfs.word();
+                int c = 0;
+                for(int i = 0; i < word.length(); i++) {
+                    if(identifiedLetters.contains(word.charAt(i))) {
+                        c++;
+                    }
+                    if(c > 1) { //adjust to control number of duplicates allowed
+                        return false;
+                    }
+                }
+                return true;
+            }).limit(wordHeuristicCutoff)
+                    .forEachOrdered(wfs -> {
+                Set<Word> newSet = new TreeSet<>(currentList);
+                newSet.add(new Word(wfs.word(), wfs.naturalOrdering()));
+                response.add(newSet);
+            });
+
+        }
+
+        return generateNWordListsInner(response, fishingWordScores, bestNWords - 1);
     }
 }

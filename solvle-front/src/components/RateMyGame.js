@@ -173,7 +173,7 @@ function RateMyGame(props) {
 
     return (
         <span>
-            <Button title="Rate Performance of a Completed Game" variant="primary"
+            <Button title="Rate Performance of a Completed Game" variant="dark"
                     onClick={handleShow}>{buttonText}</Button>
 
             <Modal className="rateMyGameModal" size="lg" show={modalOpen} onHide={handleClose} >

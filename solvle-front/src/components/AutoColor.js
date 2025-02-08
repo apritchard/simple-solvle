@@ -48,7 +48,7 @@ function AutoColor(props) {
 
     return (
         <span>
-            <Button title="Automatically color letters based on a solution" variant="secondary"
+            <Button title="Automatically color letters based on a solution" variant="dark"
                     onClick={handleShow}>{buttonText}</Button>
 
             <Modal className="autoColorModal" show={modalOpen} onHide={handleClose}>

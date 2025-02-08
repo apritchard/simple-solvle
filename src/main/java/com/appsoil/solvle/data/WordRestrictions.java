@@ -100,13 +100,11 @@ public record WordRestrictions(Word word,
         Set<Character> newRequiredLetters = new HashSet<>(currentRestrictions.requiredLetters());
         Map<Character, Integer> newMinimumLetterFrequencies = new HashMap<>(currentRestrictions.minimumLetterFrequencies());
 
-        Map<Integer, Character> newLetterPositions = new HashMap<>();
-        currentRestrictions.letterPositions().forEach((pos, c) -> newLetterPositions.put(pos, c));
+        Map<Integer, Character> newLetterPositions = new HashMap<>(currentRestrictions.letterPositions());
 
         Map<Integer, Set<Character>> newPositionExclusions = new HashMap<>();
         currentRestrictions.positionExclusions().forEach((pos, cs) -> {
-            Set<Character> newCs = new HashSet<>();
-            currentRestrictions.positionExclusions.get(pos).forEach(c -> newCs.add(c));
+            Set<Character> newCs = new HashSet<>(currentRestrictions.positionExclusions.get(pos));
             newPositionExclusions.put(pos, newCs);
         });
         

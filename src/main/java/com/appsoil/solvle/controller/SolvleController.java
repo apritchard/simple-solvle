@@ -2,6 +2,7 @@ package com.appsoil.solvle.controller;
 
 import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.data.PlayOut;
+import com.appsoil.solvle.data.TupleScore;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.service.SolvleService;
 import com.appsoil.solvle.service.WordConfig;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ public class SolvleController {
         return SolvleDTO.appendRestrictionString(wordRestrictions, result);
     }
 
-    @GetMapping("/{wordRestrictions}/{wordToScore}")
+    @GetMapping("/score/{wordRestrictions}/{wordToScore}")
     public WordScoreDTO getWordScore(@PathVariable String wordRestrictions,
                                      @PathVariable String wordToScore,
                                      @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
@@ -64,6 +66,38 @@ public class SolvleController {
         log.info("Word Score for {} took {}", wordToScore, Duration.between(start, LocalDateTime.now()));
 
         return result;
+    }
+
+    @GetMapping("/{wordRestrictions}/best/{bestNWords}")
+    public Set<TupleScore> getBestNWords(@PathVariable String wordRestrictions,
+                                          @PathVariable Integer bestNWords,
+                                          @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
+                                          @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
+                                          @RequestParam(defaultValue = "false") boolean hardMode,
+                                          @RequestParam(defaultValue = "false") boolean requireAnswer
+    ) {
+        LocalDateTime start = LocalDateTime.now();
+        logRequestsCount(start);
+        log.info("Best n words requested for {} with configuration {}", wordRestrictions, wordConfig);
+        Set<TupleScore> results = solvleService.findBestNWords(wordRestrictions.toLowerCase(), bestNWords, wordList, wordConfig, hardMode, requireAnswer);
+        log.info("Best n words for  {} took {}", wordRestrictions, Duration.between(start, LocalDateTime.now()));
+        return results;
+    }
+
+    @GetMapping("/finishTuple/{tupleString}")
+    public Set<TupleScore> finishTuple(@PathVariable String tupleString,
+                                       @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
+                                       @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
+                                       @RequestParam(defaultValue = "false") boolean hardMode,
+                                       @RequestParam(defaultValue = "false") boolean requireAnswer
+                                       ) {
+        log.info("Finish tuple requested for {} with configuration {}", tupleString, wordConfig);
+        Set<Word> tuple = Arrays.stream(tupleString.toLowerCase().split(",")).map(Word::new).collect(Collectors.toSet());
+        LocalDateTime start = LocalDateTime.now();
+        logRequestsCount(start);
+        Set<TupleScore> results = solvleService.finishTuple(tuple, wordList, requireAnswer);
+        log.info("Finish tuple for  {} took {}", tupleString, Duration.between(start, LocalDateTime.now()));
+        return results;
     }
 
     @GetMapping("/{wordRestrictions}/playout")

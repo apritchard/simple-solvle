@@ -265,6 +265,47 @@ public class FullDictionaryTest {
         log.info("Partition: " + out.bestWords());
     }
 
+    @Test
+    void findBestWords() {
+        WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
+        WordConfig config = WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING;
+        var bestTuples = solvleService.findBestNWords(restrictions.toString(), 4, DictionaryType.SIMPLE, config, false, false);
+        int i = 0;
+        for (TupleScore bestTuple : bestTuples) {
+            log.info("{}entropy({})remaining({})",
+                    bestTuple.tuple(),
+                    String.format("%.3f", bestTuple.partitionStats().entropy()),
+                    String.format("%.3f", bestTuple.partitionStats().wordsRemaining()));
+            if (i++ > 100) {
+                break;
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'arise,pound'",
+            "'soare,clint'"
+    })
+    void testScoreTuple(String words) {
+        Set<Word> tuple = Arrays.stream(words.split(",")).map(Word::new).collect(Collectors.toSet());
+        var tupleScore = solvleService.scoreTuple(tuple, DictionaryType.SIMPLE);
+        log.info(tupleScore);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'arise'",
+            "'donut'"
+    })
+    void testFinishTuple(String words) {
+        Set<Word> tuple = Arrays.stream(words.split(",")).map(Word::new).collect(Collectors.toSet());
+        var options = solvleService.finishTuple(tuple, DictionaryType.SIMPLE, true);
+        options.forEach( t -> log.info("{}: {} remaining, {} entropy", t.tuple(),
+                String.format("%.3f", t.partitionStats().wordsRemaining()),
+                String.format("%.3f", t.partitionStats().entropy())));
+    }
+
     private static String formatKnownPosition(KnownPosition kp, int wordLength) {
         String out = "";
         for(int i = 0; i < wordLength; i++) {

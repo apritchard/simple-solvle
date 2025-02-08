@@ -1,9 +1,11 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useRef} from 'react';
 import AppContext from "../contexts/contexts";
-import {Button, Form, FormControl, InputGroup, Modal} from "react-bootstrap";
+import {Button} from "react-bootstrap";
 import SolveModal from "./SolveModal";
 import AutoColor from "./AutoColor";
 import RateMyGame from "./RateMyGame";
+import UtilityDropdown from "./UtilityDropdown";
+import TupleCompletion from "./TupleCompletion";
 
 function BoardActions() {
 
@@ -33,10 +35,13 @@ function BoardActions() {
     return (
         <div>
             <Button title="clear all letters from the board" variant="dark" onClick={clickReset}>Reset Board</Button>
-            <Button title="set all letters unavailable" variant="danger" onClick={excludeCurrent}>Exclude All</Button>
-            <SolveModal />
+            <Button title="set all letters unavailable" variant="dark" onClick={excludeCurrent}>Exclude All</Button>
             <AutoColor />
-            <RateMyGame />
+            <UtilityDropdown>
+                <SolveModal />
+                <RateMyGame />
+                <TupleCompletion />
+            </UtilityDropdown>
         </div>
     );
 }
