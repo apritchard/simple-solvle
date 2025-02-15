@@ -5,6 +5,7 @@ import com.appsoil.solvle.config.SolvleConfig;
 import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.controller.WordScoreDTO;
 import com.appsoil.solvle.data.*;
+import com.appsoil.solvle.service.job.JobStatus;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -300,8 +301,19 @@ public class FullDictionaryTest {
     })
     void testFinishTuple(String words) {
         Set<Word> tuple = Arrays.stream(words.split(",")).map(Word::new).collect(Collectors.toSet());
-        var options = solvleService.finishTuple(tuple, DictionaryType.SIMPLE, true);
-        options.forEach( t -> log.info("{}: {} remaining, {} entropy", t.tuple(),
+        var dictionary = DictionaryType.SIMPLE;
+        boolean requireAnswer = false;
+
+        var results = solvleService.submitTupleJob(tuple, dictionary, requireAnswer);
+        while(Set.of(JobStatus.PENDING, JobStatus.RUNNING).contains(results.getStatus())) {
+            results = solvleService.submitTupleJob(tuple, dictionary, requireAnswer);
+            log.info(results);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {}
+
+        }
+        results.getResult().forEach( t -> log.info("{}: {} remaining, {} entropy", t.tuple(),
                 String.format("%.3f", t.partitionStats().wordsRemaining()),
                 String.format("%.3f", t.partitionStats().entropy())));
     }

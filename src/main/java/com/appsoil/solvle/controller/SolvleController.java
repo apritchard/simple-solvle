@@ -6,6 +6,7 @@ import com.appsoil.solvle.data.TupleScore;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.service.SolvleService;
 import com.appsoil.solvle.service.WordConfig;
+import com.appsoil.solvle.service.job.SolveJob;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
 import com.appsoil.solvle.service.solvers.Solver;
 import lombok.extern.log4j.Log4j2;
@@ -84,21 +85,37 @@ public class SolvleController {
         return results;
     }
 
-    @GetMapping("/finishTuple/{tupleString}")
-    public Set<TupleScore> finishTuple(@PathVariable String tupleString,
-                                       @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
-                                       @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
-                                       @RequestParam(defaultValue = "false") boolean hardMode,
-                                       @RequestParam(defaultValue = "false") boolean requireAnswer
-                                       ) {
+    @GetMapping("/submitTupleJob/{tupleString}")
+    public SolveJob<Set<TupleScore>> submitTupleJob(@PathVariable String tupleString,
+                                                    @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
+                                                    @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
+                                                    @RequestParam(defaultValue = "false") boolean hardMode,
+                                                    @RequestParam(defaultValue = "false") boolean requireAnswer
+    ) {
         log.info("Finish tuple requested for {} with configuration {}", tupleString, wordConfig);
         Set<Word> tuple = Arrays.stream(tupleString.toLowerCase().split(",")).map(Word::new).collect(Collectors.toSet());
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
-        Set<TupleScore> results = solvleService.finishTuple(tuple, wordList, requireAnswer);
+        SolveJob<Set<TupleScore>> results = solvleService.submitTupleJob(tuple, wordList, requireAnswer);
         log.info("Finish tuple for  {} took {}", tupleString, Duration.between(start, LocalDateTime.now()));
         return results;
     }
+
+//    @GetMapping("/finishTuple/{tupleString}")
+//    public Set<TupleScore> finishTuple(@PathVariable String tupleString,
+//                                       @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList,
+//                                       @RequestParam(defaultValue = "SIMPLE") WordConfig wordConfig,
+//                                       @RequestParam(defaultValue = "false") boolean hardMode,
+//                                       @RequestParam(defaultValue = "false") boolean requireAnswer
+//                                       ) {
+//        log.info("Finish tuple requested for {} with configuration {}", tupleString, wordConfig);
+//        Set<Word> tuple = Arrays.stream(tupleString.toLowerCase().split(",")).map(Word::new).collect(Collectors.toSet());
+//        LocalDateTime start = LocalDateTime.now();
+//        logRequestsCount(start);
+//        Set<TupleScore> results = solvleService.submitTupleJob(tuple, wordList, requireAnswer);
+//        log.info("Finish tuple for  {} took {}", tupleString, Duration.between(start, LocalDateTime.now()));
+//        return results;
+//    }
 
     @GetMapping("/{wordRestrictions}/playout")
     public Set<PlayOut> playOutSolution(@PathVariable String wordRestrictions,

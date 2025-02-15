@@ -3,20 +3,25 @@ package com.appsoil.solvle.service;
 import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.controller.GameScoreDTO;
 import com.appsoil.solvle.controller.KnownPositionDTO;
-import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.controller.WordScoreDTO;
 import com.appsoil.solvle.data.Dictionary;
+import com.appsoil.solvle.data.*;
+import com.appsoil.solvle.service.job.JobStatus;
+import com.appsoil.solvle.service.job.SolveJob;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
 import com.appsoil.solvle.service.solvers.Solver;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -415,16 +420,41 @@ public class SolvleService {
         return new TupleScore(tuple, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), tuple));
     }
 
-    @Cacheable("finishTuple")
-    public Set<TupleScore> finishTuple(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+    private final Map<SimpleKey, SolveJob<Set<TupleScore>>> tupleJobCache = new ConcurrentHashMap<>();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+    public SolveJob<Set<TupleScore>> submitTupleJob(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+        SimpleKey key = new SimpleKey(tuple, wordList, requireAnswer);
+        if(tupleJobCache.containsKey(key)) {
+            return tupleJobCache.get(key);
+        } else {
+            SolveJob<Set<TupleScore>> response = new SolveJob<>();
+            tupleJobCache.put(key, response);
+            executorService.submit(() -> {
+                try {
+                    finishTuple(response, tuple, wordList, requireAnswer);
+                } catch (Exception e) {
+                    response.setStatus(JobStatus.FAILED);
+                    response.setError(e.getMessage());
+                }
+            });
+            return response;
+        }
+    }
+
+    private void finishTuple(SolveJob<Set<TupleScore>> response, Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+        response.setStatus(JobStatus.RUNNING);
         Set<Word> wordSet = requireAnswer ? getPrimarySet(wordList) : getFishingSet(wordList);
         WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
         log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
+        response.setTasks(wordSet.size());
+        response.setCompletedTasks(new AtomicInteger());
         final Set<Character> identifiedLetters = tuple.stream()
                 .flatMap(word -> word.letters().keySet().stream())
                 .collect(Collectors.toSet());
         int maxOverlap = tuple.size() > 1 ? 1 : 0;
-        return wordSet.parallelStream()
+        var tuples = wordSet.parallelStream()
+                .peek(word -> response.getCompletedTasks().incrementAndGet())
                 .filter(word -> !tuple.contains(word))
                 .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
                 .map(word -> {
@@ -432,7 +462,28 @@ public class SolvleService {
                     newSet.add(word);
                     return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), newSet));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
+        response.setResult(tuples);
+        response.setStatus(JobStatus.COMPLETED);
     }
+
+//    @Cacheable("finishTuple")
+//    public Set<TupleScore> finishTuple(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+//        Set<Word> wordSet = requireAnswer ? getPrimarySet(wordList) : getFishingSet(wordList);
+//        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
+//        log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
+//        final Set<Character> identifiedLetters = tuple.stream()
+//                .flatMap(word -> word.letters().keySet().stream())
+//                .collect(Collectors.toSet());
+//        int maxOverlap = tuple.size() > 1 ? 1 : 0;
+//        return wordSet.parallelStream()
+//                .filter(word -> !tuple.contains(word))
+//                .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
+//                .map(word -> {
+//                    Set<Word> newSet = new HashSet<>(tuple);
+//                    newSet.add(word);
+//                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), newSet));
+//                }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
+//    }
 
 
     protected Set<Set<Word>> generateNWordLists(Set<Word> containedWords, Set<Word> fishingSet, int bestNWords) {

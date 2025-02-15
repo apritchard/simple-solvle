@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Button, Form, Modal, Spinner, Table} from "react-bootstrap";
+import {Button, Form, Modal, ProgressBar, Spinner, Table} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {generateConfigParams} from "../functions/functions";
 
@@ -17,6 +17,7 @@ function TupleCompletion(props) {
     const [firstWord, setFirstWord] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [job, setJob] = useState(false);
 
     const handleShow = () => {
         setModalOpen(true);
@@ -39,20 +40,38 @@ function TupleCompletion(props) {
             return;
         }
         setLoading(true);
+        setJob(null);
         let configParams = generateConfigParams(boardState);
+        const url = `solvle/submitTupleJob/${firstWord.trim()}?${configParams}`;
 
-        fetch('/solvle/finishTuple/' + firstWord.trim() + "?" + configParams)
-            .then(res => res.json())
-            .then((data) => {
-                console.log("Received suggestions:");
-                console.log(data);
-                setSuggestions(data);
-                setLoading(false)
-            })
-            .catch(error => {
-            console.error("Error fetching suggestions:", error);
-            setLoading(false);
-        });
+        let intervalId;
+
+        // Define a function to poll the same endpoint
+        const pollJob = () => {
+            fetch(url)
+                .then(res => res.json())
+                .then(jobData => {
+                    setJob(jobData);
+                    if (jobData.status === 'COMPLETED') {
+                        setSuggestions(jobData.result);
+                        setLoading(false);
+                        clearInterval(intervalId);
+                    } else if (jobData.status === 'FAILED') {
+                        alert("Job failed: " + jobData.error);
+                        setLoading(false);
+                        clearInterval(intervalId);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error polling job:", error);
+                    setLoading(false);
+                    clearInterval(intervalId);
+                });
+        };
+
+        // Start polling immediately and then every 2 seconds
+        pollJob();
+        intervalId = window.setInterval(pollJob, 2000);
     }
 
     // Handle header clicks for sorting.
@@ -128,8 +147,30 @@ function TupleCompletion(props) {
                         </Button>
                     </Form>
                     <hr/>
-                    {/* Show spinner while loading */}
-                    {loading && (
+                    {/* If loading and we have a job, show a progress bar */}
+                    {loading && job ? (
+                        <div className="job-progress-container text-center my-3">
+                            <h5>Job Progress</h5>
+                            <ProgressBar
+                                animated
+                                // Change the color based on progress: warning for low, info for mid, success for high
+                                variant={
+                                    (job.completedTasks / job.tasks) >= 0.75
+                                        ? 'success'
+                                        : (job.completedTasks / job.tasks) >= 0.5
+                                            ? 'info'
+                                            : 'warning'
+                                }
+                                now={(job.completedTasks / job.tasks) * 100}
+                                label={`${((job.completedTasks / job.tasks) * 100).toFixed(0)}%`}
+                                style={{height: '30px', fontWeight: 'bold', fontSize: '1.1rem'}}
+                            />
+                            <p className="mt-2">
+                                Evaluated {job.completedTasks} out of {job.tasks} combinations.
+                            </p>
+                        </div>
+                    ) : loading && (
+                        // Fallback spinner if no job info is yet available
                         <div className="text-center">
                             <Spinner animation="border" role="status">
                                 <span className="visually-hidden">Loading...</span>
