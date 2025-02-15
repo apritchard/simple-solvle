@@ -14,10 +14,13 @@ public class SolveJob<T> {
     private T result;
     private JobStatus status;
     private String error;
-    private LocalDateTime finishTime;
+    private LocalDateTime startTime;
+    private LocalDateTime lastUpdate;
 
     public SolveJob() {
         this.id = UUID.randomUUID();
         this.status = JobStatus.PENDING;
+        this.startTime = LocalDateTime.now();
+        this.lastUpdate = LocalDateTime.now();
     }
 }

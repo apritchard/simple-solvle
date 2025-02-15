@@ -22,6 +22,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -37,6 +39,7 @@ public class SolvleService {
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
+    private final int MAX_JOB_IGNORE_TIME_SECONDS = 60;
 
     private Map<DictionaryType, Map<Word, PartitionStats>> firstPartitionData = new ConcurrentHashMap<>();
 
@@ -424,22 +427,34 @@ public class SolvleService {
     private final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
     public SolveJob<Set<TupleScore>> submitTupleJob(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
+        log.info("Submitting tuple job");
         SimpleKey key = new SimpleKey(tuple, wordList, requireAnswer);
         if(tupleJobCache.containsKey(key)) {
-            return tupleJobCache.get(key);
-        } else {
-            SolveJob<Set<TupleScore>> response = new SolveJob<>();
-            tupleJobCache.put(key, response);
-            executorService.submit(() -> {
-                try {
-                    finishTuple(response, tuple, wordList, requireAnswer);
-                } catch (Exception e) {
-                    response.setStatus(JobStatus.FAILED);
-                    response.setError(e.getMessage());
-                }
-            });
-            return response;
+            log.info("Tuple job already exists");
+            var response = tupleJobCache.get(key);
+            if(response.getStatus() != JobStatus.FAILED) {
+                log.info("Returning existing job {}", response.getId());
+                response.setLastUpdate(LocalDateTime.now());
+                return response;
+            } else {
+                log.info("Tuple job {} failed, starting over. {}", response.getId(), response);
+            }
         }
+
+        log.info("Making new tuple job");
+        SolveJob<Set<TupleScore>> response = new SolveJob<>();
+        tupleJobCache.put(key, response);
+        executorService.submit(() -> {
+            try {
+                finishTuple(response, tuple, wordList, requireAnswer);
+            } catch (Exception e) {
+                log.error("Error while submitting tuple job", e);
+                response.setStatus(JobStatus.FAILED);
+                response.setError("Error while submitting tuple job:" + e.getMessage());
+            }
+        });
+        return response;
+
     }
 
     private void finishTuple(SolveJob<Set<TupleScore>> response, Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
@@ -449,12 +464,25 @@ public class SolvleService {
         log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
         response.setTasks(wordSet.size());
         response.setCompletedTasks(new AtomicInteger());
+        final AtomicBoolean timeout = new AtomicBoolean(false);
         final Set<Character> identifiedLetters = tuple.stream()
                 .flatMap(word -> word.letters().keySet().stream())
                 .collect(Collectors.toSet());
         int maxOverlap = tuple.size() > 1 ? 1 : 0;
         var tuples = wordSet.parallelStream()
-                .peek(word -> response.getCompletedTasks().incrementAndGet())
+                .peek(word -> {
+                    int completed = response.getCompletedTasks().incrementAndGet();
+                    if(completed % 200 == 0) {
+                        long durationSinceUpdate = Duration.between(response.getLastUpdate(), LocalDateTime.now()).getSeconds();
+                        if(durationSinceUpdate > MAX_JOB_IGNORE_TIME_SECONDS) {
+                            timeout.set(true);
+                            response.setStatus(JobStatus.FAILED);
+                            response.setError("Job timed out");
+                            log.warn("Job {} timed out after {} seconds idle", response.getId(), durationSinceUpdate);
+                        }
+                    }
+                })
+                .filter(word -> !timeout.get())
                 .filter(word -> !tuple.contains(word))
                 .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
                 .map(word -> {

@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {Button, Form, Modal, ProgressBar, Spinner, Table} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {generateConfigParams} from "../functions/functions";
@@ -20,6 +20,16 @@ function TupleCompletion(props) {
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [job, setJob] = useState(false);
+    const pollingIntervalRef = useRef(null);
+
+    const cancelJob = () => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+        setLoading(false);
+        setJob(null);
+        setFirstWord(""); // Clear the input field
+    };
 
     const handleShow = () => {
         setModalOpen(true);
@@ -68,23 +78,23 @@ function TupleCompletion(props) {
                     if (jobData.status === 'COMPLETED') {
                         setSuggestions(jobData.result);
                         setLoading(false);
-                        clearInterval(intervalId);
+                        clearInterval(pollingIntervalRef.current)
                     } else if (jobData.status === 'FAILED') {
                         alert("Job failed: " + jobData.error);
                         setLoading(false);
-                        clearInterval(intervalId);
+                        clearInterval(pollingIntervalRef.current)
                     }
                 })
                 .catch(error => {
                     console.error("Error polling job:", error);
                     setLoading(false);
-                    clearInterval(intervalId);
+                    clearInterval(pollingIntervalRef.current)
                 });
         };
 
         // Start polling immediately and then every 2 seconds
         pollJob();
-        intervalId = window.setInterval(pollJob, 2000);
+        pollingIntervalRef.current = window.setInterval(pollJob, 2000);
     }
 
     // Handle header clicks for sorting.
@@ -160,9 +170,15 @@ function TupleCompletion(props) {
                                                 <p><b>Remaining</b>: How many solutions are left on average after guessing all the words in each group (lower is better)</p>
                             <p><b>Entropy</b>: Calculated score based on how well this guess reduces the size of remaining groups (higher is better)</p>
 
-                        <Button variant="primary" type="submit">
-                            Solve!
-                        </Button>
+                        {loading && job ? (
+                            <Button variant="danger" onClick={cancelJob} type="button">
+                                Cancel
+                            </Button>
+                        ) : (
+                            <Button variant="primary" type="submit">
+                                Solve!
+                            </Button>
+                        )}
                     </Form>
                     <hr/>
                     {/* If loading and we have a job, show a progress bar */}
