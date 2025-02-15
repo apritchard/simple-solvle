@@ -22,19 +22,29 @@ function UtilityDropdown(props) {
         }, 200);
     }
 
+    function handleItemClick(e, child) {
+        setShow(false);
+        // If the child has its own onClick, call it.
+        if (child.props.onClick) {
+            child.props.onClick(e);
+        }
+    }
+
     return (
         <Dropdown as="span" show={show} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <Dropdown.Toggle variant="primary" id="dropdown-utilities">
                 {title}
             </Dropdown.Toggle>
             <Dropdown.Menu>
-                {React.Children.map(children, function(child, index) {
-                    return (
-                        <Dropdown.Item as="div" key={index}>
-                            {child}
-                        </Dropdown.Item>
-                    );
-                })}
+                {React.Children.map(children, (child, index) => (
+                    <Dropdown.Item
+                        as="div"
+                        key={index}
+                        onClick={(e) => handleItemClick(e, child)}
+                    >
+                        {child}
+                    </Dropdown.Item>
+                ))}
             </Dropdown.Menu>
         </Dropdown>
     );

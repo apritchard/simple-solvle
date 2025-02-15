@@ -1,5 +1,5 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {Button, Form, Modal} from "react-bootstrap";
+import React, {useContext, useState} from 'react';
+import {Button, Form, Modal, Spinner} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {generateConfigParams} from "../functions/functions";
 
@@ -7,7 +7,6 @@ function SolveModal(props) {
 
     const {
         boardState,
-        solverOpen,
         setSolverOpen
     } = useContext(AppContext);
 
@@ -15,8 +14,8 @@ function SolveModal(props) {
     const [solution, setSolution] = useState("");
     const [guesses, setGuesses] = useState([]);
 
-
     const [modalOpen, setModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleShow = () => {
         setModalOpen(true);
@@ -36,6 +35,7 @@ function SolveModal(props) {
 
     const solvePuzzle = (e) => {
         e.preventDefault();
+        setIsLoading(true);
         let configParams = generateConfigParams(boardState);
 
         fetch('/solvle/solve/' + solution.trim() + "?" + configParams + "&firstWord=" + firstWord)
@@ -44,7 +44,11 @@ function SolveModal(props) {
                 console.log("Received guesses:");
                 console.log(data);
                 setGuesses(data);
-            });
+            }).catch((error) => {
+                console.error('Error fetching solution:', error);
+        }).finally(() => {
+            setIsLoading(false);
+        });
     }
 
     return (
@@ -79,11 +83,19 @@ function SolveModal(props) {
                     </Form>
 
                     Solvle's Guesses:
-                    <ol>
-                      {guesses.map((item, index) => (
-                          <li className="guess" key={item} value={index + 1}>{item.toUpperCase()}</li>
-                      ))}
-                    </ol>
+                    {isLoading ? (
+                        <div>
+                            <Spinner animation="border" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </Spinner>
+                        </div>
+                    ) : (
+                        <ol>
+                            {guesses.map((item, index) => (
+                                <li className="guess" key={index}>{item.toUpperCase()}</li>
+                            ))}
+                        </ol>
+                    )}
 
                 </Modal.Body>
                 <Modal.Footer>

@@ -97,7 +97,7 @@ public class SolvleController {
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
         SolveJob<Set<TupleScore>> results = solvleService.submitTupleJob(tuple, wordList, requireAnswer);
-        log.info("Finish tuple for  {} took {}", tupleString, Duration.between(start, LocalDateTime.now()));
+        log.info("Finish tuple {} for {} took {}", results.getStatus(), tupleString, Duration.between(start, LocalDateTime.now()));
         return results;
     }
 

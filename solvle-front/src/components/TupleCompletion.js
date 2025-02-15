@@ -2,10 +2,12 @@ import React, {useContext, useEffect, useState} from 'react';
 import {Button, Form, Modal, ProgressBar, Spinner, Table} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {generateConfigParams} from "../functions/functions";
+import {MDBSwitch} from "mdb-react-ui-kit";
 
 function TupleCompletion(props) {
     const {
         boardState,
+        setBoardState,
         solverOpen,
         setSolverOpen
     } = useContext(AppContext);
@@ -29,6 +31,17 @@ function TupleCompletion(props) {
     }
     const changeFirstWord = (e) => {
         setFirstWord((e.target.value).replace(/\s/g, ""));
+    }
+
+    const updateSetting = (e) => {
+        localStorage.setItem(e.target.name, e.target.checked);
+        setBoardState(prev => ({
+            ...prev,
+            settings: {
+                ...prev.settings,
+                [e.target.name]: e.target.checked
+            }
+        }));
     }
 
     const completeTuple = (e) => {
@@ -140,15 +153,20 @@ function TupleCompletion(props) {
                             <Form.Control value={firstWord} onChange={changeFirstWord} autoComplete="off"
                                           type="text" placeholder="Starting Word(s), separated by commas"/>
                         </Form.Group>
+                        <div title="Limits multi-word guesses to potential solution words">
+                    <MDBSwitch id='requireAnswerSwitch' label="Only Use Potential Answers in Guess" name="requireAnswer"
+                               defaultChecked={boardState.settings.requireAnswer} onChange={updateSetting}/>
+                </div>
                                                 <p><b>Remaining</b>: How many solutions are left on average after guessing all the words in each group (lower is better)</p>
                             <p><b>Entropy</b>: Calculated score based on how well this guess reduces the size of remaining groups (higher is better)</p>
+
                         <Button variant="primary" type="submit">
                             Solve!
                         </Button>
                     </Form>
                     <hr/>
                     {/* If loading and we have a job, show a progress bar */}
-                    {loading && job ? (
+                    {loading && job && job.tasks > 0 ? (
                         <div className="job-progress-container text-center my-3">
                             <h5>Job Progress</h5>
                             <ProgressBar
