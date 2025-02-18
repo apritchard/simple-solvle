@@ -103,7 +103,6 @@ board
 bobby
 boney
 bongo
-bonus
 booth
 booty
 borne
@@ -147,7 +146,6 @@ chaff
 chair
 chase
 chasm
-cheap
 check
 chess
 chick
@@ -155,8 +153,6 @@ chide
 chili
 china
 chirp
-chore
-chose
 chuck
 chump
 churn
@@ -171,7 +167,6 @@ clasp
 cleat
 cliff
 clink
-cloak
 clout
 clove
 clued
@@ -191,22 +186,18 @@ coven
 covey
 crack
 crash
-crawl
 cream
 creed
 creek
 creep
 creme
-crepe
 cress
 crest
 crick
 cried
 crier
-crisp
 crock
 crony
-crook
 croup
 crude
 cruel
@@ -218,7 +209,6 @@ curse
 curve
 curvy
 cutie
-cyber
 cycle
 daily
 dairy
@@ -239,12 +229,10 @@ detox
 deuce
 dilly
 dimly
-dingy
 diode
 dirge
 dirty
 ditch
-ditty
 diver
 dizzy
 dodgy
@@ -253,7 +241,6 @@ dough
 dowdy
 dowel
 downy
-draft
 drake
 drama
 drank
@@ -310,8 +297,6 @@ extol
 eying
 fable
 fairy
-false
-fancy
 fanny
 fatal
 fatty
@@ -325,7 +310,6 @@ fence
 fetal
 fetch
 fetid
-fever
 ficus
 fiery
 fifth
@@ -340,7 +324,6 @@ flaky
 fleck
 fleet
 flier
-flint
 fluid
 fluke
 flush
@@ -388,7 +371,6 @@ gnome
 godly
 golly
 gonad
-goody
 gooey
 gourd
 graft
@@ -438,7 +420,6 @@ hussy
 hydro
 hymen
 icily
-icing
 ideal
 idiom
 idiot
@@ -464,7 +445,6 @@ juror
 kappa
 kinky
 kitty
-knack
 kneed
 knife
 known
@@ -483,7 +463,6 @@ lease
 least
 lefty
 legal
-lemur
 leper
 level
 lever
@@ -553,7 +532,6 @@ myrrh
 nadir
 nasal
 navel
-nerve
 newer
 newly
 niece
@@ -604,7 +582,6 @@ patsy
 payee
 payer
 pecan
-pedal
 penal
 pence
 penny
@@ -642,14 +619,12 @@ pried
 prism
 privy
 proof
-prose
 prude
 pubic
 pudgy
 puffy
 pulse
 punch
-pupil
 puppy
 puree
 purer
@@ -678,13 +653,11 @@ rajah
 rally
 ralph
 randy
-rapid
 rarer
 raspy
 ratty
 raven
 razor
-reach
 rearm
 rebar
 recut
@@ -692,14 +665,12 @@ reedy
 refit
 rehab
 reign
-relax
 relay
 remit
 renal
 reply
 reset
 reuse
-revue
 rifle
 rigid
 rigor
@@ -708,7 +679,6 @@ ripen
 riser
 risky
 river
-rivet
 roach
 roast
 roger
@@ -716,10 +686,8 @@ roost
 rotor
 rough
 rowdy
-rower
 rugby
 ruler
-rumba
 rumor
 rural
 sadly
@@ -741,7 +709,6 @@ scary
 scene
 scion
 scoop
-score
 scree
 screw
 scrum
@@ -776,12 +743,10 @@ shoot
 short
 shrew
 shuck
-shunt
 shush
 sieve
 sigma
 silky
-silly
 sinew
 singe
 siren
@@ -845,7 +810,6 @@ spool
 spore
 sport
 spree
-sprig
 spunk
 spurn
 squib
@@ -856,7 +820,6 @@ stank
 stave
 steak
 steal
-steep
 steer
 stilt
 stoke
@@ -870,18 +833,15 @@ stuff
 stump
 stunk
 stunt
-suave
 suing
 suite
 sully
 sumac
-sunny
 surge
 swami
 swamp
 swarm
 swash
-swath
 swear
 swept
 swift
@@ -916,14 +876,11 @@ thrum
 tight
 timer
 timid
-toast
 toddy
 token
 tonal
 tonga
-tooth
 torus
-total
 tower
 track
 trail
@@ -950,7 +907,6 @@ turbo
 tweet
 twixt
 tying
-udder
 umbra
 uncut
 undid
@@ -958,7 +914,6 @@ union
 unity
 unset
 unwed
-upper
 urine
 utile
 valor
@@ -981,7 +936,6 @@ vocal
 vogue
 vomit
 vowel
-wafer
 wager
 waist
 waive
