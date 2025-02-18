@@ -6,6 +6,7 @@ import AutoColor from "./AutoColor";
 import RateMyGame from "./RateMyGame";
 import UtilityDropdown from "./UtilityDropdown";
 import TupleCompletion from "./TupleCompletion";
+import ScoreMyStarter from "./ScoreMyStarter";
 
 function BoardActions() {
 
@@ -41,6 +42,7 @@ function BoardActions() {
                 <SolveModal />
                 <RateMyGame />
                 <TupleCompletion />
+                <ScoreMyStarter />
             </UtilityDropdown>
         </div>
     );

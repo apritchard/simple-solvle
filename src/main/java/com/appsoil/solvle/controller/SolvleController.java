@@ -69,6 +69,18 @@ public class SolvleController {
         return result;
     }
 
+    @GetMapping("/scoreTuple/{tupleString}")
+    public TupleScore getScoreTuple(@PathVariable String tupleString,
+                                    @RequestParam(defaultValue = "SIMPLE") DictionaryType wordList) {
+        LocalDateTime start = LocalDateTime.now();
+        logRequestsCount(start);
+        log.info("ScoreTuple requested for {} with configuration {}", tupleString, wordList);
+        Set<Word> tupleToScore = Arrays.stream(tupleString.toLowerCase().split(",")).map(Word::new).collect(Collectors.toSet());
+        TupleScore results = solvleService.scoreTuple(tupleToScore, wordList);
+        log.info("Score for {}: {}, took {}", tupleToScore, results, Duration.between(start, LocalDateTime.now()));
+        return results;
+    }
+
     @GetMapping("/{wordRestrictions}/best/{bestNWords}")
     public Set<TupleScore> getBestNWords(@PathVariable String wordRestrictions,
                                           @PathVariable Integer bestNWords,
