@@ -22,12 +22,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.DoubleAdder;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 @Log4j2
@@ -89,7 +88,7 @@ public class SolvleService {
 
         // find all the valid words in our dictionary for this restriction string
         Set<Word> containedWords = wordCalculationService.findMatchingWords(wordSet, wordRestrictions);
-        if(wordCalculationConfig.hardMode()) {
+        if (wordCalculationConfig.hardMode()) {
             //for hard mode, we also have to filter the fishing word list the same way
             fishingSet = wordCalculationService.findMatchingWords(fishingSet, wordRestrictions);
         }
@@ -114,7 +113,7 @@ public class SolvleService {
 
         // calculate how many words in the valid word set contain each character and
         //   then generate scores for words in the valid list and fishing list
-        if(wordCalculationConfig.rightLocationMultiplier() == 0) {
+        if (wordCalculationConfig.rightLocationMultiplier() == 0) {
             characterCounts = wordCalculationService.calculateCharacterCounts(containedWords);
 
             wordFrequencyScores = wordCalculationService
@@ -133,7 +132,7 @@ public class SolvleService {
         }
 
         // generate words that optimally partition the viable set
-        if(wordCalculationConfig.partitionThreshold() <= 0) {
+        if (wordCalculationConfig.partitionThreshold() <= 0) {
             remainingWords = null;
         } else {
             remainingWords = wordCalculationService.calculateRemainingWords(wordRestrictions, containedWords, wordFrequencyScores, fishingWordScores);
@@ -167,7 +166,7 @@ public class SolvleService {
         List<String> currentGuesses = new ArrayList<>();
         int previousRemaining = wordSet.size();
 
-        for(String guess : guesses) {
+        for (String guess : guesses) {
             log.info("Evaluating " + guess);
             //score player's guess
             WordScoreDTO playerScore = getScore(restrictions, guess, wordList, config, hardMode, requireAnswer);
@@ -182,7 +181,7 @@ public class SolvleService {
             Set<Word> newWords = wordCalculationService.findMatchingWords(wordSet, restrictions);
             int actualRemaining = newWords.size();
 
-            log.info("Adding scores: {}:{} {}:{} actualRemaining:{}", guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining );
+            log.info("Adding scores: {}:{} {}:{} actualRemaining:{}", guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining);
             gameScoreDTO.addRow(guess, playerScore, solvleGuess.word(), solvleScore, actualRemaining, previousRemaining, analysis.fishingWords().stream().findFirst().get());
             currentGuesses.add(guess); //to make sure Solvle doesn't guess an already chosen word
             previousRemaining = actualRemaining;
@@ -198,7 +197,7 @@ public class SolvleService {
     }
 
     public WordScoreDTO getScore(WordRestrictions wordRestrictions, String wordToScore, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
-        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode). withRequireAnswer(requireAnswer);
+        WordCalculationConfig wordCalculationConfig = wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer);
         Word word = new Word(wordToScore, 0);
         Set<Word> wordSet = getPrimarySet(wordList);
 
@@ -213,7 +212,7 @@ public class SolvleService {
 //            sharedPositionBonus = wordCalculationService.generateSharedCharacterWeights(wordCalculationService.findSharedWordRestrictions(containedWords), wordRestrictions);
 //        }
 
-        if(wordCalculationConfig.rightLocationMultiplier() == 0) {
+        if (wordCalculationConfig.rightLocationMultiplier() == 0) {
             var counts = wordCalculationService.removeRequiredLettersFromCounts(wordCalculationService.calculateCharacterCounts(containedWords), wordRestrictions.requiredLetters());
             score = wordCalculationService.calculateFreqScore(word,
                     counts,
@@ -226,17 +225,17 @@ public class SolvleService {
                     containedWords,
                     wordToScore.length() - wordRestrictions.letterPositions().keySet().size(),
                     wordRestrictions, sharedPositionBonus
-                    );
+            );
         }
 
         PartitionStats stats;
-        if(wordRestrictions.equals(WordRestrictions.NO_RESTRICTIONS)) {
+        if (wordRestrictions.equals(WordRestrictions.NO_RESTRICTIONS)) {
             log.info("No restrictions - using cached partition data");
             if (firstPartitionData.containsKey(wordList) && firstPartitionData.get(wordList).containsKey(word)) {
                 stats = firstPartitionData.get(wordList).get(word);
             } else {
                 stats = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word);
-                if(!firstPartitionData.containsKey(wordList)) {
+                if (!firstPartitionData.containsKey(wordList)) {
                     firstPartitionData.put(wordList, new ConcurrentHashMap<>());
                 }
                 firstPartitionData.get(wordList).put(word, stats);
@@ -245,15 +244,16 @@ public class SolvleService {
             stats = wordCalculationService.getPartitionStatsForWord(wordRestrictions, containedWords, word);
         }
 
-       return new WordScoreDTO(stats.wordsRemaining(), score, stats.entropy());
+        return new WordScoreDTO(stats.wordsRemaining(), score, stats.entropy());
     }
 
     /**
      * With a given set of restrictions, get the average solve length for top recommended words using a given configuration
      * Takes a long time, use with caution.
-     * @param restrictionString         Current known restrictions about the solution
-     * @param wordList                  Name of the wordlist for this playout
-     * @param guess                     Which number guess this is, used for identifying failure state (exceeding 6 guesses)
+     *
+     * @param restrictionString Current known restrictions about the solution
+     * @param wordList          Name of the wordlist for this playout
+     * @param guess             Which number guess this is, used for identifying failure state (exceeding 6 guesses)
      * @return
      */
     public Set<PlayOut> playOutSolutions(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, int guess) {
@@ -310,16 +310,17 @@ public class SolvleService {
     }
 
     public SharedPositions findSharedWordRestrictions(DictionaryType wordList) {
-        WordCalculationService wordCalculationService= new WordCalculationService(WordCalculationConfig.SIMPLE);
+        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.SIMPLE);
         return wordCalculationService.findSharedWordRestrictions(getPrimarySet(wordList));
     }
 
     /**
      * Solves for every word in the simple dictionary and returns a map of the guess-route the provided Solver will
      * choose for each word in the simple dictionary.
-     * @param solver Solver implementation class that decide when to use words from fishing/partition/valid lists
-     * @param firstWord Optional. Overrides the WordCalculationService's first word guess to see how results change.
-     *                  Will otherwise use the first fishing word as calculated for the provided Config
+     *
+     * @param solver                Solver implementation class that decide when to use words from fishing/partition/valid lists
+     * @param firstWord             Optional. Overrides the WordCalculationService's first word guess to see how results change.
+     *                              Will otherwise use the first fishing word as calculated for the provided Config
      * @param wordCalculationConfig
      * @return
      */
@@ -327,9 +328,9 @@ public class SolvleService {
 
         Set<Word> words = getPrimarySet(wordList);
 
-        if(firstWord == null || firstWord.isBlank()) {
+        if (firstWord == null || firstWord.isBlank()) {
             SolvleDTO guess = getWordAnalysis(WordRestrictions.noRestrictions(), words, getFishingSet(wordList), wordCalculationConfig);
-            if(guess.bestWords() != null && !guess.bestWords().isEmpty()) {
+            if (guess.bestWords() != null && !guess.bestWords().isEmpty()) {
                 firstWord = guess.bestWords().stream().findFirst().get().word();
             } else {
                 firstWord = guess.fishingWords().stream().findFirst().get().word();
@@ -339,7 +340,7 @@ public class SolvleService {
         final String startingWord = firstWord;
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
-        words.stream().forEach( word -> {
+        words.stream().forEach(word -> {
             List<String> guesses = solveWord(solver, word, startingWord, wordList);
             outcome.put(word.word(), guesses);
         });
@@ -353,7 +354,7 @@ public class SolvleService {
         final String firstWord = guess.fishingWords().stream().findFirst().get().word();
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
-        words.stream().forEach( word -> {
+        words.stream().forEach(word -> {
             List<String> guesses = new ArrayList<>(previousGuesses);
             guesses.addAll(solveWord(solver, word, firstWord, wordList));
             outcome.put(word.word(), guesses);
@@ -369,6 +370,7 @@ public class SolvleService {
     /**
      * Attempts to guess the correct solution to a word and returns a list of which words
      * would be used to find the solution.
+     *
      * @param word The solution
      * @return An ordered list of guesses, of which the final one is the solution
      */
@@ -378,38 +380,39 @@ public class SolvleService {
         Set<Word> wordSet = getPrimarySet(wordList);
         Set<Word> fishingSet = getFishingSet(wordList);
 
-        if(!wordSet.contains(word)) {
+        if (!wordSet.contains(word)) {
             return List.of("Word Not Found");
-        } else if ( !"".equals(firstWord) && !fishingSet.contains(new Word(firstWord))) {
+        } else if (!"".equals(firstWord) && !fishingSet.contains(new Word(firstWord))) {
             return List.of("First word not valid");
         }
 
         return solver.solve(word, wordSet, fishingSet, firstWord);
     }
 
-    public Set<TupleScore> findBestNWords(String startingWordRestrictions, Integer bestNWords, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
-        var config = wordConfig.config.withHardMode(hardMode).withRequireAnswer(requireAnswer);
+    public Set<TupleScore> findBestNWords(Integer bestNWords, DictionaryType wordList, WordConfig wordConfig, boolean requireAnswer) {
+        var config = wordConfig.config.withRequireAnswer(requireAnswer);
         WordCalculationService wordCalculationService = new WordCalculationService(config);
 
-        WordRestrictions startingRestrictions = new WordRestrictions(startingWordRestrictions);
 
-        Set<Word> wordSet = wordCalculationService.findMatchingWords(getPrimarySet(wordList), startingRestrictions);
+        Set<Word> wordSet = getPrimarySet(wordList);
         Set<Word> fishingSet = getFishingSet(wordList);
+        Set<Word> availableGuesses = requireAnswer ? wordSet : fishingSet;
 
-        var guessTuples = generateNWordLists(wordSet, fishingSet, bestNWords);
+//        var guessTuples = generateNWordLists(wordSet, fishingSet, bestNWords);
         //var guessTuples = generateNWordLists(wordSet, wordSet, bestNWords);
+        var guessTuples = generateNWordListsHeuristic(availableGuesses, wordSet, bestNWords, wordCalculationService);
         log.info("{} word lists generated", guessTuples.size());
 
         Set<TupleScore> tupleScores = new TreeSet<>();
         AtomicInteger tupleCounter = new AtomicInteger();
 
-        guessTuples.parallelStream().forEach( guessTuple -> {
-            PartitionStats stats = wordCalculationService.getPartitionStatsForTuple(startingRestrictions, wordSet, guessTuple);
-            if(stats != null ) {
+        guessTuples.parallelStream().forEach(guessTuple -> {
+            PartitionStats stats = wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, wordSet, guessTuple);
+            if (stats != null) {
                 tupleScores.add(new TupleScore(guessTuple, stats));
             }
             int i = tupleCounter.incrementAndGet();
-            if(i%100 == 0) {
+            if (i % 100 == 0) {
                 log.info("{} tuples evaluated", i);
             }
         });
@@ -429,10 +432,10 @@ public class SolvleService {
     public SolveJob<Set<TupleScore>> submitTupleJob(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
         log.info("Submitting tuple job");
         SimpleKey key = new SimpleKey(tuple, wordList, requireAnswer);
-        if(tupleJobCache.containsKey(key)) {
+        if (tupleJobCache.containsKey(key)) {
             log.info("Tuple job already exists");
             var response = tupleJobCache.get(key);
-            if(response.getStatus() != JobStatus.FAILED) {
+            if (response.getStatus() != JobStatus.FAILED) {
                 log.info("Returning existing job {}", response.getId());
                 response.setLastUpdate(LocalDateTime.now());
                 return response;
@@ -472,9 +475,9 @@ public class SolvleService {
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
                     int completed = response.getCompletedTasks().incrementAndGet();
-                    if(completed % 200 == 0) {
+                    if (completed % 200 == 0) {
                         long durationSinceUpdate = Duration.between(response.getLastUpdate(), LocalDateTime.now()).getSeconds();
-                        if(durationSinceUpdate > MAX_JOB_IGNORE_TIME_SECONDS) {
+                        if (durationSinceUpdate > MAX_JOB_IGNORE_TIME_SECONDS) {
                             timeout.set(true);
                             response.setStatus(JobStatus.FAILED);
                             response.setError("Job timed out");
@@ -524,8 +527,8 @@ public class SolvleService {
     }
 
     protected Set<Set<Word>> generateNWordListsInner(Set<Set<Word>> currentLists,
-                                              Set<WordFrequencyScore> fishingWordScores,
-                                              int bestNWords) {
+                                                     Set<WordFrequencyScore> fishingWordScores,
+                                                     int bestNWords) {
         // Base case: if no more words need to be added, return the current lists.
         if (bestNWords == 0) {
             return currentLists;
@@ -537,8 +540,8 @@ public class SolvleService {
         if (currentLists == null || currentLists.isEmpty()) {
             currentLists = new HashSet<>();
             int i = wordHeuristicCutoff;
-            for(WordFrequencyScore word : fishingWordScores) {
-                if(i-- <= 0 ) {
+            for (WordFrequencyScore word : fishingWordScores) {
+                if (i-- <= 0) {
                     break;
                 }
                 Set<Word> single = new TreeSet<>();
@@ -546,7 +549,7 @@ public class SolvleService {
                 currentLists.add(single);
             }
 
-            return generateNWordListsInner(currentLists, fishingWordScores,bestNWords - 1);
+            return generateNWordListsInner(currentLists, fishingWordScores, bestNWords - 1);
         }
 
         Set<Set<Word>> response = new HashSet<>();
@@ -560,26 +563,208 @@ public class SolvleService {
             fishingWordScores.stream()
                     .filter(wfs -> currentList.stream().noneMatch(word -> word.getOrder() == wfs.naturalOrdering()))
                     .filter(wfs -> {
-                String word = wfs.word();
-                int c = 0;
-                for(int i = 0; i < word.length(); i++) {
-                    if(identifiedLetters.contains(word.charAt(i))) {
-                        c++;
-                    }
-                    if(c > 1) { //adjust to control number of duplicates allowed
-                        return false;
-                    }
-                }
-                return true;
-            }).limit(wordHeuristicCutoff)
+                        String word = wfs.word();
+                        int c = 0;
+                        for (int i = 0; i < word.length(); i++) {
+                            if (identifiedLetters.contains(word.charAt(i))) {
+                                c++;
+                            }
+                            if (c > 1) { //adjust to control number of duplicates allowed
+                                return false;
+                            }
+                        }
+                        return true;
+                    }).limit(wordHeuristicCutoff)
                     .forEachOrdered(wfs -> {
-                Set<Word> newSet = new TreeSet<>(currentList);
-                newSet.add(new Word(wfs.word(), wfs.naturalOrdering()));
-                response.add(newSet);
-            });
+                        Set<Word> newSet = new TreeSet<>(currentList);
+                        newSet.add(new Word(wfs.word(), wfs.naturalOrdering()));
+                        response.add(newSet);
+                    });
 
         }
 
         return generateNWordListsInner(response, fishingWordScores, bestNWords - 1);
     }
+
+    private static long binomialCoefficient(int n, int k) {
+        if (k > n) return 0;
+        if (k == 0 || k == n) return 1;
+        long result = 1;
+        for (int i = 1; i <= k; i++) {
+            result = result * (n - i + 1) / i;
+        }
+        return result;
+    }
+
+
+    final int TOP_N = 2000;
+    final static long LOG_THRESHOLD = 10_000_000;
+
+    protected Set<Set<Word>> generateNWordListsHeuristic(Set<Word> availableGuesses, Set<Word> availableAnswers, int bestNWords, WordCalculationService wordCalculationService) {
+
+        log.info("Generating size {} wordlists", bestNWords);
+        Map<Integer, Map<Character, LongAdder>> charCounts = wordCalculationService.calculateCharacterCountsByPosition(availableAnswers);
+        final List<Word> emptyTuple = new ArrayList<>();
+        List<Word> wordsWithoutDoubleLetters = availableGuesses.stream().filter(word -> isValidCombination(emptyTuple, word)).toList();
+        log.info("Removed {} words with duplicate letters", availableGuesses.size() - wordsWithoutDoubleLetters.size());
+        final long expectedTuples = binomialCoefficient(wordsWithoutDoubleLetters.size(), bestNWords);
+
+        AtomicLong count = new AtomicLong(0);
+
+        // Generate a stream of combinations and process them in parallel.
+        PriorityQueue<Map.Entry<Set<Word>, Double>> topEntries = generateCombinations(wordsWithoutDoubleLetters, 0, bestNWords, new ArrayList<>())
+                .parallel()
+                .peek(words -> {
+                    long evalCount = count.incrementAndGet();
+                    if (evalCount % LOG_THRESHOLD == 0) {
+                        log.info("Evaluated {} / {} tuples ({}%)",
+                                evalCount,
+                                expectedTuples,
+                                Math.round(evalCount * 100.0 / expectedTuples));
+                    }
+                })
+                .map(combination -> {
+                    double score = wordCalculationService.calculateTupleFreqScoreByPosition(
+                            new HashSet<>(combination), charCounts, availableAnswers, combination.get(0).getLength());
+                    return new AbstractMap.SimpleEntry<Set<Word>, Double>(new HashSet<>(combination), score);
+                })
+                .collect(Collector.of(
+                        // Supplier: create a new min-heap (priority queue) ordered by score.
+                        () -> new PriorityQueue<>(Comparator.comparingDouble(Map.Entry::getValue)),
+                        // Accumulator: add an entry, keeping only the top TOP_N combinations.
+                        (pq, entry) -> {
+                            if (pq.size() < TOP_N) {
+                                pq.offer(entry);
+                            } else if (entry.getValue() > pq.peek().getValue()) {
+                                pq.poll();
+                                pq.offer(entry);
+                            }
+                        },
+                        // Combiner: merge two priority queues.
+                        (pq1, pq2) -> {
+                            pq2.forEach(entry -> {
+                                if (pq1.size() < TOP_N) {
+                                    pq1.offer(entry);
+                                } else if (entry.getValue() > pq1.peek().getValue()) {
+                                    pq1.poll();
+                                    pq1.offer(entry);
+                                }
+                            });
+                            return pq1;
+                        }
+                ));
+
+        log.info("Returning top {} wordLists - {}", topEntries.size(), topEntries);
+        return topEntries.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+    }
+
+
+//    private Stream<List<Word>> generateCombinations(List<Word> wordList, int start, int bestNWords, List<Word> currentCombination) {
+//        if (currentCombination.size() == bestNWords) {
+//            return Stream.of(currentCombination);
+//        }
+//        return IntStream.range(start, wordList.size())
+//                .boxed()
+//                .flatMap(i -> {
+//                    List<Word> newCombination = new ArrayList<>(currentCombination);
+//                    newCombination.add(wordList.get(i));
+//                    // Only continue if the new combination is valid (or too short to need checking).
+//                    if (newCombination.size() < 2 || isValidCombination(newCombination)) {
+//                        return generateCombinations(wordList, i + 1, bestNWords, newCombination);
+//                    }
+//                    return Stream.empty();
+//                });
+//    }
+
+    private Stream<List<Word>> generateCombinations(List<Word> wordList, int start, int bestNWords, List<Word> currentCombination) {
+        if (currentCombination.size() == bestNWords) {
+            return Stream.of(currentCombination);
+        }
+        return IntStream.range(start, wordList.size())
+                // Filter out indices that would lead to an invalid combination.
+                .filter(i -> currentCombination.isEmpty() || isValidCombination(currentCombination, wordList.get(i), currentCombination.size() > 3 ? 2 : 1))
+                .boxed()
+                .flatMap(i -> {
+                    List<Word> newCombination = new ArrayList<>(currentCombination);
+                    newCombination.add(wordList.get(i));
+                    return generateCombinations(wordList, i + 1, bestNWords, newCombination);
+                });
+    }
+
+    private static boolean isValidCombination(List<Word> initialWords, Word newWord, int maxDuplicateLetters) {
+        if(maxDuplicateLetters == 1) {
+            return isValidCombination(initialWords, newWord);
+        }
+        int[] counts = new int[256];
+        for(int i =0; i < newWord.getLength(); i++) {
+            if(++counts[newWord.word().charAt(i)] > maxDuplicateLetters) {
+                return false;
+            }
+        }
+        for (Word word : initialWords) {
+            String str = word.word();  // Cache the result here
+            for (int j = 0, len = str.length(); j < len; j++) {
+                if (++counts[str.charAt(j)] > maxDuplicateLetters) {
+//                    log.info("excluding set {}", combination);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+//    private static boolean isValidCombination(List<Word> combination) {
+//        Map<Character, Integer> letterCounts = new HashMap<>();
+//        for (Word word : combination) {
+//            for (char c : word.toString().toCharArray()) {
+//                int count = letterCounts.getOrDefault(c, 0) + 1;
+//                if (count > MAX_DUPLICATE_LETTERS) {
+//                    return false;
+//                }
+//                letterCounts.put(c, count);
+//            }
+//        }
+//        return true;
+//    }
+
+    /** GPT-generated microoptimization for identifying combinations that don't have duplicate letters **/
+    // Precomputed lookup for characters 0–255.
+    private static final int[] INDEX_LOOKUP = new int[256];
+    private static final long[] BIT_LOOKUP = new long[256];
+
+    static {
+        for (int i = 0; i < 256; i++) {
+            INDEX_LOOKUP[i] = i >>> 6;
+            BIT_LOOKUP[i] = 1L << (i & 63);
+        }
+    }
+
+    private static boolean isValidCombination(List<Word> combination, Word newWord) {
+        long[] mask = new long[4];
+        if (!accumulateMask(mask, newWord.word())) {
+            return false;
+        }
+        for (Word word : combination) {
+            if (!accumulateMask(mask, word.word())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean accumulateMask(long[] mask, String s) {
+        for (int i = 0, len = s.length(); i < len; i++) {
+            int c = s.charAt(i);
+            // Lookup the precomputed index and bit.
+            if ((mask[INDEX_LOOKUP[c]] & BIT_LOOKUP[c]) != 0) {
+                return false;
+            }
+            mask[INDEX_LOOKUP[c]] |= BIT_LOOKUP[c];
+        }
+        return true;
+    }
+
+
 }
+
+

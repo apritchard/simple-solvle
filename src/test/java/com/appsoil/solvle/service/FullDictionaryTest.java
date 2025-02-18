@@ -268,16 +268,17 @@ public class FullDictionaryTest {
 
     @Test
     void findBestWords() {
-        WordRestrictions restrictions = WordRestrictions.NO_RESTRICTIONS;
         WordConfig config = WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING;
-        var bestTuples = solvleService.findBestNWords(restrictions.toString(), 4, DictionaryType.SIMPLE, config, false, false);
+        var bestTuples = solvleService.findBestNWords( 2, DictionaryType.ICELANDIC, config, true);
         int i = 0;
+        log.info("|Guesses|Entropy|Remaining Words|");
+        log.info("|-----|-----|-----|");
         for (TupleScore bestTuple : bestTuples) {
-            log.info("{}entropy({})remaining({})",
-                    bestTuple.tuple(),
+            log.info("|{}|{}|{}|",
+                    bestTuple.tuple().stream().map(Word::word).sorted().toList(),
                     String.format("%.3f", bestTuple.partitionStats().entropy()),
                     String.format("%.3f", bestTuple.partitionStats().wordsRemaining()));
-            if (i++ > 100) {
+            if (i++ >= 99) {
                 break;
             }
         }

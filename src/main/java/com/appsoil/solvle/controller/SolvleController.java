@@ -80,7 +80,7 @@ public class SolvleController {
         LocalDateTime start = LocalDateTime.now();
         logRequestsCount(start);
         log.info("Best n words requested for {} with configuration {}", wordRestrictions, wordConfig);
-        Set<TupleScore> results = solvleService.findBestNWords(wordRestrictions.toLowerCase(), bestNWords, wordList, wordConfig, hardMode, requireAnswer);
+        Set<TupleScore> results = solvleService.findBestNWords(bestNWords, wordList, wordConfig, requireAnswer);
         log.info("Best n words for  {} took {}", wordRestrictions, Duration.between(start, LocalDateTime.now()));
         return results;
     }

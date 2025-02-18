@@ -258,6 +258,69 @@ public class WordCalculationService {
                 }).sum();
     }
 
+    protected double calculateTupleFreqScoreByPosition(Set<Word> tuple,
+                                                       Map<Integer, Map<Character, LongAdder>> wordsWithCharacter,
+                                                       Set<Word> containedWords, int len) {
+        // Initialize a list to hold the set of characters at each position.
+        List<Set<Character>> charPositions = new ArrayList<>(len);
+        for (int i = 0; i < len; i++) {
+            charPositions.add(new HashSet<>());
+        }
+
+        // Compute global letter frequencies and fill charPositions.
+        Map<Character, Integer> letterCounts = new HashMap<>();
+        for (Word word : tuple) {
+            String str = word.word();
+            for (int i = 0; i < len; i++) {
+                char c = str.charAt(i);
+                charPositions.get(i).add(c);
+                letterCounts.merge(c, 1, Integer::sum);
+            }
+        }
+
+        // Calculate the unique adjustment factor.
+        double maxLength = WordRestrictions.NO_RESTRICTIONS.word().getLength();
+        double uniqueAdjustment = 1 - ((1 - ((double) len / maxLength)) * uniqueAdjustmentScale);
+
+        // Precompute per-letter bonuses.
+        Map<Character, Double> uniqueBonusMap = new HashMap<>();
+        Map<Character, Double> vowelPenaltyMap = new HashMap<>();
+        for (Map.Entry<Character, Integer> entry : letterCounts.entrySet()) {
+            char c = entry.getKey();
+            uniqueBonusMap.put(c, entry.getValue() < 2 ? 1 + (uniquenessMultiplier - 1) * uniqueAdjustment : 1.0);
+            vowelPenaltyMap.put(c, vowels.contains(c) ? vowelAdjustment : 1.0);
+        }
+
+        // Precompute the maps for each letter position.
+        @SuppressWarnings("unchecked")
+        Map<Character, LongAdder>[] posCharMaps = new Map[len];
+        for (int j = 0; j < len; j++) {
+            posCharMaps[j] = wordsWithCharacter.get(j + 1);
+        }
+
+        // Precompute constant factor to normalize the score.
+        double finalFactor = 1.0 / (containedWords.size() * len * rightLocationMultiplier);
+        double totalScore = 0.0;
+
+        // Main nested loops: For each letter (by position) sum contributions over every other position.
+        for (int i = 0; i < len; i++) {
+            Set<Character> posChars = charPositions.get(i);
+            for (char c : posChars) {
+                // Bonus for this letter is independent of the j-loop.
+                double bonus = uniqueBonusMap.get(c) * vowelPenaltyMap.get(c);
+                for (int j = 0; j < len; j++) {
+                    // Calculate location bonus.
+                    double locationBonus = (i == j) ? (1 + (rightLocationMultiplier - 1)) : 1.0;
+                    Map<Character, LongAdder> posMap = posCharMaps[j];
+                    // Get count for letter c in position j.
+                    long count = posMap.containsKey(c) ? posMap.get(c).longValue() : 0L;
+                    totalScore += count * locationBonus * bonus * finalFactor;
+                }
+            }
+        }
+        return totalScore;
+    }
+
     /**
      * Calculates letter frequency by position and adds additional weighting bonuses as defined by this
      * service's configuration. Return value of 1.0 represents that every letter in the word exists in the same
