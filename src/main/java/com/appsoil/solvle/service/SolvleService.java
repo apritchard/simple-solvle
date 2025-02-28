@@ -467,11 +467,10 @@ public class SolvleService {
         log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
         response.setTasks(wordSet.size());
         response.setCompletedTasks(new AtomicInteger());
+        final Set<Word> allSolutions = getPrimarySet(wordList);
         final AtomicBoolean timeout = new AtomicBoolean(false);
-        final Set<Character> identifiedLetters = tuple.stream()
-                .flatMap(word -> word.letters().keySet().stream())
-                .collect(Collectors.toSet());
-        int maxOverlap = tuple.size() > 1 ? 1 : 0;
+        int maxOverlap = tuple.size() > 1 ? 2 : 1;
+        var tupleList = tuple.stream().toList();
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
                     int completed = response.getCompletedTasks().incrementAndGet();
@@ -486,12 +485,11 @@ public class SolvleService {
                     }
                 })
                 .filter(word -> !timeout.get())
-                .filter(word -> !tuple.contains(word))
-                .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
+                .filter(word -> isValidCombination(tupleList, word, maxOverlap))
                 .map(word -> {
                     Set<Word> newSet = new HashSet<>(tuple);
                     newSet.add(word);
-                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), newSet));
+                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, allSolutions, newSet));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
         response.setResult(tuples);
         response.setStatus(JobStatus.COMPLETED);
