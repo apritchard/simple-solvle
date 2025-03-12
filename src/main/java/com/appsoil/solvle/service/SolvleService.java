@@ -436,7 +436,7 @@ public class SolvleService {
             log.info("Tuple job already exists");
             var response = tupleJobCache.get(key);
             if (response.getStatus() != JobStatus.FAILED) {
-                log.info("Returning existing job {}", response.getId());
+                log.info("Returning existing job {} evaluated {} tuples", response.getId(), response.getEvaluatedTuples());
                 response.setLastUpdate(LocalDateTime.now());
                 return response;
             } else {
@@ -467,9 +467,11 @@ public class SolvleService {
         log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
         response.setTasks(wordSet.size());
         response.setCompletedTasks(new AtomicInteger());
+        response.setEvaluatedTuples(new AtomicInteger());
         final Set<Word> allSolutions = getPrimarySet(wordList);
         final AtomicBoolean timeout = new AtomicBoolean(false);
-        int maxOverlap = tuple.size() > 1 ? 2 : 1;
+        int maxOverlap = tuple.size() > 3 ? 2 : 1;
+        final int[] preExistingDuplicates = countPreExistingDuplicates(tuple);
         var tupleList = tuple.stream().toList();
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
@@ -485,35 +487,17 @@ public class SolvleService {
                     }
                 })
                 .filter(word -> !timeout.get())
-                .filter(word -> isValidCombination(tupleList, word, maxOverlap))
+                .filter(word -> isValidCombination(tupleList, word, maxOverlap, preExistingDuplicates))
                 .map(word -> {
                     Set<Word> newSet = new HashSet<>(tuple);
                     newSet.add(word);
+                    response.getEvaluatedTuples().incrementAndGet();
                     return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, allSolutions, newSet));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
         response.setResult(tuples);
         response.setStatus(JobStatus.COMPLETED);
+        log.info("Tuble job for {} completed in {}", tuple, response.runTime());
     }
-
-//    @Cacheable("finishTuple")
-//    public Set<TupleScore> finishTuple(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
-//        Set<Word> wordSet = requireAnswer ? getPrimarySet(wordList) : getFishingSet(wordList);
-//        WordCalculationService wordCalculationService = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
-//        log.info("Checking {} words for completion of tuple {}", wordSet.size(), tuple);
-//        final Set<Character> identifiedLetters = tuple.stream()
-//                .flatMap(word -> word.letters().keySet().stream())
-//                .collect(Collectors.toSet());
-//        int maxOverlap = tuple.size() > 1 ? 1 : 0;
-//        return wordSet.parallelStream()
-//                .filter(word -> !tuple.contains(word))
-//                .filter(word -> identifiedLetters.stream().mapToInt(letter -> word.letters().getOrDefault(letter, 0)).sum() <= maxOverlap)
-//                .map(word -> {
-//                    Set<Word> newSet = new HashSet<>(tuple);
-//                    newSet.add(word);
-//                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, getPrimarySet(wordList), newSet));
-//                }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
-//    }
-
 
     protected Set<Set<Word>> generateNWordLists(Set<Word> containedWords, Set<Word> fishingSet, int bestNWords) {
         log.info("Generating {}-word lists for {} solutions using {} potential guesses", bestNWords, containedWords.size(), fishingSet.size());
@@ -656,31 +640,13 @@ public class SolvleService {
         return topEntries.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
-
-//    private Stream<List<Word>> generateCombinations(List<Word> wordList, int start, int bestNWords, List<Word> currentCombination) {
-//        if (currentCombination.size() == bestNWords) {
-//            return Stream.of(currentCombination);
-//        }
-//        return IntStream.range(start, wordList.size())
-//                .boxed()
-//                .flatMap(i -> {
-//                    List<Word> newCombination = new ArrayList<>(currentCombination);
-//                    newCombination.add(wordList.get(i));
-//                    // Only continue if the new combination is valid (or too short to need checking).
-//                    if (newCombination.size() < 2 || isValidCombination(newCombination)) {
-//                        return generateCombinations(wordList, i + 1, bestNWords, newCombination);
-//                    }
-//                    return Stream.empty();
-//                });
-//    }
-
     private Stream<List<Word>> generateCombinations(List<Word> wordList, int start, int bestNWords, List<Word> currentCombination) {
         if (currentCombination.size() == bestNWords) {
             return Stream.of(currentCombination);
         }
         return IntStream.range(start, wordList.size())
                 // Filter out indices that would lead to an invalid combination.
-                .filter(i -> currentCombination.isEmpty() || isValidCombination(currentCombination, wordList.get(i), currentCombination.size() > 3 ? 2 : 1))
+                .filter(i -> currentCombination.isEmpty() || isValidCombination(currentCombination, wordList.get(i), currentCombination.size() > 3 ? 2 : 1, null))
                 .boxed()
                 .flatMap(i -> {
                     List<Word> newCombination = new ArrayList<>(currentCombination);
@@ -689,11 +655,12 @@ public class SolvleService {
                 });
     }
 
-    private static boolean isValidCombination(List<Word> initialWords, Word newWord, int maxDuplicateLetters) {
-        if(maxDuplicateLetters == 1) {
-            return isValidCombination(initialWords, newWord);
-        }
-        int[] counts = new int[256];
+    private static boolean isValidCombination(List<Word> initialWords, Word newWord) {
+        return isValidCombination(initialWords, newWord, 1, null);
+    }
+
+    private static boolean isValidCombination(List<Word> initialWords, Word newWord, int maxDuplicateLetters, int[] initialCounts) {
+        int[] counts = initialCounts == null ? new int[256] : initialCounts.clone();
         for(int i =0; i < newWord.getLength(); i++) {
             if(++counts[newWord.word().charAt(i)] > maxDuplicateLetters) {
                 return false;
@@ -711,57 +678,23 @@ public class SolvleService {
         return true;
     }
 
-//    private static boolean isValidCombination(List<Word> combination) {
-//        Map<Character, Integer> letterCounts = new HashMap<>();
-//        for (Word word : combination) {
-//            for (char c : word.toString().toCharArray()) {
-//                int count = letterCounts.getOrDefault(c, 0) + 1;
-//                if (count > MAX_DUPLICATE_LETTERS) {
-//                    return false;
-//                }
-//                letterCounts.put(c, count);
-//            }
-//        }
-//        return true;
-//    }
-
-    /** GPT-generated microoptimization for identifying combinations that don't have duplicate letters **/
-    // Precomputed lookup for characters 0–255.
-    private static final int[] INDEX_LOOKUP = new int[256];
-    private static final long[] BIT_LOOKUP = new long[256];
-
-    static {
-        for (int i = 0; i < 256; i++) {
-            INDEX_LOOKUP[i] = i >>> 6;
-            BIT_LOOKUP[i] = 1L << (i & 63);
-        }
-    }
-
-    private static boolean isValidCombination(List<Word> combination, Word newWord) {
-        long[] mask = new long[4];
-        if (!accumulateMask(mask, newWord.word())) {
-            return false;
-        }
-        for (Word word : combination) {
-            if (!accumulateMask(mask, word.word())) {
-                return false;
+    private static int[] countPreExistingDuplicates(Set<Word> tuple) {
+        int[] counts = new int[256];
+        for (Word word : tuple) {
+            String str = word.word();  // Cache the result here
+            for (int j = 0, len = str.length(); j < len; j++) {
+                counts[str.charAt(j)]++;
             }
         }
-        return true;
-    }
-
-    private static boolean accumulateMask(long[] mask, String s) {
-        for (int i = 0, len = s.length(); i < len; i++) {
-            int c = s.charAt(i);
-            // Lookup the precomputed index and bit.
-            if ((mask[INDEX_LOOKUP[c]] & BIT_LOOKUP[c]) != 0) {
-                return false;
+        //set to negative to allow pre-existing duplicates
+        for(int i =0; i < counts.length; i++) {
+            if(counts[i] > 0) {
+                counts[i] = (counts[i] - 1) * -1;
             }
-            mask[INDEX_LOOKUP[c]] |= BIT_LOOKUP[c];
         }
-        return true;
+        log.info("Tuple {} has duplicate letters {}", tuple, counts);
+        return counts;
     }
-
 
 }
 
