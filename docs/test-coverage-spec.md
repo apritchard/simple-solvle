@@ -64,13 +64,21 @@ After adding the focused calculation-service chunk, backend validation passes wi
 | Branches | 233 | 538 | 43.31% |
 | Lines | 697 | 1,125 | 61.96% |
 
-Notable backend class coverage after the first three chunks:
+After adding the `SolvleService` orchestration chunk, backend validation passes with 113 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 5,315 | 7,167 | 74.16% |
+| Branches | 308 | 538 | 57.25% |
+| Lines | 867 | 1,125 | 77.07% |
+
+Notable backend class coverage after the first four chunks:
 
 | Area | Current signal |
 | --- | --- |
 | `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Needs more duplicate-letter golden cases. |
 | `WordCalculationService` | First-pass direct coverage is in place for zero-score guards, positional count reduction, partition thresholds, fast-path partition scoring, pool merging, partition stats, and shared-position rut weighting. Remaining gaps are advanced playout/hard-mode branches. |
-| `SolvleService` | Some restriction and solve flows covered with a six-word test dictionary. API orchestration, dictionary selection, rating, tuple jobs, and full config branches are undercovered. |
+| `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Remaining gaps are tuple job cache/restart/timeout paths, forced-starter dictionary solving, playout, and the full config matrix. |
 | `RemainingSolver` | Partially covered through service tests. Needs direct selection tests for viable, fishing, partition, repeated guesses, and terminal cases. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
 | `GameScoreDTO`, `SolveJob`, `SolvescapeService`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
@@ -187,14 +195,24 @@ Add tests for:
 
 ### Service Orchestration
 
-Add `SolvleService` tests for:
+First-pass `SolvleService` tests now cover:
+
+- `getWordAnalysis` English answer lists using `DictionaryType.BIG` for fishing while language dictionaries use their configured fishing sets.
+- `hardMode=true` filtering fishing guesses through current restrictions.
+- `requireAnswer=true` collapsing fishing guesses to the solution set.
+- `getScore` returning finite score and partition stats for a candidate.
+- `rateGame` returning one row per guess and tracking actual remaining words.
+- `solveWord` rejecting unknown solutions and invalid first guesses.
+- `scoreTuple` returning tuple partition stats.
+- `findBestNWords` respecting `requireAnswer` when choosing available guesses.
+
+Remaining `SolvleService` tests to add:
 
 - `getWordAnalysis` with each meaningful config branch: simple scoring, positional scoring, no partitioning, partitioning, hard mode, and require-answer mode.
-- `getFishingSet` dictionary selection, especially English answer lists using `DictionaryType.BIG` for fishing and language-specific exceptions.
-- `getScore` returns stable score and partition stats for unrestricted and restricted inputs.
-- `rateGame` returns one row per guess and computes skill, luck, heuristic, and aggregate values.
-- `scoreTuple` returns deterministic tuple stats.
-- `findBestNWords` respects `requireAnswer`.
+- `getScore` returns stable score and partition stats for restricted inputs.
+- `rateGame` computes skill, luck, heuristic, and aggregate values across multiple rows and edge expected-remaining values.
+- `solveDictionary` forced starters are validated, prepended, and stop early when a starter is the solution.
+- `playOutSolutions` merges analysis output into solver playout scoring.
 - `submitTupleJob` returns cached active jobs, restarts failed jobs, and eventually returns completed results. If this is hard to test reliably, introduce a small test seam for the executor and clock before asserting timeout behavior.
 
 ### Controllers And API Contracts
