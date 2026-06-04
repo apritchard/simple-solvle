@@ -40,4 +40,4 @@ docker-compose up
 Docker Compose builds the backend from the root `Dockerfile` and the frontend from `solvle-front/Dockerfile`. The backend is exposed on `8081`; the frontend is exposed on `80`.
 
 ## Historical Hosting
-The app was previously deployed on AWS, but hosting is inactive. Local AWS backup artifacts may exist under `aws-backup/`. Treat them as sensitive local reference material and do not stage them.
+The app was previously deployed on AWS, but hosting is inactive. Infrastructure modernization is a future task; see `AGENTS.md` for local backup handling guardrails.

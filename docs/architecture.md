@@ -32,5 +32,5 @@ Common frontend calls include:
 
 Keep frontend fetch parameters and backend controller defaults aligned when changing API behavior.
 
-## Data And Infrastructure Notes
-Dictionary files are application data and should be changed only with a clear task and tests. Historical AWS backup data, if present under `aws-backup/`, is not part of the application architecture docs for V1 and should not be committed.
+## Data Notes
+Dictionary files are application data and should be changed only with a clear task and tests. See `docs/api-contracts.md` for the restriction-string and DTO contracts that connect frontend state to backend solver behavior.

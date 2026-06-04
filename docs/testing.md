@@ -19,7 +19,7 @@ npm.cmd test -- --watchAll=false --passWithNoTests
 npm.cmd run build
 ```
 
-The current app has no frontend tests, so the test command exits successfully with `--passWithNoTests`. The production build currently succeeds with lint warnings; do not treat those warnings as part of unrelated changes unless the task asks for frontend cleanup.
+The frontend has a smoke/render test for initial app load. Keep `--passWithNoTests` for compatibility with Create React App test discovery, but add focused tests for meaningful UI behavior changes.
 
 ## CI Expectations
 GitHub Actions should run:

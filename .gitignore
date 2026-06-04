@@ -38,4 +38,5 @@ build/
 ### app-specific
 solvle-log.txt
 *.pem
-update-ec2.sh
+aws-backup/
+*.sh

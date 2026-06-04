@@ -9,6 +9,7 @@
 ## Working Rules
 - Prefer existing patterns over new abstractions.
 - Keep backend and frontend API contracts synchronized.
+- Check `docs/api-contracts.md` before changing restriction strings, DTOs, or `/solvle` fetch calls.
 - Do not reformat dictionaries or generated assets as cleanup.
 - Do not stage `aws-backup/`, private keys, logs, or ignored build outputs.
 - Use `npm.cmd` in PowerShell when `npm.ps1` is blocked.
