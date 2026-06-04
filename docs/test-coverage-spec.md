@@ -48,7 +48,15 @@ After adding JaCoCo to the Maven test phase and the first backend unit-test chun
 | Branches | 205 | 538 | 38.10% |
 | Lines | 596 | 1,125 | 52.98% |
 
-Notable backend class coverage after the first chunk:
+After adding the MockMvc controller-contract chunk, backend validation passes with 98 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 3,963 | 7,167 | 55.30% |
+| Branches | 208 | 538 | 38.66% |
+| Lines | 650 | 1,125 | 57.78% |
+
+Notable backend class coverage after the first two chunks:
 
 | Area | Current signal |
 | --- | --- |
@@ -56,7 +64,7 @@ Notable backend class coverage after the first chunk:
 | `WordCalculationService` | Partial core coverage. Scoring, partitions, tuple stats, hard-mode rut logic, and shared-position weighting need direct tests. |
 | `SolvleService` | Some restriction and solve flows covered with a six-word test dictionary. API orchestration, dictionary selection, rating, tuple jobs, and full config branches are undercovered. |
 | `RemainingSolver` | Partially covered through service tests. Needs direct selection tests for viable, fishing, partition, repeated guesses, and terminal cases. |
-| `SolvleController` | Effectively uncovered. Needs HTTP contract tests for every `/solvle` endpoint. |
+| `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
 | `GameScoreDTO`, `SolveJob`, `SolvescapeService`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
 | `GroupSolver`, `PreloadService` | Still uncovered. Classify these before enforcing product coverage. |
 
@@ -183,7 +191,7 @@ Add `SolvleService` tests for:
 
 ### Controllers And API Contracts
 
-Add `MockMvc` tests for every active endpoint in `SolvleController`:
+Keep and extend `MockMvc` tests for every active endpoint in `SolvleController`:
 
 - `GET /solvle/{wordRestrictions}` lowercases restrictions and appends the original restriction string in the response.
 - `GET /solvle/score/{wordRestrictions}/{wordToScore}` lowercases both path variables and passes shared query params.
