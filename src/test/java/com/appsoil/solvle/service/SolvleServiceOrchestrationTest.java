@@ -5,10 +5,13 @@ import com.appsoil.solvle.controller.GameScoreDTO;
 import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.controller.WordScoreDTO;
 import com.appsoil.solvle.data.Dictionary;
+import com.appsoil.solvle.data.PlayOut;
 import com.appsoil.solvle.data.TupleScore;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.data.WordFrequencyScore;
 import com.appsoil.solvle.data.WordRestrictions;
+import com.appsoil.solvle.service.job.JobStatus;
+import com.appsoil.solvle.service.job.SolveJob;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -188,6 +191,174 @@ class SolvleServiceOrchestrationTest {
         Assertions.assertEquals(Set.of("crane"), score.tuple().stream().map(Word::word).collect(Collectors.toSet()));
         Assertions.assertTrue(score.partitionStats().wordsRemaining() > 0);
         Assertions.assertTrue(score.partitionStats().entropy() >= 0);
+    }
+
+    @Test
+    void playOutSolutions_returnsPlayoutsDrawnFromMergedViableAndFishingPool() {
+        Set<PlayOut> playOuts = solvleService.playOutSolutions(
+                "abcdefghijklmnopqrstuvwxyz",
+                DictionaryType.SIMPLE,
+                WordConfig.SIMPLE,
+                false,
+                0
+        );
+
+        Assertions.assertFalse(playOuts.isEmpty(), "Playout pool should contain candidates for the tiny dictionary");
+        playOuts.forEach(p -> Assertions.assertTrue(p.average() >= 1.0,
+                () -> "PlayOut for " + p.word() + " should require at least one guess on average; got " + p.average()));
+
+        Set<String> bigPool = Set.of("crane", "trace", "slate", "pound", "fjord");
+        Set<String> playOutWords = playOuts.stream().map(PlayOut::word).collect(Collectors.toSet());
+        Assertions.assertTrue(playOutWords.stream().anyMatch(bigPool::contains),
+                () -> "Merged playout pool should draw from viable + fishing words, got " + playOutWords);
+    }
+
+    @Test
+    void solveDictionary_blankFirstWordIsPickedFromAnalysisAndAppliedToEachSolution() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, "", WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        Assertions.assertEquals(Set.of("crane", "trace"), outcome.keySet());
+
+        String pickedFirstWord = outcome.values().iterator().next().get(0);
+        Assertions.assertTrue(Set.of("crane", "trace", "slate", "pound", "fjord").contains(pickedFirstWord),
+                () -> "First word should come from analysis fishing/best words; got " + pickedFirstWord);
+
+        outcome.forEach((solution, guesses) -> {
+            Assertions.assertEquals(pickedFirstWord, guesses.get(0),
+                    "All solutions should start with the same analysis-picked first word");
+            Assertions.assertEquals(solution, guesses.get(guesses.size() - 1),
+                    "Final guess for each solution should be the solution itself");
+        });
+    }
+
+    @Test
+    void solveDictionary_explicitFirstWordIsUsedAsTheOpeningGuess() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, "trace", WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        Assertions.assertEquals(List.of("trace"), outcome.get("trace"),
+                "First word equal to solution returns just that word");
+
+        List<String> craneGuesses = outcome.get("crane");
+        Assertions.assertEquals("trace", craneGuesses.get(0));
+        Assertions.assertEquals("crane", craneGuesses.get(craneGuesses.size() - 1));
+    }
+
+    @Test
+    void solveDictionary_singleForcedStarterIsPrependedToGuessList() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, List.of("slate"), WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        outcome.forEach((solution, guesses) -> {
+            Assertions.assertEquals("slate", guesses.get(0),
+                    "Forced starter should appear as the first guess for every solution");
+            Assertions.assertEquals(solution, guesses.get(guesses.size() - 1),
+                    "Final guess for each solution should be the solution itself");
+        });
+    }
+
+    @Test
+    void solveDictionary_multipleForcedStartersArePrependedInOrder() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, List.of("slate", "pound"), WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        outcome.forEach((solution, guesses) -> {
+            Assertions.assertEquals("slate", guesses.get(0));
+            Assertions.assertEquals("pound", guesses.get(1));
+            Assertions.assertEquals(solution, guesses.get(guesses.size() - 1));
+        });
+    }
+
+    @Test
+    void solveDictionary_forcedStarterEqualToSolutionShortCircuitsForThatSolution() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, List.of("crane"), WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        Assertions.assertEquals(List.of("crane"), outcome.get("crane"),
+                "Starter equal to solution returns just the starter");
+
+        List<String> traceGuesses = outcome.get("trace");
+        Assertions.assertEquals("crane", traceGuesses.get(0),
+                "Other solutions still get the starter prepended");
+        Assertions.assertEquals("trace", traceGuesses.get(traceGuesses.size() - 1));
+    }
+
+    @Test
+    void solveDictionary_forcedStarterOfWrongLengthIsRejectedForEverySolution() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, List.of("nope"), WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        outcome.values().forEach(guesses ->
+                Assertions.assertEquals(List.of("First word not valid"), guesses));
+    }
+
+    @Test
+    void solveDictionary_forcedStarterNotInFishingSetIsRejectedForEverySolution() {
+        RemainingSolver solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, List.of("zzzzz"), WordCalculationConfig.SIMPLE, DictionaryType.SIMPLE);
+
+        outcome.values().forEach(guesses ->
+                Assertions.assertEquals(List.of("First word not valid"), guesses));
+    }
+
+    @Test
+    void submitTupleJob_returnsCachedJobForRepeatedSubmits() {
+        Set<Word> tuple = Set.of(new Word("crane"));
+
+        SolveJob<Set<TupleScore>> first = solvleService.submitTupleJob(tuple, DictionaryType.SIMPLE, true);
+        SolveJob<Set<TupleScore>> second = solvleService.submitTupleJob(tuple, DictionaryType.SIMPLE, true);
+
+        Assertions.assertEquals(first.getId(), second.getId(),
+                "Repeated submit with the same key should return the cached SolveJob");
+    }
+
+    @Test
+    void submitTupleJob_restartsAfterFailure() throws InterruptedException {
+        Set<Word> tuple = Set.of(new Word("trace"));
+
+        SolveJob<Set<TupleScore>> first = solvleService.submitTupleJob(tuple, DictionaryType.SIMPLE, true);
+
+        // The executor sets RUNNING then COMPLETED on the job; wait for it to finish so our
+        // explicit FAILED status is not overwritten by the runnable still in flight.
+        awaitTerminalStatus(first, 5000);
+        first.setStatus(JobStatus.FAILED);
+
+        SolveJob<Set<TupleScore>> second = solvleService.submitTupleJob(tuple, DictionaryType.SIMPLE, true);
+
+        Assertions.assertNotEquals(first.getId(), second.getId(),
+                "A FAILED cached job should be replaced on the next submit");
+    }
+
+    @Test
+    void submitTupleJob_completesAndPopulatesResultForTinyDictionary() throws InterruptedException {
+        Set<Word> tuple = Set.of(new Word("brine"));
+
+        SolveJob<Set<TupleScore>> job = solvleService.submitTupleJob(tuple, DictionaryType.EXTENDED, true);
+
+        awaitTerminalStatus(job, 5000);
+
+        Assertions.assertEquals(JobStatus.COMPLETED, job.getStatus(),
+                () -> "Tuple job should complete within 5s on the tiny dictionary; error: " + job.getError());
+        Assertions.assertNotNull(job.getResult(), "Completed tuple job should expose a result set");
+    }
+
+    private static void awaitTerminalStatus(SolveJob<?> job, long timeoutMillis) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMillis;
+        while (System.currentTimeMillis() < deadline) {
+            JobStatus status = job.getStatus();
+            if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
+                return;
+            }
+            Thread.sleep(10);
+        }
     }
 
     private static Set<String> words(Set<WordFrequencyScore> scores) {

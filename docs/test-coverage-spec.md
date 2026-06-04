@@ -96,13 +96,21 @@ After classifying the legacy backend code (deleting `PreloadService`, moving `Gr
 | Branches | 317 | 512 | 61.91% |
 | Lines | 860 | 1,042 | 82.53% |
 
+After the `SolvleService` solver-orchestration chunk (playout, `solveDictionary` blank/explicit/forced-starter paths, and `submitTupleJob` cache/restart/completion), backend validation passes with 155 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 5,868 | 6,696 | 87.63% |
+| Branches | 342 | 512 | 66.80% |
+| Lines | 958 | 1,042 | 91.94% |
+
 Notable backend class coverage after the first four chunks:
 
 | Area | Current signal |
 | --- | --- |
 | `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Direct edge coverage is now in place via `WordRestrictionsTest`: parsing (`g5^2!2` style position/frequency/exclusion), `generateRestrictions` duplicate-letter Wordle semantics, `withAdditionalLetterPositions` merges, and combined `isValidWord` position/frequency/exclusion checks. |
 | `WordCalculationService` | First-pass direct coverage is in place for zero-score guards, positional count reduction, partition thresholds, fast-path partition scoring, pool merging, partition stats, and shared-position rut weighting. Remaining gaps are advanced playout/hard-mode branches. |
-| `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Remaining gaps are tuple job cache/restart/timeout paths, forced-starter dictionary solving, playout, and the full config matrix. |
+| `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Solver-orchestration paths are now covered: `playOutSolutions` over the merged viable+fishing pool, all three `solveDictionary` overloads (blank firstWord picked from analysis, explicit firstWord, single/multi forced starters with starter-equals-solution short-circuit and wrong-length/not-in-fishing-set rejection), and `submitTupleJob` cache hit, restart-after-FAILED, and tiny-dictionary completion. Remaining gaps are the tuple-job idle-timeout path (needs a test seam — the executor's `setStatus` races with externally-forced status changes), and the full `getWordAnalysis` config matrix (positional vs. non-positional scoring, harmonic, partition thresholds). |
 | `RemainingSolver` | Direct coverage is now in place via `RemainingSolverTest`: `getNextGuess` fishing/partition/viable-word branches, previous-guess avoidance, and the null terminal case, plus full `solve`/`solveWord` loop tests for solving to the answer, first-word-is-solution, prepended valid starters, and invalid/unknown-word rejections. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
 | `GameScoreDTO`, `SolveJob`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
@@ -232,15 +240,16 @@ First-pass `SolvleService` tests now cover:
 - `solveWord` rejecting unknown solutions and invalid first guesses.
 - `scoreTuple` returning tuple partition stats.
 - `findBestNWords` respecting `requireAnswer` when choosing available guesses.
+- `solveDictionary` blank-firstWord branch picks the opener from analysis, explicit-firstWord branch uses the provided opener, and the forced-starters overload prepends starters in order, short-circuits when a starter equals the solution, and rejects wrong-length or not-in-fishing-set starters.
+- `playOutSolutions` returns PlayOuts drawn from the merged viable + fishing pool.
+- `submitTupleJob` returns the cached job on a repeat submit, replaces a FAILED cached job with a new id on the next submit, and lands at `COMPLETED` with a non-null result on a tiny dictionary.
 
 Remaining `SolvleService` tests to add:
 
 - `getWordAnalysis` with each meaningful config branch: simple scoring, positional scoring, no partitioning, partitioning, hard mode, and require-answer mode.
 - `getScore` returns stable score and partition stats for restricted inputs.
 - `rateGame` computes skill, luck, heuristic, and aggregate values across multiple rows and edge expected-remaining values.
-- `solveDictionary` forced starters are validated, prepended, and stop early when a starter is the solution.
-- `playOutSolutions` merges analysis output into solver playout scoring.
-- `submitTupleJob` returns cached active jobs, restarts failed jobs, and eventually returns completed results. If this is hard to test reliably, introduce a small test seam for the executor and clock before asserting timeout behavior.
+- `submitTupleJob` idle-timeout path. Not currently testable without a refactor: the executor's `setStatus(RUNNING)` races with an externally-forced `FAILED`, and the 60-second `MAX_JOB_IGNORE_TIME_SECONDS` is a hardcoded private constant. Tracked as a follow-up — extract a settable timeout and inject a clock supplier before adding a deterministic assertion.
 
 ### Controllers And API Contracts
 
