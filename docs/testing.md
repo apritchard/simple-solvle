@@ -7,7 +7,7 @@ Run from the repository root:
 mvn test -q
 ```
 
-Backend tests cover solver behavior, word restrictions, dictionary loading, scoring, and Spring context startup. Add or update tests when changing filtering, scoring, hard-mode, dictionary, or API-contract behavior.
+Backend tests cover solver behavior, word restrictions, dictionary loading, scoring, DTO/model behavior, job state, and Spring context startup. The Maven test phase also generates a JaCoCo coverage report at `target/site/jacoco/index.html`. Add or update tests when changing filtering, scoring, hard-mode, dictionary, or API-contract behavior.
 
 The project targets Java 18 source compatibility and uses Java 21 for local and CI backend validation.
 
