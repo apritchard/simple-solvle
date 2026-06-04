@@ -17,6 +17,15 @@ function Options(props) {
     } = useContext(AppContext);
 
     const [loading, setLoading] = useState(true);
+    const {
+        dictionary,
+        hardMode,
+        requireAnswer,
+        usePartitioning,
+        wordConfig,
+        wordLength
+    } = boardState.settings;
+    const shouldUpdate = boardState.shouldUpdate;
 
     useEffect(() => {
         setLoading(true);
@@ -25,9 +34,17 @@ function Options(props) {
 
         let restrictionString = generateRestrictionString(availableLetters, knownLetters, unsureLetters);
 
-        console.log("Fetching " + restrictionString + " dictionary:" + boardState.settings.dictionary + " partitioning:" + boardState.settings.usePartitioning);
+        console.log("Fetching " + restrictionString + " dictionary:" + dictionary + " partitioning:" + usePartitioning);
 
-        let configParams = generateConfigParams(boardState);
+        let configParams = generateConfigParams({
+            settings: {
+                dictionary,
+                hardMode,
+                requireAnswer,
+                wordConfig,
+                wordLength
+            }
+        });
 
         fetch('/solvle/' + restrictionString + "?" + configParams)
             .then(res => {
@@ -53,8 +70,8 @@ function Options(props) {
                 });
                 setLoading(false);
         });
-    }, [setCurrentOptions, boardState.settings.wordLength, boardState.settings.dictionary, boardState.settings.usePartitioning, boardState.shouldUpdate,
-        availableLetters, knownLetters, unsureLetters]);
+    }, [setCurrentOptions, wordLength, dictionary, usePartitioning, shouldUpdate, availableLetters, knownLetters, unsureLetters,
+        hardMode, requireAnswer, wordConfig]);
 
     return (
 
@@ -70,14 +87,14 @@ function Options(props) {
                     {!loading && <OptionTab wordList={currentOptions.fishingWords} onSelectWord={onSelectWord} solutionList={currentOptions.wordList}
                                heading={"Fishing Words"}/> }
                 </Tab>
-                { boardState.settings.usePartitioning && currentOptions.bestWords !== null &&
+                { usePartitioning && currentOptions.bestWords !== null &&
                     <Tab eventKey="Remain" title="Cut✂" tabClassName="remTab" tabAttrs={{title:"Words that leave the fewest remaining choices."}}>
                     {loading && <div>Loading...<Spinner animation="border" role="status" /> </div>}
                     {!loading && <OptionTab wordList={currentOptions.bestWords} onSelectWord={onSelectWord} solutionList={currentOptions.wordList}
                                heading={currentOptions.bestWords.length <= 0 ? "Too many viable words " : "Optimize Entropy"}/> }
                 </Tab> }
 
-                { (!boardState.settings.usePartitioning || currentOptions.bestWords === null) &&
+                { (!usePartitioning || currentOptions.bestWords === null) &&
                     <Tab eventKey="Remain" title="Cut✂" tabClassName="remTab">
                         <div>Select a different heuristic strategy in the options menu to enable.</div>
                     </Tab>
