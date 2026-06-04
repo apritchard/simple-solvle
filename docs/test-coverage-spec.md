@@ -72,14 +72,30 @@ After adding the `SolvleService` orchestration chunk, backend validation passes 
 | Branches | 308 | 538 | 57.25% |
 | Lines | 867 | 1,125 | 77.07% |
 
+After adding the `RemainingSolver` chunk (`RemainingSolverTest`), backend validation passes with 125 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 5,390 | 7,167 | 75.21% |
+| Branches | 323 | 538 | 60.04% |
+| Lines | 877 | 1,125 | 77.96% |
+
+After adding the restriction-edge chunk (`WordRestrictionsTest`), backend validation passes with 144 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 5,413 | 7,167 | 75.53% |
+| Branches | 323 | 538 | 60.04% |
+| Lines | 880 | 1,125 | 78.22% |
+
 Notable backend class coverage after the first four chunks:
 
 | Area | Current signal |
 | --- | --- |
-| `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Needs more duplicate-letter golden cases. |
+| `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Direct edge coverage is now in place via `WordRestrictionsTest`: parsing (`g5^2!2` style position/frequency/exclusion), `generateRestrictions` duplicate-letter Wordle semantics, `withAdditionalLetterPositions` merges, and combined `isValidWord` position/frequency/exclusion checks. |
 | `WordCalculationService` | First-pass direct coverage is in place for zero-score guards, positional count reduction, partition thresholds, fast-path partition scoring, pool merging, partition stats, and shared-position rut weighting. Remaining gaps are advanced playout/hard-mode branches. |
 | `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Remaining gaps are tuple job cache/restart/timeout paths, forced-starter dictionary solving, playout, and the full config matrix. |
-| `RemainingSolver` | Partially covered through service tests. Needs direct selection tests for viable, fishing, partition, repeated guesses, and terminal cases. |
+| `RemainingSolver` | Direct coverage is now in place via `RemainingSolverTest`: `getNextGuess` fishing/partition/viable-word branches, previous-guess avoidance, and the null terminal case, plus full `solve`/`solveWord` loop tests for solving to the answer, first-word-is-solution, prepended valid starters, and invalid/unknown-word rejections. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
 | `GameScoreDTO`, `SolveJob`, `SolvescapeService`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
 | `GroupSolver`, `PreloadService` | Still uncovered. Classify these before enforcing product coverage. |
@@ -168,6 +184,8 @@ Add focused tests for `WordRestrictions` and `WordCalculationService#isValidWord
 - Preservation of existing restrictions when generating restrictions from a new guess.
 - `withAdditionalLetterPositions` merges required letters and positions without losing exclusions or frequencies.
 
+Done: these restriction-edge cases are now covered by `WordRestrictionsTest` (parsing, `generateRestrictions` including the gray-duplicate rule and `min(solution, guess)` minimum frequency, `withAdditionalLetterPositions` merges, and combined `isValidWord` checks).
+
 ### Scoring And Filtering
 
 Add deterministic small-dictionary tests for:
@@ -189,7 +207,7 @@ Add tests for:
 - `calculateRemainingWords` returns an empty set above threshold and partition scores at or below threshold.
 - `wordsByRemainingGuesses` fast path for one or two viable words.
 - `getPartitionStatsForWord` and `getPartitionStatsForTuple` group counts, average remaining words, and entropy.
-- `RemainingSolver#getNextGuess` chooses partition recommendations when present, avoids prior guesses, falls back to fishing or viable words, and handles terminal solution cases.
+- Done: `RemainingSolver#getNextGuess` chooses partition recommendations when present, avoids prior guesses, falls back to fishing or viable words, and handles terminal solution cases. Covered by `RemainingSolverTest`.
 - `solveWord` returns `Word Not Found` for invalid solutions and `First word not valid` for invalid openers.
 - `solveDictionary` forced starters are validated, prepended, and stop early when a starter is the solution.
 
