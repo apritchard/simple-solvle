@@ -3,7 +3,6 @@ package com.appsoil.solvle.service;
 import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.config.SolvleConfig;
 import com.appsoil.solvle.controller.SolvleDTO;
-import com.appsoil.solvle.controller.WordScoreDTO;
 import com.appsoil.solvle.data.*;
 import com.appsoil.solvle.service.job.JobStatus;
 import com.appsoil.solvle.service.solvers.RemainingSolver;
@@ -58,7 +57,7 @@ public class FullDictionaryTest {
         solution.forEach((k, v) -> {
             stats.addValue(v.size());
             if(v.size() > 0) {
-                log.info(v);
+                log.info(v.size() + ":" + v);
                 problems.add(v);
             }
         });
@@ -122,6 +121,25 @@ public class FullDictionaryTest {
             WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false);
             addStats(config, solvleService.solveDictionary(new RemainingSolver(solvleService, config), firstWord.toLowerCase(), config, DictionaryType.SIMPLE));
         }
+    }
+
+    /**
+     * Long-running exploration helper: solve the full dictionary while forcing the first TWO guesses.
+     * Edit the two words below to whatever pair you want to analyze.
+     */
+    @Test
+    public void testTwoStartingWords() {
+        List<String> startingWords = List.of(
+                "salet",
+                "porin"
+        );
+        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING.withHardMode(false).withRequireAnswer(true);
+        addStats(config, solvleService.solveDictionary(
+                new RemainingSolver(solvleService, config),
+                startingWords.stream().map(String::toLowerCase).toList(),
+                config,
+                DictionaryType.EXTENDED
+        ));
     }
 
     @ParameterizedTest
