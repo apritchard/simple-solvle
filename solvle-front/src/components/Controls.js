@@ -32,7 +32,7 @@ function Controls() {
 
     const setPreset = (e) => {
         localStorage.setItem("wordConfig", e.target.value);
-        let usePartitioning = String(e.target.value != "SIMPLE" && e.target.value != "OPTIMAL_MEAN");
+        let usePartitioning = e.target.value !== "SIMPLE" && e.target.value !== "OPTIMAL_MEAN";
         localStorage.setItem("usePartitioning", usePartitioning);
         setBoardState(prev => ({
             ...prev,

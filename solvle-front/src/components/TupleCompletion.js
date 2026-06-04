@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useContext, useRef, useState} from 'react';
 import {Button, Form, Modal, ProgressBar, Spinner, Table} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 import {generateConfigParams} from "../functions/functions";
@@ -8,7 +8,6 @@ function TupleCompletion(props) {
     const {
         boardState,
         setBoardState,
-        solverOpen,
         setSolverOpen
     } = useContext(AppContext);
 
@@ -66,8 +65,6 @@ function TupleCompletion(props) {
         setJob(null);
         let configParams = generateConfigParams(boardState);
         const url = `solvle/submitTupleJob/${firstWord.trim()}?${configParams}`;
-
-        let intervalId;
 
         // Define a function to poll the same endpoint
         const pollJob = () => {

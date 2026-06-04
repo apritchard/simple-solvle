@@ -1,4 +1,4 @@
-import React, {useContext, useState, useRef} from 'react';
+import React, {useContext} from 'react';
 import AppContext from "../contexts/contexts";
 import {Button} from "react-bootstrap";
 import SolveModal from "./SolveModal";

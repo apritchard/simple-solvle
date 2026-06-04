@@ -1,9 +1,9 @@
 # Development Setup
 
 ## Prerequisites
-- Java 18 or newer. Java 21 is supported for local test validation.
+- Java 21 for local backend validation.
 - Maven 3.8 or newer.
-- Node compatible with the existing React app. The Dockerfile currently uses Node 17.
+- Node compatible with the existing React app. The Dockerfile and CI currently use Node 17.
 - Docker Desktop or another Docker Compose provider if using containerized startup.
 
 ## Backend
@@ -16,7 +16,7 @@ mvn spring-boot:run
 
 The backend listens on port `8081`, configured in `src/main/resources/application.properties`.
 
-The project source level remains Java 18. Lombok is pinned so local Java 21 compilation works without changing the application runtime target.
+The project source level remains Java 18. Lombok is pinned so Java 21 compilation works without changing the source target.
 
 ## Frontend
 From `solvle-front/`:

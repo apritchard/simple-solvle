@@ -47,9 +47,9 @@ Docker exposes the backend on `8081` and the frontend on `80`.
 
 ## Runtime Notes
 - Java source level is `18`.
-- Backend tests should pass on Java 18 and Java 21.
+- Java 21 is the standard local and CI backend validation runtime.
 - Lombok is pinned for Java 21 compiler compatibility.
-- The frontend Dockerfile uses Node 17. Avoid runtime modernization unless the task explicitly asks for it.
+- The frontend Dockerfile and CI use Node 17. Avoid runtime modernization unless the task explicitly asks for it.
 
 ## Domain Guardrails
 - Dictionary files in `src/main/resources/dict2/` are domain data. Do not edit them casually or reformat them as part of unrelated work.

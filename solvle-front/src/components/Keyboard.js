@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useContext} from "react";
+import React, {useCallback, useEffect, useContext, useMemo} from "react";
 import Key from "./Key";
 import AppContext from "../contexts/contexts";
 
 function Keyboard() {
-    const keyboardLayouts = {
+    const keyboardLayouts = useMemo(() => ({
         keys1: ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
         keys2: ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
         keys3: ["Z", "X", "C", "V", "B", "N", "M"],
@@ -12,7 +12,7 @@ function Keyboard() {
         german1: ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
         german2: ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
         german3: ["Y", "X", "C", "V", "B", "N", "M", "ẞ"]
-    };
+    }), []);
 
     const {
         availableLetters,
@@ -42,7 +42,7 @@ function Keyboard() {
                 });
             }
         },
-        [onDelete, onEnter, onSelectLetter]
+        [onDelete, onEnter, onSelectLetter, keyboardLayouts, solverOpen]
     );
     useEffect(() => {
         document.addEventListener("keydown", handleKeyboard);

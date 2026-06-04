@@ -9,14 +9,8 @@ on:
 
 jobs:
   backend:
-    name: Backend Java ${{ matrix.java }}
+    name: Backend
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        java:
-          - "18"
-          - "21"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -25,7 +19,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          java-version: "21"
           cache: maven
 
       - name: Run backend tests

@@ -9,7 +9,7 @@ mvn test -q
 
 Backend tests cover solver behavior, word restrictions, dictionary loading, scoring, and Spring context startup. Add or update tests when changing filtering, scoring, hard-mode, dictionary, or API-contract behavior.
 
-The project targets Java 18 source compatibility. Local Java 21 validation is expected to work because Lombok is pinned to a Java 21 compatible version.
+The project targets Java 18 source compatibility and uses Java 21 for local and CI backend validation.
 
 ## Frontend
 Run from `solvle-front/`:
@@ -24,7 +24,7 @@ The current app has no frontend tests, so the test command exits successfully wi
 ## CI Expectations
 GitHub Actions should run:
 
-- Backend `mvn test` on Java 18 and Java 21.
+- Backend `mvn test` on Java 21.
 - Frontend install, test, and production build.
 
 ## Before Finishing Work

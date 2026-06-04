@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {Button, Form, Modal} from "react-bootstrap";
 import AppContext from "../contexts/contexts";
 
@@ -25,10 +25,10 @@ function AutoColor(props) {
         setSolverOpen(true);
     }
     const handleClose = (e) => {
-        if(e != undefined) {
+        if(e !== undefined) {
             e.preventDefault();
         }
-        if(solution.trim().length == boardState.settings.wordLength || solution.length == 0) {
+        if(solution.trim().length === boardState.settings.wordLength || solution.length === 0) {
             setAutoColorSolution(solution.trim());
         } else {
             setValid(false);

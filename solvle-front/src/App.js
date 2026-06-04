@@ -206,8 +206,7 @@ function App() {
             let restrictionString = generateRestrictionString(availableLetters, knownLetters, unsureLetters);
             let configParams = generateConfigParams(boardState);
 
-            let currentWord = "";
-            boardState.board[boardState.currAttempt.attempt].map(letter => {currentWord+= letter});
+            let currentWord = boardState.board[boardState.currAttempt.attempt].join("");
 
             fetch('/solvle/score/' + restrictionString + "/" + currentWord + "?" + configParams)
                 .then(res => {
@@ -240,8 +239,8 @@ function App() {
         solution = solution.toUpperCase()
         console.log("Coloring attempt " + attempt + " for " + solution);
         if(solution) {
-            boardState.board[attempt].map((letter, idx) => {
-                if(solution.charAt(idx) == letter) {
+            boardState.board[attempt].forEach((letter, idx) => {
+                if(solution.charAt(idx) === letter) {
                     console.log("adding " + letter + " known for " + idx);
                     addKnownLetter(idx, letter);
                 } else if (solution.includes(letter)) {

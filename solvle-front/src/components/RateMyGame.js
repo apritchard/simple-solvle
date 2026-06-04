@@ -9,7 +9,6 @@ function RateMyGame(props) {
     const {
         setSolverOpen,
         boardState,
-        setBoardState,
     } = useContext(AppContext);
 
     const [solution, setSolution] = useState(boardState.settings.autoColorWord.toUpperCase());
@@ -34,7 +33,7 @@ function RateMyGame(props) {
         }
     }
     const handleClose = (e) => {
-        if(e != undefined) {
+        if(e !== undefined) {
             e.preventDefault();
         }
         setModalOpen(false);
@@ -66,7 +65,7 @@ function RateMyGame(props) {
         e.preventDefault();
         setIsLoading(true);
         let configParams = generateConfigParams(boardState);
-        const guesses = board.map(row => row.join('')).filter(row => row.length == boardState.settings.wordLength).map(guess => 'guesses=' + encodeURIComponent(guess)).join('&');
+        const guesses = board.map(row => row.join('')).filter(row => row.length === boardState.settings.wordLength).map(guess => 'guesses=' + encodeURIComponent(guess)).join('&');
         console.log(guesses);
 
         fetch('/solvle/rate/' + solution.trim() + "?" + guesses + "&" + configParams)
@@ -140,10 +139,7 @@ function RateMyGame(props) {
             return result.join('') + (hideSpoilers ? '' : ' ' + guess.join('').toUpperCase());
         };
 
-        let clipboardText = board.map((row, index) => {
-            if(index >= rateData.rows.length) {
-                return;
-            }
+        let clipboardText = board.slice(0, rateData.rows.length).map((row, index) => {
             const finalWord = rateData.rows[rateData.rows.length-1].playerWord.toUpperCase();
             const coloredGuess = colorizeWord(row, finalWord);
             const remaining = rateData?.rows[index]?.actualRemaining.toString().padStart(4, ' ');
