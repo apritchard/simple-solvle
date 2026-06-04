@@ -56,12 +56,20 @@ After adding the MockMvc controller-contract chunk, backend validation passes wi
 | Branches | 208 | 538 | 38.66% |
 | Lines | 650 | 1,125 | 57.78% |
 
-Notable backend class coverage after the first two chunks:
+After adding the focused calculation-service chunk, backend validation passes with 104 active tests and 1 skipped test:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 4,287 | 7,167 | 59.82% |
+| Branches | 233 | 538 | 43.31% |
+| Lines | 697 | 1,125 | 61.96% |
+
+Notable backend class coverage after the first three chunks:
 
 | Area | Current signal |
 | --- | --- |
 | `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Needs more duplicate-letter golden cases. |
-| `WordCalculationService` | Partial core coverage. Scoring, partitions, tuple stats, hard-mode rut logic, and shared-position weighting need direct tests. |
+| `WordCalculationService` | First-pass direct coverage is in place for zero-score guards, positional count reduction, partition thresholds, fast-path partition scoring, pool merging, partition stats, and shared-position rut weighting. Remaining gaps are advanced playout/hard-mode branches. |
 | `SolvleService` | Some restriction and solve flows covered with a six-word test dictionary. API orchestration, dictionary selection, rating, tuple jobs, and full config branches are undercovered. |
 | `RemainingSolver` | Partially covered through service tests. Needs direct selection tests for viable, fishing, partition, repeated guesses, and terminal cases. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |

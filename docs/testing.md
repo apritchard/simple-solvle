@@ -11,6 +11,9 @@ Backend tests cover solver behavior, word restrictions, dictionary loading, scor
 
 The project targets Java 18 source compatibility and uses Java 21 for local and CI backend validation.
 
+### Backend Fixture Notes
+When tests need stable ordering for `Word` or `WordFrequencyScore` sets, build word sets through `Dictionary` or assign unique `Word` orders explicitly. Raw `new Word("...")` instances default to order `0`, and `WordFrequencyScore` equality/hash code use `naturalOrdering`, so multiple score objects with the same ordering can collapse unexpectedly inside sets.
+
 ## Frontend
 Run from `solvle-front/`:
 
