@@ -348,6 +348,59 @@ public class SolvleService {
         return outcome;
     }
 
+    /**
+     * Solves for every word in the dictionary, forcing one or more starting guesses before continuing normally
+     * @param solver               Solver implementation that decides which list (fishing/partition/valid) to use
+     * @param forcedStartingWords  One or more starting guesses to apply (in order). Null/blank entries are ignored.
+     * @param wordCalculationConfig Configuration used when the solver calls back into SolvleService
+     * @param wordList             Dictionary to solve
+     * @return Map of solution word -> ordered list of guesses (forced guesses first, final guess is the solution)
+     */
+    public Map<String, List<String>> solveDictionary(Solver solver,
+                                                    List<String> forcedStartingWords,
+                                                    WordCalculationConfig wordCalculationConfig,
+                                                    DictionaryType wordList) {
+
+        Set<Word> words = getPrimarySet(wordList);
+        Set<Word> fishingSet = getFishingSet(wordList);
+
+        final List<String> starters = forcedStartingWords == null ? List.of() : forcedStartingWords.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+
+        Map<String, List<String>> outcome = new ConcurrentHashMap<>();
+        words.stream().forEach(solutionWord -> {
+            WordRestrictions restrictions = WordRestrictions.noRestrictions();
+            List<String> guesses = new ArrayList<>();
+
+            for (String starter : starters) {
+                Word starterWord = new Word(starter);
+                if (starterWord.getLength() != solutionWord.getLength()) {
+                    outcome.put(solutionWord.word(), List.of("First word not valid"));
+                    return;
+                }
+                if (!fishingSet.contains(starterWord)) {
+                    outcome.put(solutionWord.word(), List.of("First word not valid"));
+                    return;
+                }
+                guesses.add(starterWord.word());
+                if (starterWord.equals(solutionWord)) {
+                    outcome.put(solutionWord.word(), guesses);
+                    return;
+                }
+                restrictions = WordRestrictions.generateRestrictions(solutionWord, starterWord, restrictions);
+            }
+
+            List<String> remaining = solver.solve(solutionWord, words, fishingSet, restrictions);
+            guesses.addAll(remaining);
+            outcome.put(solutionWord.word(), guesses);
+        });
+
+        return outcome;
+    }
+
     public Map<String, List<String>> solveDictionary(Solver solver, List<String> previousGuesses, WordCalculationConfig wordCalculationConfig, String startingRestrictions, DictionaryType wordList) {
         Set<Word> words = getPrimarySet(DictionaryType.SIMPLE);
         SolvleDTO guess = getWordAnalysis(new WordRestrictions(startingRestrictions.toLowerCase()), words, getFishingSet(DictionaryType.SIMPLE), wordCalculationConfig);

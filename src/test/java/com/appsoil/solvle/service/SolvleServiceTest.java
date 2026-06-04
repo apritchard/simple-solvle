@@ -6,6 +6,7 @@ import com.appsoil.solvle.data.Dictionary;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.data.WordFrequencyScore;
 import com.appsoil.solvle.data.WordRestrictions;
+import com.appsoil.solvle.service.solvers.RemainingSolver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +14,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -198,6 +198,26 @@ public class SolvleServiceTest {
         List<String> expectedResults = Arrays.stream(expectedResultString.split(",")).toList();
 
         Assertions.assertEquals(expectedResults, results);
+    }
+
+    @Test
+    void solveDictionary_forcedStartingWords_prefixes() {
+        var solver = new RemainingSolver(solvleService, WordCalculationConfig.SIMPLE);
+        List<String> starters = List.of("abcde", "bcdea");
+
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver,
+                starters,
+                WordCalculationConfig.SIMPLE,
+                DictionaryType.SIMPLE
+        );
+
+        List<String> guessesForAAAAB = outcome.get("aaaab");
+        Assertions.assertNotNull(guessesForAAAAB);
+        Assertions.assertTrue(guessesForAAAAB.size() >= starters.size());
+        Assertions.assertEquals(starters.get(0), guessesForAAAAB.get(0));
+        Assertions.assertEquals(starters.get(1), guessesForAAAAB.get(1));
+        Assertions.assertEquals("aaaab", guessesForAAAAB.get(guessesForAAAAB.size() - 1));
     }
 
     @ParameterizedTest

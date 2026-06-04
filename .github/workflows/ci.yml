@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - "ai-*"
+      - "feature/**"
       - "codex/**"
   pull_request:
 

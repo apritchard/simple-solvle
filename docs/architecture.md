@@ -33,4 +33,4 @@ Common frontend calls include:
 Keep frontend fetch parameters and backend controller defaults aligned when changing API behavior.
 
 ## Data Notes
-Dictionary files are application data and should be changed only with a clear task and tests. See `docs/api-contracts.md` for the restriction-string and DTO contracts that connect frontend state to backend solver behavior.
+Dictionary files are application data and should be changed only with a clear task and tests. Backend solving distinguishes possible answers from valid guesses: `SolvleService#getPrimarySet` selects the solution set for the requested `wordList`, while `SolvleService#getFishingSet` selects the broader valid-guess set used for fishing and opener analysis. For English lists, that broader set is `DictionaryType.BIG` (`enable1.txt`). See `docs/api-contracts.md` for the restriction-string and DTO contracts that connect frontend state to backend solver behavior.

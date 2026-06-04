@@ -53,6 +53,8 @@ Docker exposes the backend on `8081` and the frontend on `80`.
 
 ## Domain Guardrails
 - Dictionary files in `src/main/resources/dict2/` are domain data. Do not edit them casually or reformat them as part of unrelated work.
+- Distinguish solution dictionaries from valid-guess dictionaries. `getPrimarySet(wordList)` is the possible answer set; `getFishingSet(wordList)` is the valid guess/information-gain set.
+- For English solution lists such as `SIMPLE`, `EXTENDED`, and `REDUCED`, valid fishing/guess words come from `DictionaryType.BIG` (`enable1.txt`) and may not be valid answers.
 - Preserve Wordle-style tile semantics: green means exact position, yellow means present in another position, gray means unavailable subject to duplicate-letter rules.
 - Keep solver scoring, filtering, hard-mode, and `requireAnswer` behavior covered by tests when changing backend logic.
 - Fishing words may be non-solutions used for information gain. Do not collapse them into answer-only lists unless the task explicitly changes that behavior.
