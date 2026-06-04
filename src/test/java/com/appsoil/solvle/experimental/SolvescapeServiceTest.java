@@ -1,4 +1,4 @@
-package com.appsoil.solvle.service;
+package com.appsoil.solvle.experimental;
 
 import com.appsoil.solvle.config.DictionaryType;
 import com.appsoil.solvle.data.Dictionary;

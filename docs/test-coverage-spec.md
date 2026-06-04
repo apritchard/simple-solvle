@@ -88,6 +88,14 @@ After adding the restriction-edge chunk (`WordRestrictionsTest`), backend valida
 | Branches | 323 | 538 | 60.04% |
 | Lines | 880 | 1,125 | 78.22% |
 
+After classifying the legacy backend code (deleting `PreloadService`, moving `GroupSolver` and `SolvescapeService` to `com.appsoil.solvle.experimental`, and excluding that package from JaCoCo), backend validation still passes with 144 active tests and 1 skipped test, and product-code coverage is:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 5,308 | 6,696 | 79.27% |
+| Branches | 317 | 512 | 61.91% |
+| Lines | 860 | 1,042 | 82.53% |
+
 Notable backend class coverage after the first four chunks:
 
 | Area | Current signal |
@@ -97,8 +105,9 @@ Notable backend class coverage after the first four chunks:
 | `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Remaining gaps are tuple job cache/restart/timeout paths, forced-starter dictionary solving, playout, and the full config matrix. |
 | `RemainingSolver` | Direct coverage is now in place via `RemainingSolverTest`: `getNextGuess` fishing/partition/viable-word branches, previous-guess avoidance, and the null terminal case, plus full `solve`/`solveWord` loop tests for solving to the answer, first-word-is-solution, prepended valid starters, and invalid/unknown-word rejections. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
-| `GameScoreDTO`, `SolveJob`, `SolvescapeService`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
-| `GroupSolver`, `PreloadService` | Still uncovered. Classify these before enforcing product coverage. |
+| `GameScoreDTO`, `SolveJob`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
+| `GroupSolver`, `SolvescapeService` | Classified experimental. Moved to `com.appsoil.solvle.experimental` and excluded from JaCoCo (`SolvescapeServiceTest` still runs but does not count toward coverage). |
+| `PreloadService` | Removed. The startup listener body had been commented out and `SolvleService#preloadPartitionData` no longer exists; the bean was inert. |
 
 Frontend validation passed with 1 Jest test.
 
@@ -257,11 +266,10 @@ Add tests for product data classes:
 - `GameScoreDTO#addRow` math and aggregate getter behavior with one row, multiple rows, and zero/edge expected remaining values.
 - `SolveJob` default status, runtime, and mutable progress fields.
 
-Classify these before writing tests:
+Classification decisions:
 
-- `GroupSolver`: either cover it as product behavior, move it behind an explicit experimental/slow test boundary, or remove it from product coverage expectations.
-- `SolvescapeService`: either add the missing product/API coverage for anagrams or remove the stale `/solvescape` proxy expectation from frontend setup.
-- `PreloadService`: decide whether startup preloading is product behavior worth asserting or just operational warmup.
+- `GroupSolver` and `SolvescapeService` were moved to `com.appsoil.solvle.experimental` and excluded from JaCoCo via a plugin-level `<excludes>` entry. They are not product code: `GroupSolver` is a Connections-style scratch tool with a hardcoded `main`, and `SolvescapeService` is wired as a bean but has no controller route and no frontend caller. The stale `/solvescape` proxy and unused `generateAnagramString` helper in the frontend are left in place so the anagram path can be revived later; if that does not happen, both should be removed during a future cleanup pass.
+- `PreloadService` was deleted. The listener body had been commented out, the `SolvleService#preloadPartitionData` method it called no longer exists, and the bean was registered but inert under the `!test` profile.
 
 ## Backend P1 Test Spec
 
@@ -362,8 +370,6 @@ Before product changes begin:
 
 ## Open Decisions
 
-- Is `GroupSolver` still product code?
-- Is `SolvescapeService` still intended to have an API route?
 - Should full-dictionary solve quality become a scheduled/slow CI job, or remain manual exploration?
 - What minimum acceptable solve performance should be asserted for each solver config?
 - Should tuple jobs expose cancellation or timeout behavior as a tested public contract?
