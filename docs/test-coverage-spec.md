@@ -33,107 +33,33 @@ mvn -Pexploration test                                     # manual playground; 
 
 See [testing.md](testing.md) for the full benchmark workflow.
 
-## Initial Audit Baseline
+## Coverage Status
 
-Before the JaCoCo/tooling chunk, backend validation passed with 74 active tests and 1 skipped test:
-
-- `SolvleServiceTest`: 58 tests.
-- `WordCalculationServiceTest`: 14 tests.
-- `SolvleApplicationTests`: 1 Spring context test.
-- `FullDictionaryTest`: 1 skipped test class because the class is disabled.
-
-Backend JaCoCo baseline from the initial audit:
+Backend validation runs 169 active tests (default `mvn test`). Product-code JaCoCo coverage:
 
 | Metric | Covered | Total | Coverage |
 | --- | ---: | ---: | ---: |
-| Instructions | 2,889 | 7,167 | 40.31% |
-| Branches | 163 | 538 | 30.30% |
-| Lines | 470 | 1,125 | 41.78% |
+| Instructions | 6,326 | 6,875 | 92.01% |
+| Branches | 378 | 530 | 71.32% |
+| Lines | 1,034 | 1,069 | 96.73% |
 
-After adding JaCoCo to the Maven test phase and the first backend unit-test chunk, backend validation passes with 88 active tests and 1 skipped test:
+A `jacoco:check` execution in `pom.xml` enforces these minimum floors on every `mvn test`: instructions ≥85%, branches ≥65%, lines ≥90%. The experimental package (`com.appsoil.solvle.experimental`) is excluded from the report.
 
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 3,647 | 7,167 | 50.89% |
-| Branches | 205 | 538 | 38.10% |
-| Lines | 596 | 1,125 | 52.98% |
+Trajectory across this work: started at 40.31% / 30.30% / 41.78% (instructions / branches / lines) with 74 tests. Chunks landed in this order — JaCoCo tooling + first backend chunk, MockMvc controller contracts, focused calculation-service tests, `SolvleService` orchestration, `RemainingSolver` solve loops, restriction-edge tests, legacy-code classification (`PreloadService` removed; `GroupSolver` + `SolvescapeService` moved to experimental and excluded), `SolvleService` solver-orchestration (playout, `solveDictionary` overloads, `submitTupleJob` cache/restart/completion), and the final targeted-gaps pass (positional `getScore`, partitioning branch, blank-firstWord bestWords path, German fishing routing, third `solveDictionary` overload, expanded EXTENDED fixture for the `submitTupleJob` map block, fixed harmonic series, rutBreak threshold skip path, hard-mode rut detection, playout failures, `KnownPosition.compareTo` branches, `SharedPositions.sortedPositionStream` ordering, and the tuple-job idle-timeout path via a settable seam).
 
-After adding the MockMvc controller-contract chunk, backend validation passes with 98 active tests and 1 skipped test:
+Notes worth keeping:
+- `WordCalculationService#harmonic` was broken — `1.0 / (double)n` instead of `1.0 / (double)i` produced ~1.0 for every input. Fixed during the targeted-gaps pass. A new `WordCalculationConfig.withHarmonic(boolean)` builder + `OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC` `WordConfig` and benchmark variant let us measure whether the corrected series helps (initial baseline: it slightly hurts vs. the flagship).
+- The three rutBreak call sites in `SolvleService` were re-enabled. Guards (`rutBreakThreshold > 1`, `rutBreakMultiplier > 0`) keep all pre-existing configs no-op since they default to 0; new `OPTIMAL_MEAN_HARD_MODE` and `OPTIMAL_MEAN_HARD_MODE_RUTBREAK` configs exercise the path.
+- The tuple-job idle-timeout path had a latent bug — `setStatus(JobStatus.COMPLETED)` at the end of `finishTuple` unconditionally overwrote `FAILED` from the in-flight timeout. Now wrapped in `if (!timeout.get())`. `maxJobIgnoreTimeSeconds` and `tupleJobTimeoutCheckInterval` are package-private fields with setters so the test can drive the path deterministically.
+- Remaining intentional gaps: `SolvleService` defensive executor `catch` for a failed tuple job runnable, and the two priority-queue swap-on-better-score `else` branches in `generateNWordListsHeuristic` (need ~65+ word fixture to hit `TOP_N=2000`).
 
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 3,963 | 7,167 | 55.30% |
-| Branches | 208 | 538 | 38.66% |
-| Lines | 650 | 1,125 | 57.78% |
-
-After adding the focused calculation-service chunk, backend validation passes with 104 active tests and 1 skipped test:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 4,287 | 7,167 | 59.82% |
-| Branches | 233 | 538 | 43.31% |
-| Lines | 697 | 1,125 | 61.96% |
-
-After adding the `SolvleService` orchestration chunk, backend validation passes with 113 active tests and 1 skipped test:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 5,315 | 7,167 | 74.16% |
-| Branches | 308 | 538 | 57.25% |
-| Lines | 867 | 1,125 | 77.07% |
-
-After adding the `RemainingSolver` chunk (`RemainingSolverTest`), backend validation passes with 125 active tests and 1 skipped test:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 5,390 | 7,167 | 75.21% |
-| Branches | 323 | 538 | 60.04% |
-| Lines | 877 | 1,125 | 77.96% |
-
-After adding the restriction-edge chunk (`WordRestrictionsTest`), backend validation passes with 144 active tests and 1 skipped test:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 5,413 | 7,167 | 75.53% |
-| Branches | 323 | 538 | 60.04% |
-| Lines | 880 | 1,125 | 78.22% |
-
-After classifying the legacy backend code (deleting `PreloadService`, moving `GroupSolver` and `SolvescapeService` to `com.appsoil.solvle.experimental`, and excluding that package from JaCoCo), backend validation still passes with 144 active tests and 1 skipped test, and product-code coverage is:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 5,308 | 6,696 | 79.27% |
-| Branches | 317 | 512 | 61.91% |
-| Lines | 860 | 1,042 | 82.53% |
-
-After the `SolvleService` solver-orchestration chunk (playout, `solveDictionary` blank/explicit/forced-starter paths, and `submitTupleJob` cache/restart/completion), backend validation passes with 155 active tests and 1 skipped test:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 5,868 | 6,696 | 87.63% |
-| Branches | 342 | 512 | 66.80% |
-| Lines | 958 | 1,042 | 91.94% |
-
-After targeting the remaining `SolvleService`, `WordCalculationService`, `KnownPosition`, and `SharedPositions` gaps (positional getScore, partitioning branch, blank-firstWord bestWords path, German fishing routing, third `solveDictionary` overload, expanded EXTENDED fixture for the `submitTupleJob` map block, harmonic series after bug fix, rutBreak threshold skip path, hard-mode rut detection in `getPartitionStatsForTuple`, playout failures with `guessNumber=6`, plus four direct `KnownPosition.compareTo` branches and the multi-entry `SharedPositions.sortedPositionStream` ordering), backend validation passes with 168 active tests:
-
-| Metric | Covered | Total | Coverage |
-| --- | ---: | ---: | ---: |
-| Instructions | 6,361 | 6,852 | 92.83% |
-| Branches | 391 | 528 | 74.05% |
-| Lines | 1,030 | 1,062 | 96.99% |
-
-Notes from this chunk:
-- The harmonic-series implementation in `WordCalculationService#harmonic` was broken (`1.0 / (double)n` instead of `1.0 / (double)i` — every input produced ~1.0). The fix and a new `WordCalculationConfig.withHarmonic(boolean)` builder enable a benchmark variant `OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC` for solver-quality comparison.
-- The three rutBreak call sites in `SolvleService` (`getWordAnalysis` `sharedPositions` setup, `getWordAnalysis` recommendations block, `getScore` shared-position bonus) were re-enabled. Guards (`rutBreakThreshold > 1`, `rutBreakMultiplier > 0`) keep all shipped configs no-op since they all default to 0; new `OPTIMAL_MEAN_HARD_MODE` and `OPTIMAL_MEAN_HARD_MODE_RUTBREAK` configs exercise the path.
-- Remaining intentional gaps: `SolvleService` defensive executor `catch` (501), the two priority-queue swap-on-better-score `else` branches at 667/677 that require ~65+ word fixture to hit `TOP_N=2000`.
-
-Notable backend class coverage after the first four chunks:
+Backend class coverage signal:
 
 | Area | Current signal |
 | --- | --- |
 | `WordRestrictions` | Strong line and branch coverage around parsing and generated restrictions. Direct edge coverage is now in place via `WordRestrictionsTest`: parsing (`g5^2!2` style position/frequency/exclusion), `generateRestrictions` duplicate-letter Wordle semantics, `withAdditionalLetterPositions` merges, and combined `isValidWord` position/frequency/exclusion checks. |
 | `WordCalculationService` | First-pass direct coverage is in place for zero-score guards, positional count reduction, partition thresholds, fast-path partition scoring, pool merging, partition stats, and shared-position rut weighting. Remaining gaps are advanced playout/hard-mode branches. |
-| `SolvleService` | First-pass orchestration coverage is in place for English-vs-language fishing dictionary selection, `hardMode`, `requireAnswer`, scoring, game rating rows, invalid solve inputs, tuple scoring, and tuple search `requireAnswer` behavior. Solver-orchestration paths are now covered: `playOutSolutions` over the merged viable+fishing pool, all three `solveDictionary` overloads (blank firstWord picked from analysis, explicit firstWord, single/multi forced starters with starter-equals-solution short-circuit and wrong-length/not-in-fishing-set rejection), and `submitTupleJob` cache hit, restart-after-FAILED, and tiny-dictionary completion. Remaining gaps are the tuple-job idle-timeout path (needs a test seam — the executor's `setStatus` races with externally-forced status changes), and the full `getWordAnalysis` config matrix (positional vs. non-positional scoring, harmonic, partition thresholds). |
+| `SolvleService` | Orchestration coverage is in place for English-vs-language fishing dictionary selection (incl. German routing), `hardMode`, `requireAnswer`, positional and non-positional scoring, game rating rows, invalid solve inputs, tuple scoring, `findBestNWords` require-answer behavior, `findSharedWordRestrictions`, the partitioning `getWordAnalysis` branch, `playOutSolutions` over the merged viable+fishing pool (incl. high-`guessNumber` failures), all three `solveDictionary` overloads (blank-firstWord via bestWords and via fishingWords, explicit firstWord, forced-starters with short-circuit and wrong-length/not-in-fishing-set rejection, and `previousGuesses` + `startingRestrictions`), and `submitTupleJob` cache hit, restart-after-FAILED, tiny-dictionary completion, the candidate `.map` block (via the expanded EXTENDED fixture), and the idle-timeout path (via the `maxJobIgnoreTimeSeconds` / `tupleJobTimeoutCheckInterval` seam). Intentional remaining gaps: defensive executor `catch` and the priority-queue swap-on-better-score `else` branches in `generateNWordListsHeuristic`. |
 | `RemainingSolver` | Direct coverage is now in place via `RemainingSolverTest`: `getNextGuess` fishing/partition/viable-word branches, previous-guess avoidance, and the null terminal case, plus full `solve`/`solveWord` loop tests for solving to the answer, first-word-is-solution, prepended valid starters, and invalid/unknown-word rejections. |
 | `SolvleController` | First-pass MockMvc coverage is in place for every active endpoint, default/query handling, lowercasing, tuple parsing, repeated guesses, and invalid enum handling. |
 | `GameScoreDTO`, `SolveJob`, `PartitionStats`, `TupleScore`, `PlayOut`, `WordFrequencyScore` | First-pass unit coverage is in place. Remaining work is branch/edge coverage where it clarifies behavior. |
@@ -445,4 +371,6 @@ Before product changes begin:
 ## Open Decisions
 
 - Should the `-Pbenchmark` profile run on a schedule in CI (nightly) once baselines stabilize, or stay developer-triggered? The 15-20 minute runtime makes per-PR gating unattractive; a scheduled run that posts a digest is the more likely shape.
-- Should tuple jobs expose cancellation or timeout behavior as a tested public contract? Today the only way is a small refactor to extract `MAX_JOB_IGNORE_TIME_SECONDS` and inject a clock supplier.
+- `rutBreak(1.0, 6)` produces identical numbers to plain hard mode at the current baseline. Threshold likely too high to actually trigger on real Wordle answer-list patterns. Worth a tuning pass (try threshold 3-4) to see whether the feature has any value before deciding its long-term fate.
+- Frontend P0 tests are still unwritten (see spec above). Frontend is at ~23% line coverage. Likely its own branch.
+- The stale `/solvescape` proxy and unused `generateAnagramString` helper in the frontend can be removed if anagram mode is not coming back. Otherwise, restoring a `SolvescapeController` is the missing piece.

@@ -358,6 +358,34 @@ class SolvleServiceOrchestrationTest {
     }
 
     @Test
+    void submitTupleJob_idleTimeoutTransitionsJobToFailed() throws InterruptedException {
+        // Drive the timeout check on every word (interval=1) and treat any positive duration as
+        // exceeding the budget (maxJobIgnoreTimeSeconds=-1) so the first processed word fires the
+        // FAILED-with-"Job timed out" branch. Restore the production defaults in finally so other
+        // tests sharing this Spring context aren't affected.
+        long originalTimeout = solvleService.maxJobIgnoreTimeSeconds;
+        int originalInterval = solvleService.tupleJobTimeoutCheckInterval;
+        try {
+            solvleService.setMaxJobIgnoreTimeSeconds(-1);
+            solvleService.setTupleJobTimeoutCheckInterval(1);
+
+            // A tuple distinct from every other test so we don't collide with the tuple-job cache.
+            Set<Word> tuple = Set.of(new Word("gulps"));
+            SolveJob<Set<TupleScore>> job = solvleService.submitTupleJob(tuple, DictionaryType.EXTENDED, true);
+
+            awaitTerminalStatus(job, 5000);
+
+            Assertions.assertEquals(JobStatus.FAILED, job.getStatus(),
+                    () -> "Idle timeout should leave the job in FAILED, not COMPLETED");
+            Assertions.assertEquals("Job timed out", job.getError(),
+                    () -> "Timeout error should be the canonical \"Job timed out\" message");
+        } finally {
+            solvleService.setMaxJobIgnoreTimeSeconds(originalTimeout);
+            solvleService.setTupleJobTimeoutCheckInterval(originalInterval);
+        }
+    }
+
+    @Test
     void submitTupleJob_completesAndPopulatesResultForTinyDictionary() throws InterruptedException {
         Set<Word> tuple = Set.of(new Word("brine"));
 

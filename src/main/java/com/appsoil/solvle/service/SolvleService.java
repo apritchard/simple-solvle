@@ -38,7 +38,18 @@ public class SolvleService {
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
-    private final int MAX_JOB_IGNORE_TIME_SECONDS = 60;
+
+    // package-private + settable so tests can drive the idle-timeout path deterministically
+    long maxJobIgnoreTimeSeconds = 60;
+    int tupleJobTimeoutCheckInterval = 200;
+
+    void setMaxJobIgnoreTimeSeconds(long seconds) {
+        this.maxJobIgnoreTimeSeconds = seconds;
+    }
+
+    void setTupleJobTimeoutCheckInterval(int interval) {
+        this.tupleJobTimeoutCheckInterval = interval;
+    }
 
     private Map<DictionaryType, Map<Word, PartitionStats>> firstPartitionData = new ConcurrentHashMap<>();
 
@@ -523,9 +534,9 @@ public class SolvleService {
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
                     int completed = response.getCompletedTasks().incrementAndGet();
-                    if (completed % 200 == 0) {
+                    if (completed % tupleJobTimeoutCheckInterval == 0) {
                         long durationSinceUpdate = Duration.between(response.getLastUpdate(), LocalDateTime.now()).getSeconds();
-                        if (durationSinceUpdate > MAX_JOB_IGNORE_TIME_SECONDS) {
+                        if (durationSinceUpdate > maxJobIgnoreTimeSeconds) {
                             timeout.set(true);
                             response.setStatus(JobStatus.FAILED);
                             response.setError("Job timed out");
@@ -541,9 +552,13 @@ public class SolvleService {
                     response.getEvaluatedTuples().incrementAndGet();
                     return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, allSolutions, newSet));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
-        response.setResult(tuples);
-        response.setStatus(JobStatus.COMPLETED);
-        log.info("Tuble job for {} completed in {}", tuple, response.runTime());
+        if (!timeout.get()) {
+            response.setResult(tuples);
+            response.setStatus(JobStatus.COMPLETED);
+            log.info("Tuble job for {} completed in {}", tuple, response.runTime());
+        } else {
+            log.info("Tuble job for {} ended in {} (timed out)", tuple, response.runTime());
+        }
     }
 
     protected Set<Set<Word>> generateNWordLists(Set<Word> containedWords, Set<Word> fishingSet, int bestNWords) {
