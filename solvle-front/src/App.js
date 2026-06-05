@@ -6,14 +6,27 @@
 import "./App.css";
 import Board from "./components/Board";
 import Keyboard from "./components/Keyboard";
-import React, {useState} from "react";
+import React, {useMemo, useState} from "react";
 import Options from "./components/Options";
 import {MdHelp} from 'react-icons/md';
 import SolvleAlert from "./components/SolvleAlert";
 import Config from "./components/Config";
 import AppContext from "./contexts/contexts";
 import BoardActions from "./components/BoardActions";
-import {ALLOWABLE_CHARACTERS, generateConfigParams, generateRestrictionString} from "./functions/functions";
+import {
+    applyColor,
+    computeFeedback,
+    deriveAvailableLetters,
+    deriveGlobalState,
+    generateConfigParams,
+    generateRestrictionString,
+    initialTileColors,
+    nextTileColor,
+    recolorBoard,
+    TILE_DEFAULT,
+    TILE_GRAY,
+    TILE_UNSET
+} from "./functions/functions";
 
 function App() {
 
@@ -54,26 +67,6 @@ function App() {
 
     const [boardState, setBoardState] = useState(initialBoardState(6, 5));
 
-    const initialAvailableLetters = () => {
-        return new Set(ALLOWABLE_CHARACTERS.split(""));
-    }
-
-    const initialKnownLetters = (width) => {
-        let ret = new Map();
-        for (let i = 0; i < width; i++) {
-            ret.set(i, "");
-        }
-        return ret;
-    }
-
-    const initialUnsureLetters = (width) => {
-        let ret = new Map();
-        for (let i = 0; i < width; i++) {
-            ret.set(i, new Set());
-        }
-        return ret;
-    }
-
     const initialOptions = () => {
         return {
             wordList: new Set(),
@@ -85,67 +78,63 @@ function App() {
         }
     }
 
-    const [availableLetters, setAvailableLetters] = useState(initialAvailableLetters());
-    const [knownLetters, setKnownLetters] = useState(initialKnownLetters(boardState.settings.wordLength));
-    const [unsureLetters, setUnsureLetters] = useState(initialUnsureLetters(boardState.settings.wordLength));
+    const [tileColors, setTileColors] = useState(
+        initialTileColors(boardState.settings.attempts, boardState.settings.wordLength));
     const [currentOptions, setCurrentOptions] = useState(initialOptions());
     const [solverOpen, setSolverOpen] = useState(false);
     const [rowScores, setRowScores] = useState([])
 
-    const resetLetterInfo = (width) => {
-        setAvailableLetters(initialAvailableLetters());
-        setUnsureLetters(initialUnsureLetters(width))
-        setKnownLetters(initialKnownLetters(width));
+    // tileColors holds only the tiles the user has explicitly set (others are
+    // TILE_UNSET). displayColors auto-colors the unset tiles from board-wide facts
+    // (propagation) for rendering; availableLetters greys keys proven absent. Facts
+    // and the restriction string derive from tileColors (set tiles) only.
+    //
+    // By design we allow transient "invalid" boards mid-edit (e.g. a letter shown
+    // gray in one word while set present in another) rather than fighting the user's
+    // clicks across words. The derivation resolves contradictions (present wins,
+    // greens beat stale exclusions) so the restriction string is always sensible.
+    // Derive the board-wide facts once and share them with the display and keyboard memos.
+    const facts = useMemo(
+        () => deriveGlobalState(boardState.board, tileColors),
+        [boardState.board, tileColors]);
+
+    const displayColors = useMemo(
+        () => recolorBoard(boardState.board, tileColors, facts),
+        [boardState.board, tileColors, facts]);
+
+    const availableLetters = useMemo(
+        () => deriveAvailableLetters(boardState.board, tileColors, facts),
+        [boardState.board, tileColors, facts]);
+
+    const resetTileColors = (rows, width) => {
+        setTileColors(initialTileColors(rows, width));
     }
 
     const resetBoard = (rows, width) => {
         setBoardState(initialBoardState(rows, width));
-        resetLetterInfo(width);
+        resetTileColors(rows, width);
         setCurrentOptions(initialOptions());
         setRowScores([]);
     }
 
-    const addKnownLetter = (pos, letter) => {
-        setKnownLetters(prev => new Map(prev.set(pos, letter)));
+    // Immutably set a single tile's color.
+    const setTileColor = (row, pos, color) => {
+        setTileColors(prev => prev.map((r, ri) =>
+            ri === row ? r.map((c, ci) => (ci === pos ? color : c)) : r));
     }
 
-    const removeKnownLetter = (pos, letter) => {
-        if (knownLetters.get(pos) === letter) {
-            setKnownLetters(prev => new Map(prev.set(pos, "")));
-        }
+    // Cycle a tile from the color the user currently sees, recording it as an
+    // explicit set tile (always freely toggleable), and resolve simple conflicts.
+    const cycleTileColor = (row, pos) => {
+        const shown = (displayColors[row] && displayColors[row][pos]) || TILE_DEFAULT;
+        const next = nextTileColor(shown);
+        setTileColors(prev => applyColor(boardState.board, prev, row, pos, next));
     }
 
-    const addUnsureLetter = (pos, letter) => {
-        setUnsureLetters(prev => new Map(prev.set(pos, prev.get(pos).add(letter))));
-    }
-
-    const removeUnsureLetter = (pos, letter) => {
-        setUnsureLetters(prev => {
-            prev.get(pos).delete(letter);
-            return new Map(unsureLetters.set(pos, unsureLetters.get(pos)));
-        });
-    }
-
-    const addAvailableLetter = (letter) => {
-        setAvailableLetters(prev => new Set([...prev]).add(letter));
-    }
-
-    const removeAvailableLetter = (letter) => {
-        setAvailableLetters(prev => {
-            prev.delete(letter);
-            return new Set([...prev]);
-        });
-    }
-
+    // "Exclude All" marks every entered tile gray (absent).
     const setAllUnavailable = () => {
-        for(let i=0; i < boardState.board.length; i++) {
-            for(let j=0; j < boardState.board[i].length; j++) {
-                removeAvailableLetter(boardState.board[i][j]);
-            }
-        }
-        setUnsureLetters(initialUnsureLetters(boardState.settings.wordLength))
-        setKnownLetters(initialKnownLetters(boardState.settings.wordLength));
-
+        setTileColors(prev => prev.map((r, ri) =>
+            r.map((c, ci) => (boardState.board[ri][ci] !== "" ? TILE_GRAY : c))));
     }
 
     const setAutoColorSolution = (solution) => {
@@ -156,59 +145,30 @@ function App() {
                 autoColorWord: solution
             }
         }));
-        resetLetterInfo(boardState.settings.wordLength);
+        resetTileColors(boardState.settings.attempts, boardState.settings.wordLength);
         colorAllWordsBasedOnSolution(solution);
     }
 
-    const clearPosition = (attempt, pos, replacementLetter) => {
-        //get letter
-        let oldLetter = boardState.board[attempt][pos];
-
-        //if replacement letter same as old letter, bail
-        if (oldLetter === replacementLetter || oldLetter === '') {
+    // Clearing/replacing a board cell drops the user's color for it, returning the
+    // tile to the unset (auto-colored) state.
+    const clearPosition = (attempt, pos) => {
+        if (boardState.board[attempt][pos] === '') {
             return;
         }
-
-        //if old letter in same position on a different word, make no changes
-        for (let row = 0; row < boardState.currAttempt.attempt; row++) {
-            if (boardState.board[row][pos] === oldLetter) {
-                console.log("letter " + oldLetter + " found in attempt " + row + ", making no updates");
-                return;
-            }
-        }
-
-        console.log("Removing " + oldLetter + " from unsure list for position " + pos);
-        removeUnsureLetter(pos, oldLetter);
-
-        console.log("Clearing position " + pos + " of known letter " + oldLetter);
-        removeKnownLetter(pos, oldLetter);
-
-        //if old letter is anywhere on the board, leave its available status alone
-        for (let row = 0; row < boardState.currAttempt.attempt; row++) {
-            for (let x = 0; x < boardState.settings.wordLength; x++) {
-                if (boardState.board[row][x] === oldLetter) {
-                    console.log("Letter " + oldLetter + " elsewhere on board, not updating its availability");
-                    return;
-                }
-            }
-        }
-
-        if (!availableLetters.has(oldLetter)) {
-            console.log("Restoring " + oldLetter + " to availability list");
-            availableLetters.add(oldLetter);
-        }
-
+        setTileColor(attempt, pos, TILE_UNSET);
     }
 
     const updateWordRating = () => {
         if (boardState.settings.rateEnteredWords) {
 
-            let restrictionString = generateRestrictionString(availableLetters, knownLetters, unsureLetters);
+            let restrictionString = generateRestrictionString(boardState.board, tileColors);
             let configParams = generateConfigParams(boardState);
 
             let currentWord = boardState.board[boardState.currAttempt.attempt].join("");
 
-            fetch('/solvle/score/' + restrictionString + "/" + currentWord + "?" + configParams)
+            // encodeURIComponent so the ^ (min) and $ (max) frequency tokens survive
+            // the path; Tomcat rejects a raw ^ with a 400.
+            fetch('/solvle/score/' + encodeURIComponent(restrictionString) + "/" + currentWord + "?" + configParams)
                 .then(res => {
                     if (res.ok) {
                         return res.json()
@@ -236,29 +196,20 @@ function App() {
     }
 
     const colorWordBasedOnSolution = (attempt, solution) => {
-        solution = solution.toUpperCase()
-        console.log("Coloring attempt " + attempt + " for " + solution);
-        if(solution) {
-            boardState.board[attempt].forEach((letter, idx) => {
-                if(solution.charAt(idx) === letter) {
-                    console.log("adding " + letter + " known for " + idx);
-                    addKnownLetter(idx, letter);
-                } else if (solution.includes(letter)) {
-                    console.log("adding " + letter + " unsure for " + idx);
-                    addUnsureLetter(idx, letter);
-                } else {
-                    console.log("removing available " + letter);
-                    removeAvailableLetter(letter);
-                }
-            });
+        if (!solution) {
+            return;
         }
+        // Use true two-pass Wordle feedback so duplicate letters guessed more
+        // often than they occur are marked surplus-gray, not all present.
+        const guess = boardState.board[attempt].join("");
+        const colors = computeFeedback(guess, solution);
+        setTileColors(prev => prev.map((r, ri) => (ri === attempt ? [...colors] : r)));
     }
 
     const onEnter = () => {
         if (boardState.currAttempt.letter !== boardState.settings.wordLength) {
             return;
         }
-        console.log("Updating board state");
         updateWordRating();
         colorCurrentWordBasedOnSolution();
         setBoardState(prev => ({
@@ -274,11 +225,9 @@ function App() {
 
     const onDelete = () => {
         if (boardState.currAttempt.attempt === 0 && boardState.currAttempt.letter === 0) {
-            console.log("At top of board, cannot delete");
             return;
         }
         if (boardState.currAttempt.letter === 0) {
-            console.log("Returning to previous line");
             setBoardState( prev => ({
                 ...prev,
                 board: prev.board,
@@ -307,7 +256,6 @@ function App() {
 
     const onSelectLetter = (key) => {
         if(boardState.currAttempt.letter >= boardState.settings.wordLength) {
-            console.log("No room for new letters");
             return;
         }
         const newBoard = [...boardState.board];
@@ -325,13 +273,11 @@ function App() {
 
     const onSelectWord = (word) => {
         if(boardState.currAttempt.attempt >= boardState.settings.attempts) {
-            console.log("No room for more words");
             return;
         }
-        console.log("Setting " + word + " " + word.length + " " + boardState.currAttempt.attempt + " " + boardState.currAttempt.letter);
         const newBoard = [...boardState.board];
         for (let i = 0; i < word.length; i++) {
-            clearPosition(boardState.currAttempt.attempt, i, word[i]);
+            clearPosition(boardState.currAttempt.attempt, i);
             newBoard[boardState.currAttempt.attempt][i] = word[i];
         }
         updateWordRating();
@@ -371,20 +317,15 @@ function App() {
                 currentOptions,
                 setCurrentOptions,
                 availableLetters,
-                knownLetters,
-                unsureLetters,
+                tileColors,
+                displayColors,
+                cycleTileColor,
                 solverOpen,
                 setSolverOpen,
                 rowScores,
                 onSelectLetter,
                 onDelete,
                 onEnter,
-                addKnownLetter,
-                removeKnownLetter,
-                addUnsureLetter,
-                removeUnsureLetter,
-                addAvailableLetter,
-                removeAvailableLetter,
                 setAllUnavailable,
                 onSelectWord,
                 resetBoard,

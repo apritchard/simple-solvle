@@ -11,87 +11,34 @@ const buildBoardState = (overrides = {}) => ({
     ...overrides,
 });
 
-const emptyKnownLetters = (width = 5) => {
-    const m = new Map();
-    for (let i = 0; i < width; i++) m.set(i, '');
-    return m;
-};
-
-const emptyUnsureLetters = (width = 5) => {
-    const m = new Map();
-    for (let i = 0; i < width; i++) m.set(i, new Set());
-    return m;
-};
-
 describe('Letter', () => {
     test('renders the underlying letter value', () => {
         const { container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
             boardState: buildBoardState(),
-            availableLetters: new Set(['C']),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: emptyUnsureLetters(),
+            displayColors: [['', '', '', '', '']],
         });
 
         expect(container.querySelector('.letter').textContent).toBe('C');
     });
 
-    test('default state click removes the letter from availability and clears known position', () => {
-        const { context, container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
+    test('applies the tile color class from displayColors', () => {
+        const { container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
             boardState: buildBoardState(),
-            availableLetters: new Set(['C']),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: emptyUnsureLetters(),
+            displayColors: [['correct', '', '', '', '']],
         });
 
-        container.querySelector('.letter').click();
-
-        expect(context.removeKnownLetter).toHaveBeenCalledWith(0, 'C');
-        expect(context.removeAvailableLetter).toHaveBeenCalledWith('C');
+        expect(container.querySelector('.letter')).toHaveClass('correct');
     });
 
-    test('error state click promotes the letter to unsure', () => {
+    test('clicking an entered cell cycles its tile color', () => {
         const { context, container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
             boardState: buildBoardState(),
-            availableLetters: new Set(),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: emptyUnsureLetters(),
+            displayColors: [['', '', '', '', '']],
         });
 
         container.querySelector('.letter').click();
 
-        expect(context.addAvailableLetter).toHaveBeenCalledWith('C');
-        expect(context.addUnsureLetter).toHaveBeenCalledWith(0, 'C');
-    });
-
-    test('unsure state click promotes the letter to known', () => {
-        const unsure = emptyUnsureLetters();
-        unsure.get(0).add('C');
-        const { context, container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
-            boardState: buildBoardState(),
-            availableLetters: new Set(['C']),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: unsure,
-        });
-
-        container.querySelector('.letter').click();
-
-        expect(context.removeUnsureLetter).toHaveBeenCalledWith(0, 'C');
-        expect(context.addKnownLetter).toHaveBeenCalledWith(0, 'C');
-    });
-
-    test('known state click clears the known position', () => {
-        const known = emptyKnownLetters();
-        known.set(0, 'C');
-        const { context, container } = renderWithContext(<Letter letterPos={0} attemptVal={0} />, {
-            boardState: buildBoardState(),
-            availableLetters: new Set(['C']),
-            knownLetters: known,
-            unsureLetters: emptyUnsureLetters(),
-        });
-
-        container.querySelector('.letter').click();
-
-        expect(context.removeKnownLetter).toHaveBeenCalledWith(0, 'C');
+        expect(context.cycleTileColor).toHaveBeenCalledWith(0, 0);
     });
 
     test('clicking a letter in a future row is ignored', () => {
@@ -101,30 +48,22 @@ describe('Letter', () => {
                 board: [['', '', '', '', ''], ['', '', '', '', ''], ['C', '', '', '', '']],
                 currAttempt: { attempt: 0, letter: 0 },
             },
-            availableLetters: new Set(['C']),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: emptyUnsureLetters(),
+            displayColors: [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']],
         });
 
         container.querySelector('.letter').click();
 
-        expect(context.removeKnownLetter).not.toHaveBeenCalled();
-        expect(context.removeAvailableLetter).not.toHaveBeenCalled();
-        expect(context.addUnsureLetter).not.toHaveBeenCalled();
-        expect(context.addKnownLetter).not.toHaveBeenCalled();
+        expect(context.cycleTileColor).not.toHaveBeenCalled();
     });
 
     test('clicking an empty cell is ignored', () => {
         const { context, container } = renderWithContext(<Letter letterPos={1} attemptVal={0} />, {
             boardState: buildBoardState(),
-            availableLetters: new Set(),
-            knownLetters: emptyKnownLetters(),
-            unsureLetters: emptyUnsureLetters(),
+            displayColors: [['', '', '', '', '']],
         });
 
         container.querySelector('.letter').click();
 
-        expect(context.removeKnownLetter).not.toHaveBeenCalled();
-        expect(context.addUnsureLetter).not.toHaveBeenCalled();
+        expect(context.cycleTileColor).not.toHaveBeenCalled();
     });
 });

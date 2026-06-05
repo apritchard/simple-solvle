@@ -46,8 +46,6 @@ function ScoreMyStarter(props) {
         fetch('/solvle/scoreTuple/' + starter.trim() + "?" + configParams)
             .then(res => res.json())
             .then((data) => {
-                console.log("Received guesses:");
-                console.log(data);
                 setTupleData(data);
             }).catch((error) => {
                 console.error('Error fetching solution:', error);
