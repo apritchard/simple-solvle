@@ -1,0 +1,25 @@
+{
+  "config" : "OPTIMAL_MEAN_EXTENDED_PARTITIONING",
+  "dictionary" : "SIMPLE",
+  "hardMode" : false,
+  "requireAnswer" : true,
+  "firstWord" : "raise",
+  "wordCount" : 2315,
+  "distribution" : {
+    "1" : 1,
+    "2" : 61,
+    "3" : 1115,
+    "4" : 1036,
+    "5" : 100,
+    "6" : 2
+  },
+  "mean" : 3.5092872570194387,
+  "median" : 3.0,
+  "p95" : 4.0,
+  "max" : 6,
+  "stdev" : 0.6300424331562111,
+  "failureCount" : 0,
+  "runtimeMillisMedian" : 74353,
+  "runtimeMillisPerSolution" : 32.11792656587473,
+  "runs" : 3
+}

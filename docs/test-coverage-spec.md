@@ -23,6 +23,16 @@ cd solvle-front
 npm.cmd test -- --watchAll=false --coverage --passWithNoTests
 ```
 
+Backend benchmark and exploration suites (opt-in, not part of the default coverage run):
+
+```powershell
+mvn -Pbenchmark test                                       # solve-quality regression vs. committed baselines
+mvn -Pbenchmark test -Dbenchmark.baseline.write=true       # regenerate baselines
+mvn -Pexploration test                                     # manual playground; asserts nothing
+```
+
+See [testing.md](testing.md) for the full benchmark workflow.
+
 ## Initial Audit Baseline
 
 Before the JaCoCo/tooling chunk, backend validation passed with 74 active tests and 1 skipped test:
@@ -288,7 +298,40 @@ Add a small real-dictionary smoke suite that is not exhaustive:
 - English solution lists use the broader valid-guess dictionary for fishing.
 - Spanish, Icelandic, and German dictionary selections do not accidentally fall back to the English valid-guess list.
 - One golden suggestion request per major dictionary returns a non-empty response.
-- The disabled `FullDictionaryTest` scenarios are converted into tagged slow tests or documented as manual exploration only.
+
+## Full-Dictionary Benchmark And Exploration Suites
+
+`FullDictionaryTest` was split into two tagged suites that are excluded from the default `mvn test` run:
+
+- `com.appsoil.solvle.benchmark.DictionaryBenchmarkTest` (`@Tag("benchmark")`) — solve-quality regression. One test method per shipped `WordConfig` (six total), each runs `solveDictionary` against `DictionaryType.SIMPLE` with `hardMode=false, requireAnswer=true` through 1 warm-up + 3 measurement runs. Each test compares the resulting distribution and aggregates against a committed JSON baseline under `src/test/resources/benchmarks/`. Default tolerances: mean +0.02 guesses, max can't increase, failure count can't increase, no more than 0.5% of solutions can shift into a worse bucket. Runtime is reported and warns at +25% but never fails the test.
+- `com.appsoil.solvle.service.DictionaryExplorationTest` (`@Tag("exploration")`) — manual playground organized into three `@Nested` classes: `StarterWordSearch`, `ParameterSweeps`, `OneShotInspection`. Asserts nothing; reads through logs to interpret results.
+
+Run via:
+
+```powershell
+mvn -Pbenchmark test                                       # ~15-20 minutes; fails on solve-quality regression
+mvn -Pbenchmark test -Dbenchmark.baseline.write=true       # accept current results as new baseline
+mvn -Pexploration test                                     # unbounded; usually run individual @Nested classes
+```
+
+Updating a baseline is a deliberate human action — regenerate, inspect the JSON diff, commit with a message explaining the accepted regression.
+
+Initial baselines (one full `mvn -Pbenchmark test -Dbenchmark.baseline.write=true` against `DictionaryType.SIMPLE`, 2,315 solutions, `hardMode=false, requireAnswer=true`, 1 warm-up + 3 measurement runs):
+
+| Config | First word | Mean | Median | p95 | Max | Failures | Median runtime |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `SIMPLE` | alert | 3.7313 | 4.0 | 5.0 | 7 | 1 | 5.2s |
+| `SIMPLE_WITH_PARTITIONING` | alert | 3.5952 | 4.0 | 5.0 | 6 | 0 | 15.1s |
+| `OPTIMAL_MEAN` | slate | 3.5991 | 4.0 | 5.0 | 8 | 2 | 20.7s |
+| `OPTIMAL_MEAN_WITH_PARTITIONING` (flagship) | slate | 3.4592 | 3.0 | 4.0 | 6 | 0 | 47.0s |
+| `OPTIMAL_MEAN_EXTENDED_PARTITIONING` | raise | 3.5093 | 3.0 | 4.0 | 6 | 0 | 74.4s |
+| `TWO_OR_LESS` | slate | 3.4786 | 3.0 | 4.0 | 6 | 0 | 27.1s |
+
+Full benchmark run total wall time: ~12:43 on the developer laptop these baselines were captured on. Runtime numbers in committed baselines are informational — comparator warns at +25% but does not gate on runtime.
+
+`OPTIMAL_MEAN_WITH_PARTITIONING` is the production flagship by solve quality on these baselines (mean 3.4592, max 6, 0 failures). `OPTIMAL_MEAN_EXTENDED_PARTITIONING` is retained as an experimental high-partition-threshold variant; its mean and runtime are both worse, but it's tracked so we notice if a future change closes that gap.
+
+Tuple-job idle-timeout coverage in `SolvleService` is still open and would require a small test seam (extract `MAX_JOB_IGNORE_TIME_SECONDS` and inject a clock supplier) before it can be tested deterministically.
 
 ## Frontend P0 Test Spec
 
@@ -379,6 +422,5 @@ Before product changes begin:
 
 ## Open Decisions
 
-- Should full-dictionary solve quality become a scheduled/slow CI job, or remain manual exploration?
-- What minimum acceptable solve performance should be asserted for each solver config?
-- Should tuple jobs expose cancellation or timeout behavior as a tested public contract?
+- Should the `-Pbenchmark` profile run on a schedule in CI (nightly) once baselines stabilize, or stay developer-triggered? The 15-20 minute runtime makes per-PR gating unattractive; a scheduled run that posts a digest is the more likely shape.
+- Should tuple jobs expose cancellation or timeout behavior as a tested public contract? Today the only way is a small refactor to extract `MAX_JOB_IGNORE_TIME_SECONDS` and inject a clock supplier.

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git mv *)",
+      "Bash(git rm *)",
+      "Bash(mkdir -p \"src/main/java/com/appsoil/solvle/experimental\")",
+      "Bash(mkdir -p \"src/test/java/com/appsoil/solvle/experimental\")",
+      "Bash(mvn test *)",
+      "Bash(mvn clean *)",
+      "Bash(awk *)",
+      "Bash(mvn -q test -Dtest=SolvleServiceOrchestrationTest)",
+      "Bash(mvn -Pbenchmark test -Dtest=\"DictionaryBenchmarkTest#twoOrLess\" -Dbenchmark.baseline.write=true)",
+      "Bash(mvn -Pbenchmark test -DfailIfNoTests=false)",
+      "Bash(mvn -Pbenchmark test -Dtest=\"DictionaryBenchmarkTest#twoOrLess\" -Dbenchmark.baseline.write=true -DfailIfNoTests=false)",
+      "Bash(mvn -Pbenchmark test -Dbenchmark.baseline.write=true)",
+      "Bash(tee target/benchmark-baseline-run.log)",
+      "Bash(mvn -Pbenchmark test -Dtest=\"DictionaryBenchmarkTest#simpleConfig\")"
+    ]
+  }
+}

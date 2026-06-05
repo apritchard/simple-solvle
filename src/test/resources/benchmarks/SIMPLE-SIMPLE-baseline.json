@@ -1,0 +1,26 @@
+{
+  "config" : "SIMPLE",
+  "dictionary" : "SIMPLE",
+  "hardMode" : false,
+  "requireAnswer" : true,
+  "firstWord" : "alert",
+  "wordCount" : 2315,
+  "distribution" : {
+    "1" : 1,
+    "2" : 38,
+    "3" : 841,
+    "4" : 1165,
+    "5" : 243,
+    "6" : 26,
+    "7" : 1
+  },
+  "mean" : 3.731317494600432,
+  "median" : 4.0,
+  "p95" : 5.0,
+  "max" : 7,
+  "stdev" : 0.7173848965044589,
+  "failureCount" : 1,
+  "runtimeMillisMedian" : 5164,
+  "runtimeMillisPerSolution" : 2.230669546436285,
+  "runs" : 3
+}
