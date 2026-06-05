@@ -68,24 +68,34 @@ Backend class coverage signal:
 
 Frontend validation passed with 1 Jest test.
 
-Frontend Istanbul baseline:
+Frontend Istanbul coverage:
 
 | Metric | Coverage |
 | --- | ---: |
-| Statements | 22.70% |
-| Branches | 14.09% |
-| Functions | 19.55% |
-| Lines | 22.89% |
+| Statements | 39.05% |
+| Branches | 32.70% |
+| Functions | 34.44% |
+| Lines | 39.94% |
 
-Notable frontend coverage:
+Trajectory: opened at 22.89% lines / 14.09% branches / 19.55% functions / 22.70% statements with a single App smoke test. The basics pass added 46 tests across three buckets — a pure-function suite for `functions.js`, single-component tests through a small `AppContext` test-render helper (`Letter`, `Key`, `OptionTab`, `RowScore`, `SolvleAlert`), and two fetch-mocked modal tests (`SolveModal`, `ScoreMyStarter`).
 
-| Area | Current signal |
-| --- | --- |
-| `App.test.js` | Smoke-renders the app, mocks one initial `/solvle` fetch, and asserts `0 possible words`. |
-| `Options.js` | Relatively high incidental coverage from initial render, but request/error/tab behavior is not thoroughly asserted. |
-| `Board.js`, `contexts.js` | Covered by render only; little behavioral confidence. |
-| `Controls.js`, `RateMyGame.js`, `RowScore.js`, `ScoreMyStarter.js`, `SolveModal.js`, `TupleCompletion.js` | 0% coverage. |
-| `functions.js` | Partial coverage from app render. Needs direct unit tests for restriction strings, config params, and anagram strings. |
+Per-file coverage after the basics pass:
+
+| Area | Lines | Note |
+| --- | ---: | --- |
+| `functions.js` | 100% | All 3 helpers (`generateRestrictionString`, `generateAnagramString`, `generateConfigParams`) directly unit-tested. |
+| `Key.js`, `OptionTab.js`, `RowScore.js`, `SolvleAlert.js`, `Board.js`, `contexts.js` | 100% | |
+| `SolveModal.js` | 96.6% | Open/submit/render/close; only the catch-block log line is uncovered. |
+| `ScoreMyStarter.js` | 90.6% | Validation + fetch + render formatted entropy/remaining-words; small handler branch and catch-block log uncovered. |
+| `Letter.js` | 88.4% | 5-state click cycle covered; remaining uncovered lines are the "huh" composite state and the `default` switch arm. |
+| `Row.js` | 85.7% | Incidental coverage from App smoke test. |
+| `Options.js` | 81.8% | Initial render path covered; error branch (catch) still uncovered. |
+| `Config.js` | 75% | Wrapping component only. |
+| `Keyboard.js` | 50% | Keydown handler not directly tested. |
+| `AutoColor.js`, `BoardActions.js`, `UtilityDropdown.js` | 33-45% | Incidental coverage; not directly tested. |
+| `App.js` | 31.7% | State coordinator; deferred to follow-up integration branch. |
+| `Controls.js`, `RateMyGame.js`, `TupleCompletion.js` | 0% | Deferred: large/integration-flavored, planned for a follow-up. |
+| `testUtils.js` | 100% | New helper. `renderWithContext(ui, contextOverrides)` wraps a render in `AppContext.Provider` with sensible defaults and `jest.fn()`-stubbed handlers. |
 
 ## Tooling Recommendations
 
