@@ -8,20 +8,20 @@
   "distribution" : {
     "1" : 1,
     "2" : 66,
-    "3" : 988,
+    "3" : 990,
     "4" : 1081,
-    "5" : 166,
+    "5" : 164,
     "6" : 11,
     "7" : 1,
     "8" : 1
   },
-  "mean" : 3.5991360691144707,
+  "mean" : 3.597408207343412,
   "median" : 4.0,
   "p95" : 5.0,
   "max" : 8,
-  "stdev" : 0.6969492330305501,
+  "stdev" : 0.6959521341678252,
   "failureCount" : 2,
-  "runtimeMillisMedian" : 20711,
-  "runtimeMillisPerSolution" : 8.946436285097192,
+  "runtimeMillisMedian" : 15910,
+  "runtimeMillisPerSolution" : 6.8725701943844495,
   "runs" : 3
 }

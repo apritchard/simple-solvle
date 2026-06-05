@@ -7,19 +7,19 @@
   "wordCount" : 2315,
   "distribution" : {
     "1" : 1,
-    "2" : 72,
-    "3" : 1140,
-    "4" : 1025,
-    "5" : 74,
+    "2" : 73,
+    "3" : 1141,
+    "4" : 1024,
+    "5" : 73,
     "6" : 3
   },
-  "mean" : 3.4786177105831535,
+  "mean" : 3.4768898488120947,
   "median" : 3.0,
   "p95" : 4.0,
   "max" : 6,
-  "stdev" : 0.621458532238538,
+  "stdev" : 0.6213966505239646,
   "failureCount" : 0,
-  "runtimeMillisMedian" : 43275,
-  "runtimeMillisPerSolution" : 18.69330453563715,
+  "runtimeMillisMedian" : 31932,
+  "runtimeMillisPerSolution" : 13.793520518358532,
   "runs" : 3
 }

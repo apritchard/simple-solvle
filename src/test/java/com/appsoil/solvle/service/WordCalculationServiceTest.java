@@ -142,6 +142,7 @@ public class WordCalculationServiceTest {
                 Set.of('a'),
                 Map.of(1, 'a'),
                 new HashMap<>(),
+                new HashMap<>(),
                 new HashMap<>()
         );
 
@@ -223,7 +224,7 @@ public class WordCalculationServiceTest {
 
         Map<Character, DoubleAdder> weightsWithKnownC = rutBreakingService.generateSharedCharacterWeights(
                 sharedPositions,
-                new WordRestrictions(new Word("abcdefg"), Set.of('c'), Map.of(), new HashMap<>(), new HashMap<>())
+                new WordRestrictions(new Word("abcdefg"), Set.of('c'), Map.of(), new HashMap<>(), new HashMap<>(), new HashMap<>())
         );
 
         Assertions.assertFalse(weightsWithKnownC.containsKey('c'));

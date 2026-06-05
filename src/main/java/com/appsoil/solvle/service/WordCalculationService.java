@@ -93,7 +93,14 @@ public class WordCalculationService {
             if (word.letters().getOrDefault(entry.getKey(), 0) < entry.getValue()) {
                 return false;
             }
-        }        
+        }
+
+        //check maximum letter frequencies (duplicate-letter upper bounds learned from gray surplus tiles)
+        for (Map.Entry<Character, Integer> entry : wordRestrictions.maximumLetterFrequencies().entrySet()) {
+            if (word.letters().getOrDefault(entry.getKey(), 0) > entry.getValue()) {
+                return false;
+            }
+        }
 
         //then check if all letters in this word are available in the restrictions
         return wordRestrictions.word().letters().keySet().containsAll(word.letters().keySet());

@@ -76,6 +76,38 @@ class WordRestrictionsTest {
     }
 
     @Test
+    void parsing_maximumLetterFrequencyUsesDollar() {
+        // "crane$1" attaches a maximum of one 'e'; a bare maximum does not make the letter required
+        WordRestrictions restrictions = new WordRestrictions("crane$1");
+
+        Assertions.assertEquals(1, restrictions.maximumLetterFrequencies().get('e'));
+        Assertions.assertFalse(restrictions.requiredLetters().contains('e'),
+                "A maximum-only token must not assert the letter is present");
+    }
+
+    @Test
+    void parsing_combinedMinAndMaxFrequencyGivesExactCount() {
+        // "abcde5^1$1": e known in position 5, at least one e, at most one e
+        WordRestrictions restrictions = new WordRestrictions("abcde5^1$1");
+
+        Assertions.assertEquals('e', restrictions.letterPositions().get(5));
+        Assertions.assertEquals(1, restrictions.minimumLetterFrequencies().get('e'));
+        Assertions.assertEquals(1, restrictions.maximumLetterFrequencies().get('e'));
+        Assertions.assertTrue(restrictions.requiredLetters().contains('e'),
+                "A known position still makes the letter required even alongside a maximum");
+    }
+
+    @Test
+    void parsing_maxTokenCoexistsWithExclusions() {
+        // "abcde5^1$1!23": min/max one e in pos 5, excluded from positions 2 and 3
+        WordRestrictions restrictions = new WordRestrictions("abcde5^1$1!23");
+
+        Assertions.assertEquals(1, restrictions.maximumLetterFrequencies().get('e'));
+        Assertions.assertTrue(restrictions.positionExclusions().get(2).contains('e'));
+        Assertions.assertTrue(restrictions.positionExclusions().get(3).contains('e'));
+    }
+
+    @Test
     void parsing_combinedPositionFrequencyAndExclusion_g5caret2excl2() {
         WordRestrictions restrictions = new WordRestrictions("cranebg5^2!2");
 
@@ -150,6 +182,54 @@ class WordRestrictionsTest {
                 new Word("abbey"), new Word("babes"), WordRestrictions.noRestrictions());
 
         Assertions.assertEquals(2, next.minimumLetterFrequencies().get('b'));
+    }
+
+    @Test
+    void generate_graySurplusLetter_recordsMaximumFrequency() {
+        // solution "crane" has exactly one 'e'; guess "geese" has three -> the surplus e's come
+        // back gray, proving an upper bound of one 'e'.
+        WordRestrictions next = WordRestrictions.generateRestrictions(
+                new Word("crane"), new Word("geese"), WordRestrictions.noRestrictions());
+
+        Assertions.assertEquals(1, next.maximumLetterFrequencies().get('e'),
+                "Three guessed e's against one solution e proves a maximum of one");
+        Assertions.assertEquals(1, next.minimumLetterFrequencies().get('e'));
+    }
+
+    @Test
+    void generate_duplicateInSolution_recordsExactCountAsMatchingMinAndMax() {
+        // solution "abbey" has two b's; guess "bobby" has three -> exactly two b's (min == max == 2)
+        WordRestrictions next = WordRestrictions.generateRestrictions(
+                new Word("abbey"), new Word("bobby"), WordRestrictions.noRestrictions());
+
+        Assertions.assertEquals(2, next.minimumLetterFrequencies().get('b'));
+        Assertions.assertEquals(2, next.maximumLetterFrequencies().get('b'));
+    }
+
+    @Test
+    void generate_noSurplus_doesNotInventAMaximum() {
+        // solution "abbey" has two b's; guess "babes" also has two -> no gray b, so no upper bound
+        WordRestrictions next = WordRestrictions.generateRestrictions(
+                new Word("abbey"), new Word("babes"), WordRestrictions.noRestrictions());
+
+        Assertions.assertFalse(next.maximumLetterFrequencies().containsKey('b'),
+                "Two guessed b's against two solution b's reveals no maximum");
+    }
+
+    @Test
+    void generate_maximumFrequencyTightensAcrossGuesses() {
+        // solution "agate" (a,g,a,t,e) has two a's.
+        // First guess "aabcd" (three a's) proves a maximum of two; a later guess can only tighten.
+        WordRestrictions first = WordRestrictions.generateRestrictions(
+                new Word("agate"), new Word("aaabc"), WordRestrictions.noRestrictions());
+        Assertions.assertEquals(2, first.maximumLetterFrequencies().get('a'),
+                "Three guessed a's against two solution a's proves a maximum of two");
+
+        // a subsequent guess with even more a's must not raise the known maximum
+        WordRestrictions second = WordRestrictions.generateRestrictions(
+                new Word("agate"), new Word("aaaad"), first);
+        Assertions.assertEquals(2, second.maximumLetterFrequencies().get('a'),
+                "Maximum frequency only tightens; it never increases");
     }
 
     @Test
@@ -231,6 +311,30 @@ class WordRestrictionsTest {
         Assertions.assertTrue(matcher.isValidWord(new Word("abbey"), restrictions));
         Assertions.assertFalse(matcher.isValidWord(new Word("abeey"), restrictions),
                 "A single 'b' fails the minimum frequency of two");
+    }
+
+    @Test
+    void isValidWord_enforcesMaximumLetterFrequency() {
+        // guessing "geese" (three e's) against solution "crane" (one e) proves at most one 'e'.
+        WordRestrictions restrictions = WordRestrictions.generateRestrictions(
+                new Word("crane"), new Word("geese"), WordRestrictions.noRestrictions());
+
+        Assertions.assertTrue(matcher.isValidWord(new Word("crane"), restrictions),
+                "crane has exactly one e and should remain valid");
+        Assertions.assertFalse(matcher.isValidWord(new Word("elude"), restrictions),
+                "elude has two e's and must be rejected by the maximum of one — this is the duplicate-letter bug");
+    }
+
+    @Test
+    void isValidWord_enforcesMaximumFromParsedString() {
+        // "exactly one e in position 5" expressed purely through the restriction string grammar:
+        // available cranelud, e known in pos 5, min one e, max one e ($1), e excluded from pos 2 and 3.
+        WordRestrictions restrictions = new WordRestrictions("cranelud e5^1$1!23");
+
+        Assertions.assertTrue(matcher.isValidWord(new Word("crane"), restrictions),
+                "crane has exactly one e and satisfies the parsed maximum");
+        Assertions.assertFalse(matcher.isValidWord(new Word("elude"), restrictions),
+                "elude has two e's and must be rejected by the parsed $1 maximum");
     }
 
     @Test
