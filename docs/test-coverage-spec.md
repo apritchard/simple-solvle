@@ -273,7 +273,6 @@ Initial baselines (one full `mvn -Pbenchmark test -Dbenchmark.baseline.write=tru
 | `SIMPLE_WITH_PARTITIONING` | alert | 3.5952 | 4.0 | 5.0 | 6 | 0 | 15.1s |
 | `OPTIMAL_MEAN` | slate | 3.5991 | 4.0 | 5.0 | 8 | 2 | 20.7s |
 | `OPTIMAL_MEAN_WITH_PARTITIONING` (flagship) | slate | 3.4592 | 3.0 | 4.0 | 6 | 0 | 47.0s |
-| `OPTIMAL_MEAN_EXTENDED_PARTITIONING` | raise | 3.5093 | 3.0 | 4.0 | 6 | 0 | 74.4s |
 | `OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC` | slant | 3.4786 | 3.0 | 4.0 | 6 | 0 | 43.3s |
 | `OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE` (hardMode=true) | slate | 3.5400 | 3.0 | 5.0 | 8 | 7 | 15.7s |
 | `OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE_RUTBREAK` (hardMode=true) | slate | 3.5400 | 3.0 | 5.0 | 8 | 7 | 17.7s |
@@ -281,7 +280,7 @@ Initial baselines (one full `mvn -Pbenchmark test -Dbenchmark.baseline.write=tru
 
 Full benchmark run total wall time: ~12:43 on the developer laptop these baselines were captured on. Runtime numbers in committed baselines are informational — comparator warns at +25% but does not gate on runtime.
 
-`OPTIMAL_MEAN_WITH_PARTITIONING` is the production flagship by solve quality on these baselines (mean 3.4592, max 6, 0 failures). `OPTIMAL_MEAN_EXTENDED_PARTITIONING` is retained as an experimental high-partition-threshold variant; its mean and runtime are both worse, but it's tracked so we notice if a future change closes that gap.
+`OPTIMAL_MEAN_WITH_PARTITIONING` is the production flagship by solve quality on these baselines (mean 3.4592, max 6, 0 failures). `OPTIMAL_MEAN_EXTENDED_PARTITIONING` was previously tracked in the benchmark suite but was dropped — its mean (3.5093) and runtime (~70s) were both strictly worse than the flagship at every baseline measurement, so it was contributing run time without signal. The `WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING` static and the matching `WordConfig` enum value remain so the API option is still available and the exploration suite can still drive it.
 
 Findings from the harmonic + hard-mode benchmark sweep (initial values, ripe for tuning):
 
@@ -377,6 +376,12 @@ Before product changes begin:
 8. Long-running full-dictionary tests are either tagged slow and runnable on demand or documented as manual exploration.
 9. Coverage thresholds are added after the P0 tests land, starting from the improved baseline rather than the current baseline.
 10. `docs/testing.md` is updated with the final coverage commands once tooling is committed.
+
+## Solver-Ranking Note
+
+Partition ranking is **entropy-first by design**, driven by `WordFrequencyScore.compareTo` (`data/WordFrequencyScore.java`). The TreeSet that backs `SolvleDTO.bestWords` orders by `partitionStats.entropy()` (highest first), and only falls back to the `freqScore` field when entropies tie. The `freqScore` expression in `WordCalculationService.wordsByRemainingGuesses` (`(1 - wordsRemaining/N) + viableWordPreference`) is therefore an entropy-tied tiebreaker — not the primary rank. The `DataModelTest#wordFrequencyScore_sortByPartitionEntropyThenScoreThenNaturalOrder` test pins this behavior.
+
+Implication for solver-quality work: any "switch to entropy ranking" suggestion is already true; the real lever for closing the gap to SOTA solvers is the **partition-candidate pool**, not the ranking criterion. The pool that gets entropy-evaluated is the merged top-`MAX_RESULT_LIST_SIZE`(100) viable + top-`FISHING_WORD_SIZE`(200) fishing words filtered by positional-frequency score; candidates not in that pool — including some openers like "salet" — never get entropy-ranked at all. Widening `FISHING_WORD_SIZE` exponentially increases first-move latency, which is a UX constraint; a cleaner direction is one-time precomputation of the optimal first guess per `(WordConfig, DictionaryType)` pair.
 
 ## Open Decisions
 

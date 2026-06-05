@@ -54,11 +54,6 @@ class DictionaryBenchmarkTest {
     }
 
     @Test
-    void optimalMeanExtendedPartitioning() throws IOException {
-        runConfig(WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING, false);
-    }
-
-    @Test
     void twoOrLess() throws IOException {
         runConfig(WordConfig.TWO_OR_LESS, false);
     }
