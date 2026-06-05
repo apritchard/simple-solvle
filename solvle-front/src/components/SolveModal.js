@@ -41,8 +41,6 @@ function SolveModal(props) {
         fetch('/solvle/solve/' + solution.trim() + "?" + configParams + "&firstWord=" + firstWord)
             .then(res => res.json())
             .then((data) => {
-                console.log("Received guesses:");
-                console.log(data);
                 setGuesses(data);
             }).catch((error) => {
                 console.error('Error fetching solution:', error);

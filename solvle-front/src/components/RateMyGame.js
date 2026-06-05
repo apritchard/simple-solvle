@@ -58,7 +58,6 @@ function RateMyGame(props) {
         const newRows = [...board];
         newRows[rowIndex] = updatedRow;
         setBoard(newRows);
-        console.log("Setting board to", newRows);
     };
 
     const rateGame = (e) => {
@@ -66,20 +65,16 @@ function RateMyGame(props) {
         setIsLoading(true);
         let configParams = generateConfigParams(boardState);
         const guesses = board.map(row => row.join('')).filter(row => row.length === boardState.settings.wordLength).map(guess => 'guesses=' + encodeURIComponent(guess)).join('&');
-        console.log(guesses);
 
         fetch('/solvle/rate/' + solution.trim() + "?" + guesses + "&" + configParams)
             .then(res => res.json())
             .then((data) => {
                 if(!data?.rows){
-                    console.log("No game data received")
                     return;
                 }
-                console.log("Received data:");
-                console.log(data);
                 setRateData(data);
             }).catch(error => {
-                console.log("Bad request for game data.");
+                console.error("Bad request for game data.", error);
             }).finally(() => {setIsLoading(false)});
     }
 
@@ -156,7 +151,6 @@ function RateMyGame(props) {
         clipboardText += "  \nhttps://solvle.appsoil.com";
 
         navigator.clipboard.writeText(clipboardText).then(() => {
-            console.log(clipboardText);
             setShowCopiedMessage(true);
             setTimeout(() => setShowCopiedMessage(false), 2000);
         }).catch(err => {
