@@ -345,7 +345,7 @@ public class SolvleService {
         final String startingWord = firstWord;
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
-        words.stream().forEach(word -> {
+        words.parallelStream().forEach(word -> {
             List<String> guesses = solveWord(solver, word, startingWord, wordList);
             outcome.put(word.word(), guesses);
         });
@@ -376,7 +376,7 @@ public class SolvleService {
                 .toList();
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
-        words.stream().forEach(solutionWord -> {
+        words.parallelStream().forEach(solutionWord -> {
             WordRestrictions restrictions = WordRestrictions.noRestrictions();
             List<String> guesses = new ArrayList<>();
 
@@ -412,7 +412,7 @@ public class SolvleService {
         final String firstWord = guess.fishingWords().stream().findFirst().get().word();
 
         Map<String, List<String>> outcome = new ConcurrentHashMap<>();
-        words.stream().forEach(word -> {
+        words.parallelStream().forEach(word -> {
             List<String> guesses = new ArrayList<>(previousGuesses);
             guesses.addAll(solveWord(solver, word, firstWord, wordList));
             outcome.put(word.word(), guesses);
