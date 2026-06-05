@@ -40,3 +40,7 @@ solvle-log.txt
 *.pem
 aws-backup/
 *.sh
+
+### Claude Code per-developer state
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

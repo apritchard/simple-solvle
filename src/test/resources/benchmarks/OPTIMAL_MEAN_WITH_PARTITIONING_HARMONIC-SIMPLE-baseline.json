@@ -1,0 +1,25 @@
+{
+  "config" : "OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC",
+  "dictionary" : "SIMPLE",
+  "hardMode" : false,
+  "requireAnswer" : true,
+  "firstWord" : "slant",
+  "wordCount" : 2315,
+  "distribution" : {
+    "1" : 1,
+    "2" : 72,
+    "3" : 1140,
+    "4" : 1025,
+    "5" : 74,
+    "6" : 3
+  },
+  "mean" : 3.4786177105831535,
+  "median" : 3.0,
+  "p95" : 4.0,
+  "max" : 6,
+  "stdev" : 0.621458532238538,
+  "failureCount" : 0,
+  "runtimeMillisMedian" : 43275,
+  "runtimeMillisPerSolution" : 18.69330453563715,
+  "runs" : 3
+}

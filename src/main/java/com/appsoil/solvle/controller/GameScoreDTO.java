@@ -25,13 +25,25 @@ public class GameScoreDTO {
     private DescriptiveStatistics luckStats = new DescriptiveStatistics();
     private DescriptiveStatistics heuristicStats = new DescriptiveStatistics();
 
+    /**
+     * Adds one completed guess to the game rating.
+     *
+     * skill compares the player's expected remaining words to Solvle's recommendation.
+     * heuristic compares the player's information-gain score to the best fishing word.
+     * luck compares the expected remaining words to the actual remaining words after the guess.
+     *
+     * Terminal rows and rows without a fishing baseline are still returned in the row list,
+     * but are skipped from aggregate averages so the summary reflects comparable decision points.
+     */
     public void addRow(String playerWord, WordScoreDTO playerScore, String solvleWord, WordScoreDTO solvleScore, int actualRemaining, int previousRemaining, WordFrequencyScore bestFishing) {
         double skill, luck, heuristic;
         if (playerScore.remainingWords() <= 0) {
+            // Avoid divide-by-zero on terminal/degenerate scores; the row is perfect but not aggregateable.
             skill = 1;
             heuristic = 1;
             luck = 0;
         } else if (actualRemaining == previousRemaining) {
+            // No actual progress: keep the row visible, but floor skill/heuristic and use neutral luck.
             skill = 0.01;
             heuristic = 0.01;
             luck = .5;
@@ -39,6 +51,7 @@ public class GameScoreDTO {
             luckStats.addValue(luck);
             heuristicStats.addValue(heuristic);
         } else {
+            // Normal scoring path: compare player choice against Solvle and against the best fishing option.
             skill = solvleScore.remainingWords() / playerScore.remainingWords();
             heuristic = bestFishing.freqScore() > 0 ? playerScore.fishingScore() /  bestFishing.freqScore() : 1.0;
             luck = calculateLuck(playerScore.remainingWords(), actualRemaining);

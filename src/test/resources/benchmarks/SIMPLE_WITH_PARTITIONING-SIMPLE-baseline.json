@@ -1,0 +1,25 @@
+{
+  "config" : "SIMPLE_WITH_PARTITIONING",
+  "dictionary" : "SIMPLE",
+  "hardMode" : false,
+  "requireAnswer" : true,
+  "firstWord" : "alert",
+  "wordCount" : 2315,
+  "distribution" : {
+    "1" : 1,
+    "2" : 42,
+    "3" : 969,
+    "4" : 1185,
+    "5" : 117,
+    "6" : 1
+  },
+  "mean" : 3.59524838012959,
+  "median" : 4.0,
+  "p95" : 5.0,
+  "max" : 6,
+  "stdev" : 0.6193884583266817,
+  "failureCount" : 0,
+  "runtimeMillisMedian" : 15065,
+  "runtimeMillisPerSolution" : 6.50755939524838,
+  "runs" : 3
+}

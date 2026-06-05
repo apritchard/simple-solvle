@@ -523,13 +523,13 @@ public class WordCalculationService {
      * @param n Number of words with letter
      * @return The nth value of the harmonic series. For example: 1(1), 2(1.5), 3(1.833), 4(2.083)...
      */
-    private double harmonic(int n) {
+    double harmonic(int n) {
         if(!useHarmonic) {
             return n;
         }
         double sum = 0.0;
         for(int i = 1; i <= n; i++) {
-            sum += 1.0 / (double)n;
+            sum += 1.0 / (double)i;
         }
         return sum;
     }

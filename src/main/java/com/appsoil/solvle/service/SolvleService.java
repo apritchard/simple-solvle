@@ -38,19 +38,24 @@ public class SolvleService {
     private final int FISHING_WORD_SIZE = 200;
     private final int SHARED_POSITION_LIMIT = 1000;
     private final int DEFAULT_LENGTH = 5;
-    private final int MAX_JOB_IGNORE_TIME_SECONDS = 60;
+
+    // package-private + settable so tests can drive the idle-timeout path deterministically
+    long maxJobIgnoreTimeSeconds = 60;
+    int tupleJobTimeoutCheckInterval = 200;
+
+    void setMaxJobIgnoreTimeSeconds(long seconds) {
+        this.maxJobIgnoreTimeSeconds = seconds;
+    }
+
+    void setTupleJobTimeoutCheckInterval(int interval) {
+        this.tupleJobTimeoutCheckInterval = interval;
+    }
 
     private Map<DictionaryType, Map<Word, PartitionStats>> firstPartitionData = new ConcurrentHashMap<>();
 
     public SolvleService(Map<DictionaryType, Dictionary> dictionaries) {
         this.dictionaries = dictionaries;
     }
-
-
-    private void timestamp(String name, LocalDateTime start){
-        log.info(name + " took " + Duration.between(start, LocalDateTime.now()));
-    }
-
 
     @Cacheable("validWords")
     public SolvleDTO getWordAnalysis(String restrictionString, DictionaryType wordList, WordConfig wordConfig, boolean hardMode, boolean requireAnswer) {
@@ -96,14 +101,14 @@ public class SolvleService {
         // check for common positions within contained words
         SharedPositions sharedPositions = null;
         Map<Character, DoubleAdder> sharedPositionBonus = new HashMap<>();
-//        if(wordCalculationConfig.rutBreakThreshold() > 1 && containedWords.size() < SHARED_POSITION_LIMIT) {
-//            sharedPositions = wordCalculationService.findSharedWordRestrictions(containedWords);
-//
-//            if(wordCalculationConfig.rutBreakMultiplier() > 0) {
-//                //generate a per-character bonus score based on their frequency in the shared position sets
-//                sharedPositionBonus = wordCalculationService.generateSharedCharacterWeights(sharedPositions, wordRestrictions);
-//            }
-//        }
+        if(wordCalculationConfig.rutBreakThreshold() > 1 && containedWords.size() < SHARED_POSITION_LIMIT) {
+            sharedPositions = wordCalculationService.findSharedWordRestrictions(containedWords);
+
+            if(wordCalculationConfig.rutBreakMultiplier() > 0) {
+                //generate a per-character bonus score based on their frequency in the shared position sets
+                sharedPositionBonus = wordCalculationService.generateSharedCharacterWeights(sharedPositions, wordRestrictions);
+            }
+        }
 
         // data needed for the DTO
         Set<WordFrequencyScore> wordFrequencyScores; // scores for possible solution words
@@ -138,16 +143,16 @@ public class SolvleService {
             remainingWords = wordCalculationService.calculateRemainingWords(wordRestrictions, containedWords, wordFrequencyScores, fishingWordScores);
 
             //if partitioning enabled, also calculate recommendations for ruts
-//            if(sharedPositions != null) {
-//                Map<KnownPosition, Set<WordFrequencyScore>> recommendations = sharedPositions.knownPositions().entrySet().stream()
-//                        .filter(es -> es.getValue().size() >= wordCalculationConfig.rutBreakThreshold())
-//                        .collect(Collectors.toMap(Map.Entry::getKey, es -> {
-//                            //for each known position, make a new set of restrictions and then find the best partition word for that set
-//                            WordRestrictions tempRestrictions = wordRestrictions.withAdditionalLetterPositions(es.getKey().pos());
-//                            return wordCalculationService.calculateRemainingWords(tempRestrictions, containedWords, wordFrequencyScores, fishingWordScores).stream().limit(5).collect(Collectors.toCollection(TreeSet::new));
-//                        }));
-//                sharedPositions = sharedPositions.withRecommendations(recommendations);
-//            }
+            if(sharedPositions != null) {
+                Map<KnownPosition, Set<WordFrequencyScore>> recommendations = sharedPositions.knownPositions().entrySet().stream()
+                        .filter(es -> es.getValue().size() >= wordCalculationConfig.rutBreakThreshold())
+                        .collect(Collectors.toMap(Map.Entry::getKey, es -> {
+                            //for each known position, make a new set of restrictions and then find the best partition word for that set
+                            WordRestrictions tempRestrictions = wordRestrictions.withAdditionalLetterPositions(es.getKey().pos());
+                            return wordCalculationService.calculateRemainingWords(tempRestrictions, containedWords, wordFrequencyScores, fishingWordScores).stream().limit(5).collect(Collectors.toCollection(TreeSet::new));
+                        }));
+                sharedPositions = sharedPositions.withRecommendations(recommendations);
+            }
         }
 
         List<KnownPositionDTO> knownPositions = sharedPositions == null ? new ArrayList<>() : sharedPositions.toKnownPositionDTOList(wordCalculationConfig.rutBreakThreshold());
@@ -208,9 +213,9 @@ public class SolvleService {
         double score;
         // generate a per-character bonus score based on their frequency in the shared position sets
         Map<Character, DoubleAdder> sharedPositionBonus = new HashMap<>();
-//        if(wordCalculationConfig.rutBreakThreshold() > 1 && wordCalculationConfig.rutBreakMultiplier() > 0 && containedWords.size() < SHARED_POSITION_LIMIT) {
-//            sharedPositionBonus = wordCalculationService.generateSharedCharacterWeights(wordCalculationService.findSharedWordRestrictions(containedWords), wordRestrictions);
-//        }
+        if(wordCalculationConfig.rutBreakThreshold() > 1 && wordCalculationConfig.rutBreakMultiplier() > 0 && containedWords.size() < SHARED_POSITION_LIMIT) {
+            sharedPositionBonus = wordCalculationService.generateSharedCharacterWeights(wordCalculationService.findSharedWordRestrictions(containedWords), wordRestrictions);
+        }
 
         if (wordCalculationConfig.rightLocationMultiplier() == 0) {
             var counts = wordCalculationService.removeRequiredLettersFromCounts(wordCalculationService.calculateCharacterCounts(containedWords), wordRestrictions.requiredLetters());
@@ -529,9 +534,9 @@ public class SolvleService {
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
                     int completed = response.getCompletedTasks().incrementAndGet();
-                    if (completed % 200 == 0) {
+                    if (completed % tupleJobTimeoutCheckInterval == 0) {
                         long durationSinceUpdate = Duration.between(response.getLastUpdate(), LocalDateTime.now()).getSeconds();
-                        if (durationSinceUpdate > MAX_JOB_IGNORE_TIME_SECONDS) {
+                        if (durationSinceUpdate > maxJobIgnoreTimeSeconds) {
                             timeout.set(true);
                             response.setStatus(JobStatus.FAILED);
                             response.setError("Job timed out");
@@ -547,9 +552,13 @@ public class SolvleService {
                     response.getEvaluatedTuples().incrementAndGet();
                     return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, allSolutions, newSet));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
-        response.setResult(tuples);
-        response.setStatus(JobStatus.COMPLETED);
-        log.info("Tuble job for {} completed in {}", tuple, response.runTime());
+        if (!timeout.get()) {
+            response.setResult(tuples);
+            response.setStatus(JobStatus.COMPLETED);
+            log.info("Tuble job for {} completed in {}", tuple, response.runTime());
+        } else {
+            log.info("Tuble job for {} ended in {} (timed out)", tuple, response.runTime());
+        }
     }
 
     protected Set<Set<Word>> generateNWordLists(Set<Word> containedWords, Set<Word> fishingSet, int bestNWords) {
