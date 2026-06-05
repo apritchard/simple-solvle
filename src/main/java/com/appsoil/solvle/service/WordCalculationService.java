@@ -428,11 +428,17 @@ public class WordCalculationService {
             }
         });
 
+        // Ranking note: this TreeSet's ordering comes from WordFrequencyScore.compareTo, which
+        // sorts by partitionStats.entropy() first (highest first) and only falls back to freqScore
+        // when entropies tie. The (1 - wordsRemaining/N) expression below is therefore an
+        // entropy-tied tiebreaker, not the primary rank — it prefers candidates that also have a
+        // smaller expected remaining set, plus a tiny bonus for words that are themselves viable
+        // solutions (so an entropy-tied solution-set member wins over a non-solution).
         statSummary.forEach((word, partitionStats) ->
                 scores.add(new WordFrequencyScore(word.getOrder(), word.word(),
                         ((1.0 - (partitionStats.wordsRemaining() / containedWords.size()))
                                 + (containedWords.contains(word) ? (viableWordPreference / (1 + startingRestrictions.letterPositions().keySet().size() * viableWordAdjustmentScale)) : 0)),
-                        partitionStats))); // add tiny bonus to viable words so they are prioritized
+                        partitionStats)));
         return scores;
     }
 
