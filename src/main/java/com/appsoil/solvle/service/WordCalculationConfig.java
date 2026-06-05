@@ -51,6 +51,10 @@ public record  WordCalculationConfig (
         return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
 
+    public WordCalculationConfig withHarmonic(boolean useHarmonic) {
+        return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
+    }
+
     public WordCalculationConfig withFineTuning(double locationAdjustmentScale, double uniqueAdjustmentScale, double viableWordAdjustmentScale, double vowelMultiplier) {
         return new WordCalculationConfig(rightLocationMultiplier, uniquenessMultiplier, partitionThreshold, viableWordPreference, useHarmonic, fishingThreshold, hardMode, requireAnswer, locationAdjustmentScale, uniqueAdjustmentScale, viableWordAdjustmentScale, vowelMultiplier, rutBreakMultiplier, rutBreakThreshold);
     }
@@ -105,6 +109,25 @@ public record  WordCalculationConfig (
 
     public static WordCalculationConfig OPTIMAL_MEAN_EXTENDED_PARTITIONING =  new WordCalculationConfig(3, 8, 4000, .0001)
             .withFineTuning(1, 0, 0.0, 0.7);
+
+    /**
+     * OPTIMAL_MEAN with the (now-fixed) harmonic-series scoring enabled. Used to benchmark
+     * whether dampening high letter-frequency scores via the harmonic series improves solve quality.
+     */
+    public static WordCalculationConfig OPTIMAL_MEAN_HARMONIC = OPTIMAL_MEAN.withHarmonic(true);
+
+    /**
+     * OPTIMAL_MEAN in hard mode. Used as the baseline for hard-mode benchmarks (no rutBreak).
+     */
+    public static WordCalculationConfig OPTIMAL_MEAN_HARD_MODE = OPTIMAL_MEAN.withHardMode(true);
+
+    /**
+     * OPTIMAL_MEAN in hard mode with rutBreak shared-position weighting enabled. Used to benchmark
+     * whether boosting characters that resolve word ruts reduces hard-mode failure rates.
+     */
+    public static WordCalculationConfig OPTIMAL_MEAN_HARD_MODE_RUTBREAK = OPTIMAL_MEAN
+            .withHardMode(true)
+            .withRutBreak(1.0, 6);
 
     /**
      * Optimal mean but with partitioning disabled

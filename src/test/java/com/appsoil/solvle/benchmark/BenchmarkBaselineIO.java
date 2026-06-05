@@ -19,12 +19,12 @@ public final class BenchmarkBaselineIO {
     private BenchmarkBaselineIO() {
     }
 
-    public static Path baselinePath(String config, String dictionary) {
-        return BASELINE_DIR.resolve(String.format("%s-%s-baseline.json", config, dictionary));
+    public static Path baselinePath(String config, String dictionary, boolean hardMode) {
+        return BASELINE_DIR.resolve(String.format("%s-%s%s-baseline.json", config, dictionary, hardMode ? "-hardMode" : ""));
     }
 
     public static Path currentPath(BenchmarkReport report) {
-        return CURRENT_DIR.resolve(String.format("%s-%s.json", report.config(), report.dictionary()));
+        return CURRENT_DIR.resolve(String.format("%s-%s%s.json", report.config(), report.dictionary(), report.hardMode() ? "-hardMode" : ""));
     }
 
     public static void writeCurrent(BenchmarkReport report) throws IOException {
@@ -34,11 +34,11 @@ public final class BenchmarkBaselineIO {
 
     public static void writeBaseline(BenchmarkReport report) throws IOException {
         Files.createDirectories(BASELINE_DIR);
-        MAPPER.writeValue(baselinePath(report.config(), report.dictionary()).toFile(), report);
+        MAPPER.writeValue(baselinePath(report.config(), report.dictionary(), report.hardMode()).toFile(), report);
     }
 
-    public static Optional<BenchmarkReport> readBaseline(String config, String dictionary) throws IOException {
-        Path path = baselinePath(config, dictionary);
+    public static Optional<BenchmarkReport> readBaseline(String config, String dictionary, boolean hardMode) throws IOException {
+        Path path = baselinePath(config, dictionary, hardMode);
         if (!Files.exists(path)) {
             return Optional.empty();
         }

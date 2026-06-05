@@ -114,6 +114,19 @@ After the `SolvleService` solver-orchestration chunk (playout, `solveDictionary`
 | Branches | 342 | 512 | 66.80% |
 | Lines | 958 | 1,042 | 91.94% |
 
+After targeting the remaining `SolvleService`, `WordCalculationService`, `KnownPosition`, and `SharedPositions` gaps (positional getScore, partitioning branch, blank-firstWord bestWords path, German fishing routing, third `solveDictionary` overload, expanded EXTENDED fixture for the `submitTupleJob` map block, harmonic series after bug fix, rutBreak threshold skip path, hard-mode rut detection in `getPartitionStatsForTuple`, playout failures with `guessNumber=6`, plus four direct `KnownPosition.compareTo` branches and the multi-entry `SharedPositions.sortedPositionStream` ordering), backend validation passes with 168 active tests:
+
+| Metric | Covered | Total | Coverage |
+| --- | ---: | ---: | ---: |
+| Instructions | 6,361 | 6,852 | 92.83% |
+| Branches | 391 | 528 | 74.05% |
+| Lines | 1,030 | 1,062 | 96.99% |
+
+Notes from this chunk:
+- The harmonic-series implementation in `WordCalculationService#harmonic` was broken (`1.0 / (double)n` instead of `1.0 / (double)i` — every input produced ~1.0). The fix and a new `WordCalculationConfig.withHarmonic(boolean)` builder enable a benchmark variant `OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC` for solver-quality comparison.
+- The three rutBreak call sites in `SolvleService` (`getWordAnalysis` `sharedPositions` setup, `getWordAnalysis` recommendations block, `getScore` shared-position bonus) were re-enabled. Guards (`rutBreakThreshold > 1`, `rutBreakMultiplier > 0`) keep all shipped configs no-op since they all default to 0; new `OPTIMAL_MEAN_HARD_MODE` and `OPTIMAL_MEAN_HARD_MODE_RUTBREAK` configs exercise the path.
+- Remaining intentional gaps: `SolvleService` defensive executor `catch` (501), the two priority-queue swap-on-better-score `else` branches at 667/677 that require ~65+ word fixture to hit `TOP_N=2000`.
+
 Notable backend class coverage after the first four chunks:
 
 | Area | Current signal |
@@ -325,11 +338,20 @@ Initial baselines (one full `mvn -Pbenchmark test -Dbenchmark.baseline.write=tru
 | `OPTIMAL_MEAN` | slate | 3.5991 | 4.0 | 5.0 | 8 | 2 | 20.7s |
 | `OPTIMAL_MEAN_WITH_PARTITIONING` (flagship) | slate | 3.4592 | 3.0 | 4.0 | 6 | 0 | 47.0s |
 | `OPTIMAL_MEAN_EXTENDED_PARTITIONING` | raise | 3.5093 | 3.0 | 4.0 | 6 | 0 | 74.4s |
+| `OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC` | slant | 3.4786 | 3.0 | 4.0 | 6 | 0 | 43.3s |
+| `OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE` (hardMode=true) | slate | 3.5400 | 3.0 | 5.0 | 8 | 7 | 15.7s |
+| `OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE_RUTBREAK` (hardMode=true) | slate | 3.5400 | 3.0 | 5.0 | 8 | 7 | 17.7s |
 | `TWO_OR_LESS` | slate | 3.4786 | 3.0 | 4.0 | 6 | 0 | 27.1s |
 
 Full benchmark run total wall time: ~12:43 on the developer laptop these baselines were captured on. Runtime numbers in committed baselines are informational — comparator warns at +25% but does not gate on runtime.
 
 `OPTIMAL_MEAN_WITH_PARTITIONING` is the production flagship by solve quality on these baselines (mean 3.4592, max 6, 0 failures). `OPTIMAL_MEAN_EXTENDED_PARTITIONING` is retained as an experimental high-partition-threshold variant; its mean and runtime are both worse, but it's tracked so we notice if a future change closes that gap.
+
+Findings from the harmonic + hard-mode benchmark sweep (initial values, ripe for tuning):
+
+- The fixed harmonic series slightly underperforms the flagship (3.4786 vs 3.4592 mean), and picks a different opener (`slant` vs `slate`). Keep the feature exposed but don't make it default.
+- Hard mode adds ~0.08 to mean and produces 7 failures (vs 0) on the SIMPLE answer list — expected, hard mode is harder.
+- `withRutBreak(1.0, 6)` produces identical numbers to plain hard mode at these defaults. Likely the threshold of 6 shared-word-set members is too high for typical Wordle answer-list patterns; the early-return at the top of `generateSharedCharacterWeights` filters everything out. Tune `rutBreakThreshold` down (e.g., 3-4) or `rutBreakMultiplier` up to actually see weight effects.
 
 Tuple-job idle-timeout coverage in `SolvleService` is still open and would require a small test seam (extract `MAX_JOB_IGNORE_TIME_SECONDS` and inject a clock supplier) before it can be tested deterministically.
 

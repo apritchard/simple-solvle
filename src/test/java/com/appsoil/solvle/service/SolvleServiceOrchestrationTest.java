@@ -6,6 +6,7 @@ import com.appsoil.solvle.controller.SolvleDTO;
 import com.appsoil.solvle.controller.WordScoreDTO;
 import com.appsoil.solvle.data.Dictionary;
 import com.appsoil.solvle.data.PlayOut;
+import com.appsoil.solvle.data.SharedPositions;
 import com.appsoil.solvle.data.TupleScore;
 import com.appsoil.solvle.data.Word;
 import com.appsoil.solvle.data.WordFrequencyScore;
@@ -39,7 +40,7 @@ class SolvleServiceOrchestrationTest {
         Map<DictionaryType, Dictionary> allDictionaries() {
             Map<DictionaryType, Dictionary> dictionaries = new EnumMap<>(DictionaryType.class);
             dictionaries.put(DictionaryType.SIMPLE, dictionary("crane", "trace"));
-            dictionaries.put(DictionaryType.EXTENDED, dictionary("crane", "trace", "brine"));
+            dictionaries.put(DictionaryType.EXTENDED, dictionary("crane", "trace", "brine", "gulps"));
             dictionaries.put(DictionaryType.REDUCED, dictionary("crane"));
             dictionaries.put(DictionaryType.BIG, dictionary("crane", "trace", "slate", "pound", "fjord"));
             dictionaries.put(DictionaryType.SPANISH, dictionary("noche", "canto"));
@@ -191,6 +192,25 @@ class SolvleServiceOrchestrationTest {
         Assertions.assertEquals(Set.of("crane"), score.tuple().stream().map(Word::word).collect(Collectors.toSet()));
         Assertions.assertTrue(score.partitionStats().wordsRemaining() > 0);
         Assertions.assertTrue(score.partitionStats().entropy() >= 0);
+    }
+
+    @Test
+    void playOutSolutions_failuresPopulatedWhenGuessNumberLeavesNoRoom() {
+        // playOutSolutions passes guessNumber to getWordsBySolveLength, which records a "failure" for
+        // any solve whose guess list length is greater than (6 - guessNumber). At guessNumber=6 the
+        // threshold is 0, so every non-empty guess list counts — the failures list in each PlayOut
+        // becomes the full set of solutions.
+        Set<PlayOut> playOuts = solvleService.playOutSolutions(
+                "abcdefghijklmnopqrstuvwxyz",
+                DictionaryType.SIMPLE,
+                WordConfig.SIMPLE,
+                false,
+                6
+        );
+
+        Assertions.assertFalse(playOuts.isEmpty());
+        Assertions.assertTrue(playOuts.stream().anyMatch(p -> !p.failures().isEmpty()),
+                "At guessNumber=6 every successful solve registers as a failure in PlayOut.failures");
     }
 
     @Test
@@ -348,6 +368,145 @@ class SolvleServiceOrchestrationTest {
         Assertions.assertEquals(JobStatus.COMPLETED, job.getStatus(),
                 () -> "Tuple job should complete within 5s on the tiny dictionary; error: " + job.getError());
         Assertions.assertNotNull(job.getResult(), "Completed tuple job should expose a result set");
+    }
+
+    @Test
+    void submitTupleJob_mapsCandidatesThatPassDuplicateLetterFilter() throws InterruptedException {
+        // EXTENDED includes "gulps" which shares no letters with brine, so it survives isValidCombination
+        // and the .map block builds a TupleScore around {brine, gulps}.
+        Set<Word> tuple = Set.of(new Word("brine"));
+
+        SolveJob<Set<TupleScore>> job = solvleService.submitTupleJob(tuple, DictionaryType.EXTENDED, true);
+        awaitTerminalStatus(job, 5000);
+
+        Assertions.assertEquals(JobStatus.COMPLETED, job.getStatus(),
+                () -> "Tuple job should complete; error: " + job.getError());
+        Set<TupleScore> result = job.getResult();
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isEmpty(), "At least one letter-disjoint candidate should produce a TupleScore");
+        Assertions.assertTrue(result.stream().anyMatch(ts -> ts.tuple().stream()
+                        .map(Word::word).collect(Collectors.toSet()).containsAll(Set.of("brine", "gulps"))),
+                () -> "Expected a tuple containing brine + gulps, got: " + result);
+    }
+
+    @Test
+    void getScore_stringEntryPointParsesRestrictionsAndDelegates() {
+        WordScoreDTO score = solvleService.getScore(
+                "abcdefghijklmnopqrstuvwxyz",
+                "crane",
+                DictionaryType.SIMPLE,
+                WordConfig.SIMPLE,
+                false,
+                false
+        );
+
+        Assertions.assertTrue(score.remainingWords() > 0);
+        Assertions.assertTrue(score.fishingScore() > 0);
+        Assertions.assertTrue(score.entropy() >= 0);
+    }
+
+    @Test
+    void getScore_positionalBranchUsedWhenRightLocationMultiplierIsNonZero() {
+        // WordConfig.OPTIMAL_MEAN has rightLocationMultiplier=3, so getScore goes through
+        // calculateFreqScoreByPosition (line 216) instead of the non-positional branch.
+        WordScoreDTO score = solvleService.getScore(
+                WordRestrictions.NO_RESTRICTIONS,
+                "crane",
+                DictionaryType.SIMPLE,
+                WordConfig.OPTIMAL_MEAN,
+                false,
+                false
+        );
+
+        Assertions.assertTrue(score.remainingWords() > 0);
+        Assertions.assertTrue(score.fishingScore() > 0);
+    }
+
+    @Test
+    void getWordAnalysis_partitioningBranchPopulatesBestWords() {
+        // WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING has partitionThreshold=4000, so the else
+        // branch at SolvleService:132 runs and calculateRemainingWords produces bestWords.
+        SolvleDTO result = solvleService.getWordAnalysis(
+                WordRestrictions.NO_RESTRICTIONS,
+                DictionaryType.SIMPLE,
+                WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING,
+                false,
+                false
+        );
+
+        Assertions.assertNotNull(result.bestWords(), "Partitioning config should produce a non-null bestWords");
+        Assertions.assertFalse(result.bestWords().isEmpty(), "With viable words and partition enabled, bestWords should be non-empty");
+    }
+
+    @Test
+    void solveDictionary_blankFirstWordPicksFromBestWordsWhenPartitioningEnabled() {
+        // With partitioning enabled and a non-empty bestWords set, solveDictionary's blank-firstWord
+        // branch takes the bestWords path (line 327-328) instead of the fishingWords fallback.
+        WordCalculationConfig config = WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING;
+        RemainingSolver solver = new RemainingSolver(solvleService, config);
+
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver, "", config, DictionaryType.SIMPLE);
+
+        Assertions.assertEquals(Set.of("crane", "trace"), outcome.keySet());
+        String pickedFirstWord = outcome.values().iterator().next().get(0);
+        Assertions.assertTrue(Set.of("crane", "trace").contains(pickedFirstWord),
+                () -> "First word should be a viable bestWords pick (containedWords <=2 fast path), got " + pickedFirstWord);
+    }
+
+    @Test
+    void getWordAnalysis_germanDictionariesRouteToTheirOwnFishingSets() {
+        SolvleDTO german6mal5 = solvleService.getWordAnalysis(
+                WordRestrictions.NO_RESTRICTIONS,
+                DictionaryType.GERMAN_6MAL5,
+                WordConfig.SIMPLE,
+                false,
+                false
+        );
+        SolvleDTO germanGlobal = solvleService.getWordAnalysis(
+                WordRestrictions.NO_RESTRICTIONS,
+                DictionaryType.GERMAN_WORDLE_GLOBAL,
+                WordConfig.SIMPLE,
+                false,
+                false
+        );
+
+        Assertions.assertEquals(Set.of("geist"), words(german6mal5.wordList()));
+        Assertions.assertEquals(Set.of("geist"), words(german6mal5.fishingWords()),
+                "GERMAN_6MAL5 should use its own dictionary for fishing, not BIG");
+        Assertions.assertEquals(Set.of("ander"), words(germanGlobal.wordList()));
+        Assertions.assertEquals(Set.of("ander"), words(germanGlobal.fishingWords()),
+                "GERMAN_WORDLE_GLOBAL should use its own dictionary for fishing, not BIG");
+    }
+
+    @Test
+    void findSharedWordRestrictions_returnsSharedPositionsForDictionary() {
+        SharedPositions positions = solvleService.findSharedWordRestrictions(DictionaryType.SIMPLE);
+
+        Assertions.assertNotNull(positions);
+        Assertions.assertNotNull(positions.knownPositions());
+    }
+
+    @Test
+    void solveDictionary_previousGuessesAndStartingRestrictionsPrependsHistoryAndUsesRestrictions() {
+        WordCalculationConfig config = WordCalculationConfig.SIMPLE;
+        RemainingSolver solver = new RemainingSolver(solvleService, config);
+
+        Map<String, List<String>> outcome = solvleService.solveDictionary(
+                solver,
+                List.of("aaaaa"),
+                config,
+                "abcdefghijklmnopqrstuvwxyz",
+                DictionaryType.SIMPLE
+        );
+
+        Assertions.assertEquals(Set.of("crane", "trace"), outcome.keySet());
+        outcome.forEach((solution, guesses) -> {
+            Assertions.assertEquals("aaaaa", guesses.get(0),
+                    "Each solution's guess list should start with the prepended previousGuesses entry");
+            Assertions.assertEquals(solution, guesses.get(guesses.size() - 1),
+                    "Final guess for each solution should be the solution");
+        });
     }
 
     private static void awaitTerminalStatus(SolveJob<?> job, long timeoutMillis) throws InterruptedException {

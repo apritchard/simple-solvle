@@ -56,6 +56,46 @@ class DataModelTest {
     }
 
     @Test
+    void knownPosition_compareToCoversAllSameSizeBranches() {
+        KnownPosition earlyPos = new KnownPosition(Map.of(1, 's', 3, 'a'));
+        KnownPosition latePos = new KnownPosition(Map.of(2, 't', 3, 'a'));
+        KnownPosition sameKeysLowerChar = new KnownPosition(Map.of(1, 'a', 3, 'a'));
+        KnownPosition sameKeysHigherChar = new KnownPosition(Map.of(1, 'b', 3, 'a'));
+        KnownPosition identical = new KnownPosition(Map.of(1, 's', 3, 'a'));
+
+        // -1 branch: this has a position the other doesn't
+        Assertions.assertTrue(earlyPos.compareTo(latePos) < 0);
+        // +1 branch: other has a position this doesn't
+        Assertions.assertTrue(latePos.compareTo(earlyPos) > 0);
+        // char-compare branch: same positions, different characters
+        Assertions.assertTrue(sameKeysLowerChar.compareTo(sameKeysHigherChar) < 0);
+        Assertions.assertTrue(sameKeysHigherChar.compareTo(sameKeysLowerChar) > 0);
+        // identical positions throw IllegalStateException - loop completes without returning
+        Assertions.assertThrows(IllegalStateException.class, () -> earlyPos.compareTo(identical));
+    }
+
+    @Test
+    void sharedPositions_sortedPositionStreamOrdersBySharedThenByWordCountThenByPositionKey() {
+        KnownPosition threeShared = new KnownPosition(Map.of(1, 's', 3, 'a', 5, 'e'));
+        KnownPosition twoSharedManyWords = new KnownPosition(Map.of(1, 's', 3, 'a'));
+        KnownPosition twoSharedFewerWords = new KnownPosition(Map.of(2, 't', 3, 'a'));
+
+        SharedPositions positions = new SharedPositions(Map.of(
+                threeShared, Set.of(new Word("stare"), new Word("share")),
+                twoSharedManyWords, Set.of(new Word("sat"), new Word("sap"), new Word("sad")),
+                twoSharedFewerWords, Set.of(new Word("eta"), new Word("ita"))
+        ));
+
+        List<KnownPosition> sorted = positions.sortedPositionStream()
+                .map(Map.Entry::getKey)
+                .toList();
+
+        // larger shared count comes first; among same shared count, more words comes first;
+        // tie-break falls through to keyCompare on the KnownPosition itself.
+        Assertions.assertEquals(List.of(threeShared, twoSharedManyWords, twoSharedFewerWords), sorted);
+    }
+
+    @Test
     void sharedPositions_buildsThresholdedDtosAndDescriptions() {
         KnownPosition position = new KnownPosition(Map.of(1, 's', 3, 'a'));
         Set<Word> words = Set.of(new Word("stare"), new Word("share"));

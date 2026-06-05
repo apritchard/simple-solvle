@@ -26,7 +26,6 @@ class DictionaryBenchmarkTest {
 
     private static final int WARMUP_RUNS = 1;
     private static final int MEASUREMENT_RUNS = 3;
-    private static final boolean HARD_MODE = false;
     private static final boolean REQUIRE_ANSWER = true;
     private static final DictionaryType DICTIONARY = DictionaryType.SIMPLE;
     private static final BenchmarkTolerances TOLERANCES = BenchmarkTolerances.defaults();
@@ -36,41 +35,56 @@ class DictionaryBenchmarkTest {
 
     @Test
     void simpleConfig() throws IOException {
-        runConfig(WordConfig.SIMPLE);
+        runConfig(WordConfig.SIMPLE, false);
     }
 
     @Test
     void simpleWithPartitioning() throws IOException {
-        runConfig(WordConfig.SIMPLE_WITH_PARTITIONING);
+        runConfig(WordConfig.SIMPLE_WITH_PARTITIONING, false);
     }
 
     @Test
     void optimalMean() throws IOException {
-        runConfig(WordConfig.OPTIMAL_MEAN);
+        runConfig(WordConfig.OPTIMAL_MEAN, false);
     }
 
     @Test
     void optimalMeanWithPartitioning_flagship() throws IOException {
-        runConfig(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING);
+        runConfig(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING, false);
     }
 
     @Test
     void optimalMeanExtendedPartitioning() throws IOException {
-        runConfig(WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
+        runConfig(WordConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING, false);
     }
 
     @Test
     void twoOrLess() throws IOException {
-        runConfig(WordConfig.TWO_OR_LESS);
+        runConfig(WordConfig.TWO_OR_LESS, false);
     }
 
-    private void runConfig(WordConfig wordConfig) throws IOException {
-        log.info("Benchmarking {} on {} ({} warmup + {} measurement runs)",
-                wordConfig, DICTIONARY, WARMUP_RUNS, MEASUREMENT_RUNS);
+    @Test
+    void optimalMeanWithPartitioning_harmonic() throws IOException {
+        runConfig(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING_HARMONIC, false);
+    }
+
+    @Test
+    void optimalMeanWithPartitioning_hardMode() throws IOException {
+        runConfig(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE, true);
+    }
+
+    @Test
+    void optimalMeanWithPartitioning_hardMode_rutBreak() throws IOException {
+        runConfig(WordConfig.OPTIMAL_MEAN_WITH_PARTITIONING_HARD_MODE_RUTBREAK, true);
+    }
+
+    private void runConfig(WordConfig wordConfig, boolean hardMode) throws IOException {
+        log.info("Benchmarking {} on {} hardMode={} ({} warmup + {} measurement runs)",
+                wordConfig, DICTIONARY, hardMode, WARMUP_RUNS, MEASUREMENT_RUNS);
 
         BenchmarkReport report = BenchmarkRunner.run(
                 solvleService, wordConfig, DICTIONARY,
-                HARD_MODE, REQUIRE_ANSWER, WARMUP_RUNS, MEASUREMENT_RUNS
+                hardMode, REQUIRE_ANSWER, WARMUP_RUNS, MEASUREMENT_RUNS
         );
 
         BenchmarkBaselineIO.writeCurrent(report);
@@ -85,13 +99,13 @@ class DictionaryBenchmarkTest {
 
         if (Boolean.getBoolean("benchmark.baseline.write")) {
             BenchmarkBaselineIO.writeBaseline(report);
-            log.info("[BENCHMARK] Wrote baseline for {} on {}", report.config(), report.dictionary());
+            log.info("[BENCHMARK] Wrote baseline for {} on {} (hardMode={})", report.config(), report.dictionary(), report.hardMode());
             return;
         }
 
-        Optional<BenchmarkReport> baseline = BenchmarkBaselineIO.readBaseline(report.config(), report.dictionary());
+        Optional<BenchmarkReport> baseline = BenchmarkBaselineIO.readBaseline(report.config(), report.dictionary(), report.hardMode());
         if (baseline.isEmpty()) {
-            fail("No baseline for " + report.config() + " on " + report.dictionary()
+            fail("No baseline for " + report.config() + " on " + report.dictionary() + " (hardMode=" + report.hardMode() + ")"
                     + ". Run with -Dbenchmark.baseline.write=true to create one.");
             return;
         }
@@ -106,7 +120,7 @@ class DictionaryBenchmarkTest {
             String msg = violations.stream()
                     .map(v -> "  - " + v.metric() + ": " + v.message())
                     .collect(Collectors.joining("\n"));
-            fail("Benchmark regression for " + report.config() + " on " + report.dictionary() + ":\n" + msg);
+            fail("Benchmark regression for " + report.config() + " on " + report.dictionary() + " (hardMode=" + report.hardMode() + "):\n" + msg);
         }
     }
 }

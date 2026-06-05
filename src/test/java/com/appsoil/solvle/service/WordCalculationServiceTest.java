@@ -231,6 +231,63 @@ public class WordCalculationServiceTest {
         Assertions.assertEquals(2.0, weightsWithKnownC.get('g').doubleValue());
     }
 
+    @Test
+    void harmonic_returnsCorrectedSequenceWhenUseHarmonicEnabled() {
+        WordCalculationService nonHarmonic = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN);
+        WordCalculationService harmonic = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN.withHarmonic(true));
+
+        // Without useHarmonic, harmonic(n) just returns n
+        Assertions.assertEquals(5.0, nonHarmonic.harmonic(5));
+        Assertions.assertEquals(10.0, nonHarmonic.harmonic(10));
+
+        // With useHarmonic enabled, returns the n-th harmonic number: sum of 1/i for i in 1..n
+        Assertions.assertEquals(1.0, harmonic.harmonic(1));
+        Assertions.assertEquals(1.5, harmonic.harmonic(2));
+        Assertions.assertEquals(1.0 + 1.0 / 2 + 1.0 / 3, harmonic.harmonic(3), 1e-9);
+        Assertions.assertEquals(1.0 + 1.0 / 2 + 1.0 / 3 + 1.0 / 4, harmonic.harmonic(4), 1e-9);
+    }
+
+    @Test
+    void generateSharedCharacterWeights_skipsWordSetsBelowRutBreakThreshold() {
+        // Same 3-word rut as the test above, but with rutBreakThreshold=100 — the wordSet has 3 entries,
+        // below the threshold, so the early-return at the top of the forEach skips everything.
+        WordCalculationService highThreshold = new WordCalculationService(
+                new WordCalculationConfig(3, 8, 10, 0).withRutBreak(2.0, 100)
+        );
+        Set<Word> rutWords = Stream.of("abcde", "abfde", "abgde").map(Word::new).collect(Collectors.toSet());
+
+        SharedPositions sharedPositions = highThreshold.findSharedWordRestrictions(rutWords);
+        Map<Character, DoubleAdder> weights = highThreshold.generateSharedCharacterWeights(
+                sharedPositions,
+                new WordRestrictions("abcdefg")
+        );
+
+        Assertions.assertTrue(weights.isEmpty(),
+                "All wordSets below rutBreakThreshold should be skipped, leaving no weights");
+    }
+
+    @Test
+    void getPartitionStatsForTuple_hardModeDetectsAndFiltersRutGroups() {
+        // 5 words sharing the same 4 positions {1,2,4,5} - a tight rut pattern.
+        Set<Word> rutWords = Stream.of("abcde", "abfde", "abgde", "abhde", "abide")
+                .map(Word::new).collect(Collectors.toSet());
+        Set<Word> formattedWords = getFormattedWords(rutWords);
+
+        WordCalculationService hardModeService = new WordCalculationService(
+                WordCalculationConfig.OPTIMAL_MEAN.withHardMode(true)
+        );
+
+        // A guess that doesn't differentiate any of the 5 solutions puts them all into one partition group,
+        // triggering the hardMode && 3 < size < 30 branch and the largestSet > sizeLimit rut detection.
+        Word innocuousGuess = new Word("zzzzz");
+        PartitionStats stats = hardModeService.getPartitionStatsForTuple(
+                WordRestrictions.NO_RESTRICTIONS, formattedWords, Set.of(innocuousGuess)
+        );
+
+        Assertions.assertFalse(stats.ruts().isEmpty(),
+                "Hard mode should detect the rutty partition group and record it in stats.ruts()");
+    }
+
     private static Set<Word> getFormattedWords(Set<Word> words) {
         int size = words.stream().findFirst().get().getLength();
         var wordMap = Map.of(size, words);
