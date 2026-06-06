@@ -1,0 +1,82 @@
+name: Deploy
+
+# Simple deploy-from-push: every push to main builds the single container,
+# pushes it to the Lightsail container service, and rolls out a new deployment.
+# Can also be triggered by hand (e.g. the very first deploy) via workflow_dispatch.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never run two deploys at once; let an in-flight one finish.
+concurrency:
+  group: deploy-lightsail
+  cancel-in-progress: false
+
+# Required for OIDC federation with AWS (no long-lived keys stored in GitHub).
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  SERVICE_NAME: solvle
+  CONTAINER_LABEL: app
+  CONTAINER_PORT: "8081"
+
+jobs:
+  deploy:
+    name: Build & deploy to Lightsail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Lightsail container plugin
+        run: |
+          sudo curl -fsSL \
+            "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" \
+            -o /usr/local/bin/lightsailctl
+          sudo chmod +x /usr/local/bin/lightsailctl
+
+      - name: Build image
+        run: docker build -t "${SERVICE_NAME}:${GITHUB_SHA}" .
+
+      - name: Push image to Lightsail
+        id: push
+        run: |
+          set -o pipefail
+          aws lightsail push-container-image \
+            --region "$AWS_REGION" \
+            --service-name "$SERVICE_NAME" \
+            --label "$CONTAINER_LABEL" \
+            --image "${SERVICE_NAME}:${GITHUB_SHA}" | tee push.log
+          # push-container-image prints: Refer to this image as ":solvle.app.N" ...
+          REF=$(grep -oE ":${SERVICE_NAME}\.${CONTAINER_LABEL}\.[0-9]+" push.log | tail -n1)
+          if [ -z "$REF" ]; then echo "Could not parse pushed image ref" >&2; exit 1; fi
+          echo "image_ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "Pushed image ref: $REF"
+
+      - name: Deploy
+        run: |
+          aws lightsail create-container-service-deployment \
+            --region "$AWS_REGION" \
+            --service-name "$SERVICE_NAME" \
+            --containers "{
+              \"${CONTAINER_LABEL}\": {
+                \"image\": \"${{ steps.push.outputs.image_ref }}\",
+                \"ports\": { \"${CONTAINER_PORT}\": \"HTTP\" }
+              }
+            }" \
+            --public-endpoint "{
+              \"containerName\": \"${CONTAINER_LABEL}\",
+              \"containerPort\": ${CONTAINER_PORT},
+              \"healthCheck\": { \"path\": \"/actuator/health\", \"successCodes\": \"200-299\" }
+            }"
+          echo "Deployment submitted. Lightsail will health-check /actuator/health before cutting traffic over."

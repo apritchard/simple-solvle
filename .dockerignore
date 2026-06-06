@@ -1,0 +1,23 @@
+# Build context hygiene — keep the image build fast and free of secrets/cruft
+.git/
+.github/
+.idea/
+.vscode/
+.junie/
+.claude/
+
+# Java build output
+target/
+**/target/
+
+# Frontend build output / deps (rebuilt inside the image)
+solvle-front/node_modules/
+solvle-front/build/
+
+# Legacy infra + local artifacts
+aws-backup/
+docs/
+*.pem
+*.sh
+solvle-log.txt
+docker-compose.yaml
