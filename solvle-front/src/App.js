@@ -113,7 +113,12 @@ function App() {
     const resetBoard = (rows, width) => {
         setBoardState(initialBoardState(rows, width));
         resetTileColors(rows, width);
-        setCurrentOptions(initialOptions());
+        // Don't clear currentOptions here: the word list is repopulated by the fetch
+        // effect, which only re-runs when the restriction string actually changes. On a
+        // board that's already blank, resetting yields the same (empty) restriction
+        // string, so no refetch fires — eagerly clearing would strand the panel at
+        // "0 possible words". When reset does change the board, the fetch repopulates it
+        // (and the loading flag hides the stale list in the meantime).
         setRowScores([]);
     }
 
