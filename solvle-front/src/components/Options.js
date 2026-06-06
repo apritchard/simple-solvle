@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useMemo, useState} from 'react';
 import AppContext from "../contexts/contexts";
 import OptionTab from "./OptionTab";
 import {Spinner, Tab, Tabs} from "react-bootstrap";
@@ -9,9 +9,7 @@ function Options(props) {
     const {
         currentOptions,
         setCurrentOptions,
-        availableLetters,
-        knownLetters,
-        unsureLetters,
+        tileColors,
         onSelectWord,
         boardState,
     } = useContext(AppContext);
@@ -27,12 +25,15 @@ function Options(props) {
     } = boardState.settings;
     const shouldUpdate = boardState.shouldUpdate;
 
+    // Restriction string depends only on colored tiles, so this stays a stable
+    // primitive while the user types uncolored letters and only changes when the
+    // board coloring does, avoiding refetches on every keystroke.
+    const restrictionString = useMemo(
+        () => generateRestrictionString(boardState.board, tileColors),
+        [boardState.board, tileColors]);
+
     useEffect(() => {
         setLoading(true);
-
-        console.log("Available letters: " + [...availableLetters]);
-
-        let restrictionString = generateRestrictionString(availableLetters, knownLetters, unsureLetters);
 
         console.log("Fetching " + restrictionString + " dictionary:" + dictionary + " partitioning:" + usePartitioning);
 
@@ -46,7 +47,9 @@ function Options(props) {
             }
         });
 
-        fetch('/solvle/' + restrictionString + "?" + configParams)
+        // encodeURIComponent so the ^ (min) and $ (max) frequency tokens survive
+        // the path; Tomcat rejects a raw ^ with a 400.
+        fetch('/solvle/' + encodeURIComponent(restrictionString) + "?" + configParams)
             .then(res => {
                 if (res.ok) {
                     return res.json()
@@ -70,8 +73,8 @@ function Options(props) {
                 });
                 setLoading(false);
         });
-    }, [setCurrentOptions, wordLength, dictionary, usePartitioning, shouldUpdate, availableLetters, knownLetters, unsureLetters,
-        hardMode, requireAnswer, wordConfig]);
+    }, [setCurrentOptions, restrictionString, dictionary, usePartitioning, shouldUpdate,
+        hardMode, requireAnswer, wordConfig, wordLength]);
 
     return (
 
