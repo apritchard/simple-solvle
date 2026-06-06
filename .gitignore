@@ -41,6 +41,10 @@ solvle-log.txt
 aws-backup/
 *.sh
 
+### throwaway IAM scratch files for one-time deploy setup (see docs/deploy.md)
+trust.json
+lightsail-deploy.json
+
 ### Claude Code per-developer state
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
