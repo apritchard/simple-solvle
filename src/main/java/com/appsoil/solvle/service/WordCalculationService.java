@@ -478,27 +478,70 @@ public class WordCalculationService {
         return getPartitionStats(groups, containedWords);
     }
 
+    /**
+     * Pre-applies a fixed set of prefix guesses to every contained word, returning the per-solution
+     * restrictions they produce. When scoring many tuples that all share the same prefix (e.g. the
+     * user's fixed opener words plus a varying candidate), this lets the shared prefix be computed
+     * once instead of re-derived for every candidate. The guesses are applied in iteration order.
+     */
+    public Map<Word, WordRestrictions> precomputeRestrictions(WordRestrictions startingRestrictions, Set<Word> containedWords, Iterable<Word> prefixGuesses) {
+        Map<Word, WordRestrictions> base = new HashMap<>(containedWords.size());
+        for (Word solution : containedWords) {
+            WordRestrictions effective = startingRestrictions;
+            for (Word guess : prefixGuesses) {
+                effective = WordRestrictions.generateRestrictions(solution, guess, effective);
+            }
+            base.put(solution, effective);
+        }
+        return base;
+    }
+
+    /**
+     * Like {@link #getPartitionStatsForTuple} but with the shared prefix already applied per solution
+     * (see {@link #precomputeRestrictions}). Only the additional guess is applied here, on top of each
+     * solution's precomputed base restriction.
+     */
+    public PartitionStats getPartitionStatsForAdditionalGuess(Map<Word, WordRestrictions> baseBySolution, Set<Word> containedWords, Word additionalGuess) {
+        Map<WordRestrictions, Integer> groups = new HashMap<>();
+        for (Word solution : containedWords) {
+            WordRestrictions effective = WordRestrictions.generateRestrictions(solution, additionalGuess, baseBySolution.get(solution));
+            groups.merge(effective, 1, Integer::sum);
+        }
+        return getPartitionStats(groups, containedWords);
+    }
+
     public PartitionStats getPartitionStats(Map<WordRestrictions, Integer> groups, Set<Word> containedWords) {
         List<SharedPositions> ruts = new ArrayList<>();
         double remaining = 0.0;
         double entropy = 0.0;
         for(Map.Entry<WordRestrictions, Integer> group : groups.entrySet()) {
-            Set<Word> newWords = findMatchingWords(containedWords, group.getKey());
-            remaining += newWords.size() * group.getValue();
-            double probability = (double)group.getValue() / containedWords.size();
-            //in hard mode, exclude potential ruts if we can
-            if(hardMode && newWords.size() < 30 && newWords.size() > 3) { //@todo configure rut break entropy limit
-                SharedPositions sharedPositions = findSharedWordRestrictions(newWords);
-                double sharedPositionSizeLimit = Math.min(5, Math.max(3, ((double)newWords.size() * 0.5)));
-                if(sharedPositions.largestSet() > sharedPositionSizeLimit) {
-                    //log.info("De-prioritizing {} because max rut {} in {} for rut {}", word, sharedPositions.largestSet(), newWords, sharedPositions.sortedPositionStream().toList());
-                    entropy += probability * (Math.log(probability) / Math.log(2));
-                    SharedPositions filteredPositions = new SharedPositions(sharedPositions.knownPositions().entrySet().stream()
-                            .filter(entry -> entry.getValue().size() > sharedPositionSizeLimit)
-                            .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())));
-                    ruts.add(filteredPositions);
-                    continue;
+            int groupSize = group.getValue();
+            double probability = (double)groupSize / containedWords.size();
+            // Hard mode needs the concrete matching word set to detect ruts, so it still rescans.
+            // Outside hard mode we can skip findMatchingWords entirely: each group already holds the
+            // solutions that produced its feedback, and the set of words consistent with that
+            // feedback's restriction is exactly that same group, so the matching count equals the
+            // group count. (See WordCalculationServicePartitionParityTest, which verifies this
+            // equality across the full dictionary.)
+            if(hardMode) {
+                Set<Word> newWords = findMatchingWords(containedWords, group.getKey());
+                remaining += newWords.size() * groupSize;
+                //in hard mode, exclude potential ruts if we can
+                if(newWords.size() < 30 && newWords.size() > 3) { //@todo configure rut break entropy limit
+                    SharedPositions sharedPositions = findSharedWordRestrictions(newWords);
+                    double sharedPositionSizeLimit = Math.min(5, Math.max(3, ((double)newWords.size() * 0.5)));
+                    if(sharedPositions.largestSet() > sharedPositionSizeLimit) {
+                        //log.info("De-prioritizing {} because max rut {} in {} for rut {}", word, sharedPositions.largestSet(), newWords, sharedPositions.sortedPositionStream().toList());
+                        entropy += probability * (Math.log(probability) / Math.log(2));
+                        SharedPositions filteredPositions = new SharedPositions(sharedPositions.knownPositions().entrySet().stream()
+                                .filter(entry -> entry.getValue().size() > sharedPositionSizeLimit)
+                                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue())));
+                        ruts.add(filteredPositions);
+                        continue;
+                    }
                 }
+            } else {
+                remaining += (double)groupSize * groupSize;
             }
             entropy -= probability * (Math.log(probability) / Math.log(2));
         };

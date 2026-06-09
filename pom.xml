@@ -147,6 +147,12 @@
 	<profiles>
 		<profile>
 			<id>benchmark</id>
+			<!-- Performance tests, not coverage tests: skip the JaCoCo agent entirely. Its bytecode
+			     instrumentation adds large per-invocation overhead that distorts timing baselines,
+			     and the coverage check is meaningless for a benchmark-only run. -->
+			<properties>
+				<jacoco.skip>true</jacoco.skip>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -161,6 +167,11 @@
 		</profile>
 		<profile>
 			<id>exploration</id>
+			<!-- Same rationale as the benchmark profile: skip JaCoCo so instrumentation overhead
+			     doesn't distort exploration timings. -->
+			<properties>
+				<jacoco.skip>true</jacoco.skip>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>

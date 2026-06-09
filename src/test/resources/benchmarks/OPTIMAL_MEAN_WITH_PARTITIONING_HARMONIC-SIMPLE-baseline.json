@@ -19,7 +19,7 @@
   "max" : 6,
   "stdev" : 0.6213966505239646,
   "failureCount" : 0,
-  "runtimeMillisMedian" : 31932,
-  "runtimeMillisPerSolution" : 13.793520518358532,
+  "runtimeMillisMedian" : 3741,
+  "runtimeMillisPerSolution" : 1.6159827213822895,
   "runs" : 3
 }
