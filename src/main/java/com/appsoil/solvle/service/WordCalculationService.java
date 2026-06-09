@@ -478,6 +478,38 @@ public class WordCalculationService {
         return getPartitionStats(groups, containedWords);
     }
 
+    /**
+     * Pre-applies a fixed set of prefix guesses to every contained word, returning the per-solution
+     * restrictions they produce. When scoring many tuples that all share the same prefix (e.g. the
+     * user's fixed opener words plus a varying candidate), this lets the shared prefix be computed
+     * once instead of re-derived for every candidate. The guesses are applied in iteration order.
+     */
+    public Map<Word, WordRestrictions> precomputeRestrictions(WordRestrictions startingRestrictions, Set<Word> containedWords, Iterable<Word> prefixGuesses) {
+        Map<Word, WordRestrictions> base = new HashMap<>(containedWords.size());
+        for (Word solution : containedWords) {
+            WordRestrictions effective = startingRestrictions;
+            for (Word guess : prefixGuesses) {
+                effective = WordRestrictions.generateRestrictions(solution, guess, effective);
+            }
+            base.put(solution, effective);
+        }
+        return base;
+    }
+
+    /**
+     * Like {@link #getPartitionStatsForTuple} but with the shared prefix already applied per solution
+     * (see {@link #precomputeRestrictions}). Only the additional guess is applied here, on top of each
+     * solution's precomputed base restriction.
+     */
+    public PartitionStats getPartitionStatsForAdditionalGuess(Map<Word, WordRestrictions> baseBySolution, Set<Word> containedWords, Word additionalGuess) {
+        Map<WordRestrictions, Integer> groups = new HashMap<>();
+        for (Word solution : containedWords) {
+            WordRestrictions effective = WordRestrictions.generateRestrictions(solution, additionalGuess, baseBySolution.get(solution));
+            groups.merge(effective, 1, Integer::sum);
+        }
+        return getPartitionStats(groups, containedWords);
+    }
+
     public PartitionStats getPartitionStats(Map<WordRestrictions, Integer> groups, Set<Word> containedWords) {
         List<SharedPositions> ruts = new ArrayList<>();
         double remaining = 0.0;

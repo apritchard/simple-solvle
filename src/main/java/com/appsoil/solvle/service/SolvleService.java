@@ -594,6 +594,10 @@ public class SolvleService {
         int maxOverlap = tuple.size() > 3 ? 2 : 1;
         final int[] preExistingDuplicates = countPreExistingDuplicates(tuple);
         var tupleList = tuple.stream().toList();
+        // The user's input words produce the same per-solution feedback for every candidate, so apply
+        // them once up front instead of re-deriving them inside each candidate's partition.
+        final Map<Word, WordRestrictions> baseBySolution =
+                wordCalculationService.precomputeRestrictions(WordRestrictions.NO_RESTRICTIONS, allSolutions, tupleList);
         var tuples = wordSet.parallelStream()
                 .peek(word -> {
                     int completed = response.getCompletedTasks().incrementAndGet();
@@ -613,7 +617,7 @@ public class SolvleService {
                     Set<Word> newSet = new HashSet<>(tuple);
                     newSet.add(word);
                     response.getEvaluatedTuples().incrementAndGet();
-                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, allSolutions, newSet));
+                    return new TupleScore(newSet, wordCalculationService.getPartitionStatsForAdditionalGuess(baseBySolution, allSolutions, word));
                 }).sorted().limit(100).collect(Collectors.toCollection(TreeSet::new));
         if (!timeout.get()) {
             response.setResult(tuples);

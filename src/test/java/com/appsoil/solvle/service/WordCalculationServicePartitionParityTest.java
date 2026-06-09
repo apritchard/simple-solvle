@@ -33,12 +33,13 @@ class WordCalculationServicePartitionParityTest {
     private static Set<Word> solutions;
     private static List<Word> guessSample;
     private static WordCalculationService service;
+    private static Set<Word> fishing;
 
     @BeforeAll
     static void loadRealDictionaries() {
         Map<DictionaryType, Dictionary> dictionaries = new SolvleConfig().allDictionaries();
         solutions = dictionaries.get(DictionaryType.SIMPLE).wordsBySize().get(5);
-        Set<Word> fishing = dictionaries.get(DictionaryType.BIG).wordsBySize().get(5);
+        fishing = dictionaries.get(DictionaryType.BIG).wordsBySize().get(5);
         // OPTIMAL_MEAN_EXTENDED_PARTITIONING is the exact config the tuple job uses; hardMode=false.
         service = new WordCalculationService(WordCalculationConfig.OPTIMAL_MEAN_EXTENDED_PARTITIONING);
         // Deterministic spread across the fishing set so the sample covers a wide variety of words.
@@ -78,6 +79,67 @@ class WordCalculationServicePartitionParityTest {
                     () -> "remaining mismatch for tuple crane+" + second.word()
                             + " (matchingCount != groupCount for some partition)");
         }
+    }
+
+    @Test
+    void precomputedPrefixMatchesFullTuplePartition() {
+        // #4 applies the fixed input word once up front and only the candidate per-tuple, instead of
+        // re-applying the whole set. For the letter-disjoint candidates the job actually evaluates,
+        // this must produce the identical partition (and therefore identical remaining + entropy) as
+        // scoring the full {input, candidate} tuple.
+        List<Word> input = List.of(new Word("crane"));
+        int maxOverlap = 1; // tuple.size() <= 3
+        Map<Word, WordRestrictions> base =
+                service.precomputeRestrictions(WordRestrictions.NO_RESTRICTIONS, solutions, input);
+
+        // Letter-disjoint candidates for "crane" are uncommon (no a/e), so scan a wide sample to
+        // gather a solid set of the candidates the job would actually evaluate.
+        int checked = 0;
+        for (Word candidate : evenSample(fishing, 3000)) {
+            if (!passesProductionFilter(input, candidate, maxOverlap)) {
+                continue;
+            }
+            checked++;
+
+            Set<Word> full = new HashSet<>(input);
+            full.add(candidate);
+            var fullStats = service.getPartitionStatsForTuple(WordRestrictions.NO_RESTRICTIONS, solutions, full);
+            var prefixStats = service.getPartitionStatsForAdditionalGuess(base, solutions, candidate);
+
+            Assertions.assertEquals(fullStats.wordsRemaining(), prefixStats.wordsRemaining(), 1e-9,
+                    () -> "remaining mismatch for crane+" + candidate.word());
+            Assertions.assertEquals(fullStats.entropy(), prefixStats.entropy(), 1e-9,
+                    () -> "entropy mismatch for crane+" + candidate.word());
+        }
+        Assertions.assertTrue(checked > 20, "sample should exercise a meaningful number of disjoint candidates, got " + checked);
+    }
+
+    /** Mirrors SolvleService.isValidCombination + countPreExistingDuplicates for the tuple job. */
+    private static boolean passesProductionFilter(List<Word> inputWords, Word candidate, int maxOverlap) {
+        int[] counts = new int[256];
+        for (Word w : inputWords) {
+            for (int i = 0; i < w.getLength(); i++) {
+                counts[w.word().charAt(i)]++;
+            }
+        }
+        for (int i = 0; i < counts.length; i++) {
+            if (counts[i] > 0) {
+                counts[i] = (counts[i] - 1) * -1; // allow pre-existing duplicates within the input
+            }
+        }
+        for (int i = 0; i < candidate.getLength(); i++) {
+            if (++counts[candidate.word().charAt(i)] > maxOverlap) {
+                return false;
+            }
+        }
+        for (Word w : inputWords) {
+            for (int i = 0; i < w.getLength(); i++) {
+                if (++counts[w.word().charAt(i)] > maxOverlap) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
