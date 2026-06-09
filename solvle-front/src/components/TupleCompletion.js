@@ -178,8 +178,20 @@ function TupleCompletion(props) {
                         )}
                     </Form>
                     <hr/>
-                    {/* If loading and we have a job, show a progress bar */}
-                    {loading && job && job.tasks > 0 ? (
+                    {/* If the job is still queued behind others, show its place in line */}
+                    {loading && job && job.status === 'PENDING' ? (
+                        <div className="text-center my-3">
+                            <Spinner animation="border" role="status">
+                                <span className="visually-hidden">Waiting...</span>
+                            </Spinner>
+                            <p className="mt-2">
+                                {job.queuePosition > 0
+                                    ? `Waiting to begin — ${job.queuePosition} request${job.queuePosition === 1 ? '' : 's'} ahead of you.`
+                                    : 'Waiting to begin…'}
+                            </p>
+                        </div>
+                    ) : loading && job && job.tasks > 0 ? (
+                        /* If loading and we have a running job, show a progress bar */
                         <div className="job-progress-container text-center my-3">
                             <h5>Job Progress</h5>
                             <ProgressBar

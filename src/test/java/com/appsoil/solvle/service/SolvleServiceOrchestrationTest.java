@@ -359,19 +359,27 @@ class SolvleServiceOrchestrationTest {
 
     @Test
     void submitTupleJob_idleTimeoutTransitionsJobToFailed() throws InterruptedException {
-        // Drive the timeout check on every word (interval=1) and treat any positive duration as
-        // exceeding the budget (maxJobIgnoreTimeSeconds=-1) so the first processed word fires the
-        // FAILED-with-"Job timed out" branch. Restore the production defaults in finally so other
-        // tests sharing this Spring context aren't affected.
+        // Exercise the in-flight idle timeout inside finishTuple (interval=1 checks every word). The
+        // job passes the pre-start abandonment check (it isn't idle when picked up), then we hold it
+        // on the gate just long enough that lastUpdate goes stale before finishTuple runs, so the
+        // first processed word fires the FAILED-with-"Job timed out" branch. Restore defaults in
+        // finally so other tests sharing this Spring context aren't affected.
         long originalTimeout = solvleService.maxJobIgnoreTimeSeconds;
         int originalInterval = solvleService.tupleJobTimeoutCheckInterval;
+        java.util.concurrent.CountDownLatch gate = new java.util.concurrent.CountDownLatch(1);
+        solvleService.jobGate = gate;
         try {
-            solvleService.setMaxJobIgnoreTimeSeconds(-1);
+            solvleService.setMaxJobIgnoreTimeSeconds(0);
             solvleService.setTupleJobTimeoutCheckInterval(1);
 
             // A tuple distinct from every other test so we don't collide with the tuple-job cache.
             Set<Word> tuple = Set.of(new Word("gulps"));
             SolveJob<Set<TupleScore>> job = solvleService.submitTupleJob(tuple, DictionaryType.EXTENDED, true);
+
+            // The worker clears the pre-start check immediately (idle 0 > 0 is false) and parks on the
+            // gate. Let just over a second pass so its lastUpdate is now stale, then release it.
+            Thread.sleep(1100);
+            gate.countDown();
 
             awaitTerminalStatus(job, 5000);
 
@@ -380,8 +388,105 @@ class SolvleServiceOrchestrationTest {
             Assertions.assertEquals("Job timed out", job.getError(),
                     () -> "Timeout error should be the canonical \"Job timed out\" message");
         } finally {
+            gate.countDown();
+            solvleService.jobGate = null;
             solvleService.setMaxJobIgnoreTimeSeconds(originalTimeout);
             solvleService.setTupleJobTimeoutCheckInterval(originalInterval);
+        }
+    }
+
+    @Test
+    void submitTupleJob_dropsAbandonedRequestBeforeStarting() throws InterruptedException {
+        // With maxJobIgnoreTimeSeconds=-1 every request looks idle the moment the worker pulls it, so
+        // the pre-start abandonment guard drops it without ever calculating.
+        long originalTimeout = solvleService.maxJobIgnoreTimeSeconds;
+        try {
+            solvleService.setMaxJobIgnoreTimeSeconds(-1);
+
+            // Distinct key from the in-flight timeout test (which also uses gulps).
+            Set<Word> tuple = Set.of(new Word("crane"));
+            SolveJob<Set<TupleScore>> job = solvleService.submitTupleJob(tuple, DictionaryType.EXTENDED, true);
+
+            awaitTerminalStatus(job, 5000);
+
+            Assertions.assertEquals(JobStatus.FAILED, job.getStatus(),
+                    () -> "An abandoned queued request should be dropped to FAILED");
+            Assertions.assertEquals("Request abandoned before it started (no client activity)", job.getError(),
+                    () -> "Drop reason should explain the request was abandoned before starting");
+        } finally {
+            solvleService.setMaxJobIgnoreTimeSeconds(originalTimeout);
+        }
+    }
+
+    @Test
+    void submitTupleJob_rejectsNewRequestsWhenQueueIsFull() throws InterruptedException {
+        // Cap the backlog at a single in-flight job and hold the worker, so the next distinct request
+        // is rejected rather than queued.
+        int originalMax = solvleService.maxQueuedJobs;
+        java.util.concurrent.CountDownLatch gate = new java.util.concurrent.CountDownLatch(1);
+        solvleService.jobGate = gate;
+        try {
+            solvleService.setMaxQueuedJobs(1);
+
+            // Tuples distinct from every other test so we don't collide on the tuple-job cache key.
+            SolveJob<Set<TupleScore>> first = solvleService.submitTupleJob(
+                    Set.of(new Word("slate")), DictionaryType.BIG, true);
+            SolveJob<Set<TupleScore>> rejected = solvleService.submitTupleJob(
+                    Set.of(new Word("pound")), DictionaryType.BIG, true);
+
+            Assertions.assertEquals(JobStatus.FAILED, rejected.getStatus(),
+                    "A request over the queue cap should be rejected");
+            Assertions.assertTrue(rejected.getError() != null && rejected.getError().contains("too many queued requests"),
+                    () -> "Rejection should explain the queue is full; got: " + rejected.getError());
+
+            gate.countDown();
+            awaitTerminalStatus(first, 5000);
+
+            // Once the backlog drains, new requests are accepted again.
+            SolveJob<Set<TupleScore>> afterDrain = solvleService.submitTupleJob(
+                    Set.of(new Word("fjord")), DictionaryType.BIG, true);
+            Assertions.assertNotEquals(JobStatus.FAILED, afterDrain.getStatus(),
+                    "Requests should be accepted again once the queue has room");
+            awaitTerminalStatus(afterDrain, 5000);
+        } finally {
+            gate.countDown();
+            solvleService.jobGate = null;
+            solvleService.setMaxQueuedJobs(originalMax);
+        }
+    }
+
+    @Test
+    void submitTupleJob_queuesAdditionalRequestsBehindTheRunningOne() throws InterruptedException {
+        // Hold the worker on the first job so the second request can't start, then verify the
+        // second one reports its place in line ("requests ahead of you") instead of running.
+        // Tuples distinct from every other test so we don't collide on the tuple-job cache key.
+        java.util.concurrent.CountDownLatch gate = new java.util.concurrent.CountDownLatch(1);
+        solvleService.jobGate = gate;
+        try {
+            SolveJob<Set<TupleScore>> first = solvleService.submitTupleJob(
+                    Set.of(new Word("crane")), DictionaryType.BIG, true);
+            SolveJob<Set<TupleScore>> second = solvleService.submitTupleJob(
+                    Set.of(new Word("trace")), DictionaryType.BIG, true);
+
+            Assertions.assertEquals(0, first.getQueuePosition(),
+                    "The first request should be at the front of the queue");
+            Assertions.assertEquals(JobStatus.PENDING, second.getStatus(),
+                    "A second request should wait rather than start calculating immediately");
+            Assertions.assertEquals(1, second.getQueuePosition(),
+                    "The second request should report one request ahead of it");
+
+            gate.countDown();
+            awaitTerminalStatus(first, 5000);
+            awaitTerminalStatus(second, 5000);
+
+            // Once the queue drains, a fresh poll of the finished job no longer reports a backlog.
+            SolveJob<Set<TupleScore>> secondAgain = solvleService.submitTupleJob(
+                    Set.of(new Word("trace")), DictionaryType.BIG, true);
+            Assertions.assertEquals(0, secondAgain.getQueuePosition(),
+                    "A completed job should no longer report queued requests ahead of it");
+        } finally {
+            gate.countDown();
+            solvleService.jobGate = null;
         }
     }
 

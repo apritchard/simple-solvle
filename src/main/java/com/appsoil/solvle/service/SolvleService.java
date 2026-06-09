@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.*;
@@ -43,8 +44,20 @@ public class SolvleService {
     long maxJobIgnoreTimeSeconds = 60;
     int tupleJobTimeoutCheckInterval = 200;
 
+    // Upper bound on how many tuple jobs may be queued/running at once. New requests beyond this are
+    // rejected rather than allowed to pile up unbounded. package-private + settable for tests.
+    int maxQueuedJobs = 100;
+
+    // Test seam: when set, the single worker waits on this latch before starting each tuple job,
+    // so tests can hold a job in flight and observe queue ordering deterministically.
+    java.util.concurrent.CountDownLatch jobGate = null;
+
     void setMaxJobIgnoreTimeSeconds(long seconds) {
         this.maxJobIgnoreTimeSeconds = seconds;
+    }
+
+    void setMaxQueuedJobs(int maxQueuedJobs) {
+        this.maxQueuedJobs = maxQueuedJobs;
     }
 
     void setTupleJobTimeoutCheckInterval(int interval) {
@@ -485,7 +498,12 @@ public class SolvleService {
     }
 
     private final Map<SimpleKey, SolveJob<Set<TupleScore>>> tupleJobCache = new ConcurrentHashMap<>();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(8);
+    // Single worker so only one tuple job is ever calculated at a time; additional requests wait in line.
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    // In-memory, FIFO-ordered queue of pending/running jobs. The head is the job currently being
+    // worked (or about to be); everything behind it is still waiting to begin. A job is removed once
+    // it reaches a terminal state, so a PENDING job's index here is the number of requests ahead of it.
+    private final Queue<SolveJob<Set<TupleScore>>> jobQueue = new ConcurrentLinkedQueue<>();
 
     public SolveJob<Set<TupleScore>> submitTupleJob(Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {
         log.info("Submitting tuple job");
@@ -496,26 +514,71 @@ public class SolvleService {
             if (response.getStatus() != JobStatus.FAILED) {
                 log.info("Returning existing job {} evaluated {} tuples", response.getId(), response.getEvaluatedTuples());
                 response.setLastUpdate(LocalDateTime.now());
+                response.setQueuePosition(queuePositionOf(response));
                 return response;
             } else {
                 log.info("Tuple job {} failed, starting over. {}", response.getId(), response);
             }
         }
 
+        // Reject rather than queue once the backlog is full, so a flood of requests can't grow memory
+        // without bound. The client surfaces the error like any other failed job.
+        if (jobQueue.size() >= maxQueuedJobs) {
+            log.warn("Tuple job queue full ({} of {}); rejecting new request for {}", jobQueue.size(), maxQueuedJobs, tuple);
+            SolveJob<Set<TupleScore>> rejected = new SolveJob<>();
+            rejected.setStatus(JobStatus.FAILED);
+            rejected.setError("Server is busy - too many queued requests. Please try again shortly.");
+            return rejected;
+        }
+
         log.info("Making new tuple job");
         SolveJob<Set<TupleScore>> response = new SolveJob<>();
         tupleJobCache.put(key, response);
+        jobQueue.add(response);
         executorService.submit(() -> {
             try {
+                // Before spending any work, make sure the client is still listening. If we haven't
+                // heard a poll in maxJobIgnoreTimeSeconds, treat the request as abandoned and drop it.
+                long idleSeconds = Duration.between(response.getLastUpdate(), LocalDateTime.now()).getSeconds();
+                if (idleSeconds > maxJobIgnoreTimeSeconds) {
+                    log.info("Dropping queued tuple job {} before start - client idle for {}s", response.getId(), idleSeconds);
+                    response.setStatus(JobStatus.FAILED);
+                    response.setError("Request abandoned before it started (no client activity)");
+                    return;
+                }
+                java.util.concurrent.CountDownLatch gate = jobGate;
+                if (gate != null) {
+                    gate.await();
+                }
                 finishTuple(response, tuple, wordList, requireAnswer);
             } catch (Exception e) {
                 log.error("Error while submitting tuple job", e);
                 response.setStatus(JobStatus.FAILED);
                 response.setError("Error while submitting tuple job:" + e.getMessage());
+            } finally {
+                jobQueue.remove(response);
             }
         });
+        response.setQueuePosition(queuePositionOf(response));
+        log.info("Queued tuple job {} at position {}", response.getId(), response.getQueuePosition());
         return response;
 
+    }
+
+    /**
+     * Number of jobs ahead of the given job in the work queue. 0 means it is currently being
+     * worked (head of the queue) or is next up; a positive value is how many requests must finish
+     * before this one begins. Returns 0 for jobs no longer queued (already completed/failed).
+     */
+    private int queuePositionOf(SolveJob<?> job) {
+        int position = 0;
+        for (SolveJob<?> queued : jobQueue) {
+            if (queued == job) {
+                return position;
+            }
+            position++;
+        }
+        return 0;
     }
 
     private void finishTuple(SolveJob<Set<TupleScore>> response, Set<Word> tuple, DictionaryType wordList, boolean requireAnswer) {

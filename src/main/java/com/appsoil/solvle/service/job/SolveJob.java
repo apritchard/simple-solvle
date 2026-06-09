@@ -19,6 +19,12 @@ public class SolveJob<T> {
     private LocalDateTime startTime;
     private LocalDateTime lastUpdate;
 
+    /**
+     * Number of requests ahead of this one in the queue while it is still PENDING.
+     * 0 means it is next up (or already running). Only meaningful for PENDING jobs.
+     */
+    private int queuePosition;
+
     public SolveJob() {
         this.id = UUID.randomUUID();
         this.status = JobStatus.PENDING;
