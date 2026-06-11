@@ -16,7 +16,7 @@ was strictly for educational value.
 The easiest way to run this application is through Docker. You should be able to clone this repo and run `docker-compose up`
 from the parent directory to start an instance of both the front and backend locally.
 
-If you prefer, you can start the apps outside of docker using your tools of choice. The back-end requires Java 18 or 
+If you prefer, you can start the apps outside of docker using your tools of choice. The back-end requires Java 21 or 
 higher and the front-end uses node. Run the SolvleApplication class to launch the backend application and run `npm start` from the
 /solvle-front directory.
 

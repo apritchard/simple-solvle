@@ -12,14 +12,12 @@ The frontend collects puzzle state, encodes it into Solvle restriction strings, 
 - `SolvleConfig` loads dictionaries from `src/main/resources/dict2/`.
 - Solver implementations live under `service/solvers/`.
 
-The backend runs on port `8081`.
-
 ## Frontend
 - `solvle-front/src/App.js` owns the main game state and several fetch workflows.
 - Components under `solvle-front/src/components/` render the board, keyboard, options, solver modals, tuple completion, and scoring tools.
 - `solvle-front/src/setupProxy.js` forwards `/solvle` and `/solvescape` during local development.
 
-The frontend dev server runs on port `3000`.
+Ports and run commands are in `docs/dev-setup.md`.
 
 ## API Flow
 Common frontend calls include:
