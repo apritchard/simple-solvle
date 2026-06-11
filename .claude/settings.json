@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn:*)",
+      "PowerShell(mvn:*)",
+      "Bash(npm test:*)",
+      "Bash(npm.cmd test:*)",
+      "Bash(npm run build)",
+      "Bash(npm.cmd run build)",
+      "Bash(npm ci)",
+      "Bash(npm.cmd ci)",
+      "PowerShell(npm test:*)",
+      "PowerShell(npm.cmd test:*)",
+      "PowerShell(npm run build)",
+      "PowerShell(npm.cmd run build)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore:*)",
+      "PowerShell(git status:*)",
+      "PowerShell(git diff:*)",
+      "PowerShell(git log:*)",
+      "PowerShell(git show:*)",
+      "PowerShell(git branch:*)",
+      "Bash(tee target/:*)",
+      "Bash(tee -a target/:*)"
+    ],
+    "deny": [
+      "Read(./aws-backup/**)",
+      "Read(./**/*.pem)"
+    ]
+  }
+}
