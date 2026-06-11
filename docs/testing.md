@@ -9,8 +9,6 @@ mvn test -q
 
 Backend tests cover solver behavior, word restrictions, dictionary loading, scoring, DTO/model behavior, job state, and Spring context startup. The Maven test phase also generates a JaCoCo coverage report at `target/site/jacoco/index.html`. Add or update tests when changing filtering, scoring, hard-mode, dictionary, or API-contract behavior.
 
-The project targets Java 18 source compatibility and uses Java 21 for local and CI backend validation.
-
 ### Benchmark And Exploration Suites
 
 Two slow JUnit groups are excluded from the default `mvn test` run via JUnit `@Tag`:
@@ -47,10 +45,7 @@ npm.cmd run build
 The frontend has a smoke/render test for initial app load. Keep `--passWithNoTests` for compatibility with Create React App test discovery, but add focused tests for meaningful UI behavior changes.
 
 ## CI Expectations
-GitHub Actions should run:
-
-- Backend `mvn test` on Java 21.
-- Frontend install, test, and production build.
+`.github/workflows/ci.yml` is authoritative. It runs backend `mvn test` and frontend install, test, and production build on every push and pull request.
 
 ## Before Finishing Work
 - Run the smallest relevant checks for the files changed.

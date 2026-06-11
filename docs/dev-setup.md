@@ -1,9 +1,9 @@
 # Development Setup
 
 ## Prerequisites
-- Java 21 for local backend validation.
+- Java 21 — authoritative version is `java.version` in `pom.xml` (currently also the Spring Boot 3.5 baseline).
 - Maven 3.8 or newer.
-- Node compatible with the existing React app. The Dockerfile and CI currently use Node 17.
+- Node 20 — authoritative version is the root `Dockerfile` base image and `.github/workflows/ci.yml`.
 - Docker Desktop or another Docker Compose provider if using containerized startup.
 
 ## Backend
@@ -15,8 +15,6 @@ mvn spring-boot:run
 ```
 
 The backend listens on port `8081`, configured in `src/main/resources/application.properties`.
-
-The project source level remains Java 18. Lombok is pinned so Java 21 compilation works without changing the source target.
 
 ## Frontend
 From `solvle-front/`:
@@ -37,7 +35,7 @@ From the repository root:
 docker-compose up
 ```
 
-Docker Compose builds the backend from the root `Dockerfile` and the frontend from `solvle-front/Dockerfile`. The backend is exposed on `8081`; the frontend is exposed on `80`.
+Docker Compose builds the single combined image from the root `Dockerfile`: the React production build is bundled into the Spring Boot jar as static resources, and one container serves both UI and API on `8081`. Open `http://localhost:8081`. This is the same image that deploys to production.
 
-## Historical Hosting
-The app was previously deployed on AWS, but hosting is inactive. Infrastructure modernization is a future task; see `AGENTS.md` for local backup handling guardrails.
+## Hosting
+The app is live on an AWS Lightsail container service at https://solvle.appsoil.com, deployed automatically on every push to `main`. See `docs/deploy.md` for the full setup and `AGENTS.md` for deploy and backup-data guardrails.
